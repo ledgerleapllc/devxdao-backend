@@ -6,7 +6,7 @@
 
 Relies on Laravel PHP, and Mysql if hosting locally
 
-```
+```bash
 sudo apt -y install apache2
 sudo a2enmod rewrite
 sudo a2enmod headers
@@ -23,7 +23,7 @@ php -r "unlink('composer-setup.php');"
 
 Setup the repo according to our VHOST path. Note, the actual VHOST path in this case should be set to **/var/www/devxdao-backend/public**
 
-```
+```bash
 cd /var/www/
 git clone https://github.com/ledgerleapllc/devxdao-backend
 cd devxdao-backend
@@ -31,7 +31,7 @@ cd devxdao-backend
 
 Install packages and setup environment
 
-```
+```bash
 composer install
 composer update
 cp .env.example .env
@@ -39,7 +39,7 @@ cp .env.example .env
 
 After adjusting .env with your variables, run Artisan to finish setup
 
-```
+```bash
 php artisan key:generate
 php artisan migrate
 php artisan passport:install
@@ -51,7 +51,7 @@ php artisan cache:clear
 
 You may also have to authorize Laravel to write to the storage directory
 
-```
+```bash
 sudo chown -R www-data:www-data storage/
 ```
 
