@@ -1,6 +1,22 @@
-<p align="center" padding-top="100"><img src="https://ledgerleap.com/web/images/devxdao-logo.png" width="400"></a></p>
+<p align="center" padding-top="100">
+	<img src="https://ledgerleap.com/web/images/devxdao-logo.png" width="400">
+</p>
 
 ## DevxDao Grant Portal Backend
+
+The DevxDao's grant and voting associates portal hosted at http://portal.devxdao.com
+
+This is the backend repo of the portal. Frontends for this backend API are listed below.
+
+Main portal: https://github.com/ledgerleapllc/devxdao-frontend
+
+Project Management portal: https://github.com/ledgerleapllc/devxdao-pm
+
+Compliance portal: https://github.com/ledgerleapllc/devxdao-compliance
+
+### Prerequisites
+
+Relies on Laravel PHP. You can find Laravel's documentation here https://github.com/laravel/laravel
 
 ### Install and Deploy
 
@@ -67,4 +83,23 @@ You may also have to authorize Laravel to write to the storage directory
 
 ```bash
 sudo chown -R www-data:www-data storage/
+```
+
+### Default user/passwords
+
+Default user/admin logins are created in the portal during initial install. 
+All the default logins that are created on install are given random hash passwords that can be found printed in your laravel log file that will look something like this:
+
+```
+[2021-11-30 18:13:51] production.INFO:  Created <type> admin
+[2021-11-30 18:13:51] production.INFO:  Email: <email>
+[2021-11-30 18:13:51] production.INFO:  Password: <random_password>
+```
+
+### Testing
+
+We use PHPUnit for unit testing of the portal's api endpoints. In order to run the test suite, you will need to build composer dependencies and run PHP Artisan's commands, ensuring a proper backend build. Run **composer run-script --dev test** to run the unit tests and see output on th CLI. Run this command at the root of the repo directory.
+
+```bash
+composer run-script --dev test
 ```
