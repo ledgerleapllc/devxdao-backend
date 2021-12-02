@@ -3403,6 +3403,23 @@ class AdminController extends Controller
 					'message' => 'Provide all the necessary information'
 				];
 			}
+
+			$countDiscussions = Proposal::where('proposal.status', 'approved')
+			->doesntHave('votes')
+			->where(function ($query) {
+				$survey_rank_ids = SurveyRank::where('is_winner', 1)->pluck('proposal_id');
+				$survey_downvote_rank_ids = SurveyDownVoteRank::where('is_winner', 1)->pluck('proposal_id');
+				$query->whereNotIn('proposal.id', $survey_rank_ids->toArray())
+					->whereNotIn('proposal.id', $survey_downvote_rank_ids->toArray());
+			})->count();
+			$number_response = $request->downvote ? $request->number_response * 2 : $request->number_response;
+			if($number_response > $countDiscussions) {
+				$slot = $request->downvote ? floor($countDiscussions / 2) : $countDiscussions;
+				return [
+					'success' => false,
+					'message' => "There are not enough proposals in the pipeline. Select a number of slots no more than $slot."
+				];
+			}
 			$time = $request->time;
 			$timeUnit = $request->time_unit;
 			$mins = 0;

@@ -483,6 +483,7 @@ class ComplianceController extends Controller
 
         $proposals = FinalGrant::with([
             'proposal', 'proposal.user', 'proposal.milestones',
+            'proposal.onboarding',
             'proposal.votes',
             'proposal.votes.results',
             'proposal.votes.results.user',
