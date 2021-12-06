@@ -41,10 +41,12 @@ use App\Survey;
 use App\SurveyResult;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class Helper
 {
@@ -890,6 +892,7 @@ class Helper
   // Start Onboarding
   public static function startOnboarding($proposal, $vote, $status = 'pending')
   {
+    Log::info("Start Onboarding of proposal $proposal->id");
     if ($vote->type != "informal") return null;
 
     $settings = self::getSettings();
@@ -898,17 +901,6 @@ class Helper
       ->first();
     if (!$onboarding) {
       $token = Str::random(50);
-      try {
-        if ($settings['compliance_admin']) {
-          $title = "Proposal $proposal->id needs a compliance review";
-          $public_url = config('app.fe_url') . "/public-proposals/$proposal->id";
-          $approve_url = config('app.fe_url') . "/compliance-approve-grant/$proposal->id?token=$token";
-          $deny_url = config('app.fe_url') . "/compliance-deny-grant/$proposal->id?token=$token";
-          Mail::to($settings['compliance_admin'])->send(new ComplianceReview($title, $proposal, $public_url, $approve_url, $deny_url));
-        }
-      } catch (Exception $e) {
-        Log::info($e->getMessage());
-      }
       $onboarding = new OnBoarding();
       $onboarding->proposal_id = $proposal->id;
       $onboarding->vote_id = $vote->id;
@@ -918,6 +910,18 @@ class Helper
       $onboarding->admin_email = $settings['compliance_admin'] ?? '';
       $onboarding->compliance_status = 'pending';
       $onboarding->save();
+      try {
+        if ($settings['compliance_admin']) {
+          Log::info("Send mail compliance review of proposal $proposal->id");
+          $title = "Proposal $proposal->id needs a compliance review";
+          $public_url = config('app.fe_url') . "/public-proposals/$proposal->id";
+          $approve_url = config('app.fe_url') . "/compliance-approve-grant/$proposal->id?token=$token";
+          $deny_url = config('app.fe_url') . "/compliance-deny-grant/$proposal->id?token=$token";
+          Mail::to($settings['compliance_admin'])->send(new ComplianceReview($title, $proposal, $public_url, $approve_url, $deny_url));
+        }
+      } catch (Exception $e) {
+        Log::info($e->getMessage());
+      }
       return $onboarding;
     }
 
@@ -1698,5 +1702,80 @@ class Helper
         }
       });
     return $query;
+  }
+
+  public static function generatePdfGrantReport()
+  {
+    $grants = FinalGrant::has('proposal')->with(['proposal'])->orderBy('id', 'asc')->get();
+    $collection = collect();
+    foreach ($grants as $grant) {
+        $month =  $grant->created_at->format('M') . ' ' . $grant->created_at->format('Y');
+        $collection->push([
+            'id' => $grant->id,
+            'month' => $month,
+            'grant' => $grant->proposal->total_grant,
+        ]);
+    }
+    $grant_results = [];
+    $groupByMonths = $collection->groupBy('month');
+    foreach ($groupByMonths as $key => $value) {
+        $total = $value->sum('grant');
+        $grant_results[] = [
+            'month' => $key,
+            'number_onboarded' => count($value),
+            'total' => $total,
+        ];
+    }
+
+    $reptutions = Reputation::join('users' , 'users.id', '=', 'reputation.user_id')
+        ->select(['reputation.*', 'users.email', DB::raw('YEAR(reputation.created_at) year, MONTH(reputation.created_at) month')])
+        ->orderBy('reputation.id', 'asc')->get();
+    $reptutions = $reptutions->groupBy('year');
+    $rep_results = collect();
+    foreach($reptutions as $key => $values) {
+        $rep_collection = collect();
+        $rep_response = collect();
+        foreach($values as $value) {
+            $rep_collection->push([
+                'id' => $value->id,
+                'user_id' => $value->user_id,
+                'email' => $value->email,
+                'value' => $value->value,
+                'type' => $value->type,
+                'staked' => $value->staked,
+                'pending' => $value->pending,
+                'month' => $value->month,
+                'year' => $value->year,
+                'created_at' => $value->created_at,
+            ]);
+        }
+        $grouped = $rep_collection->groupBy('user_id');
+        foreach($grouped as $user_rep) {
+            $user_rep_result = collect();
+            for($i=1; $i <=12; $i++) {
+                $user_rep_filter = $user_rep->where('month', $i);
+                $total_stake = $user_rep_filter->where('type', 'Staked')->sum('staked');
+                $total_minted = $user_rep_filter->whereIn('type', ['Gained', 'Minted', 'Stake Lost', 'Lost'])->sum('value');
+                $user_rep_result["month_$i"] = $total_minted -  $total_stake;
+            }
+            $user_rep_result['rep_pending'] = $user_rep->sum('pending');
+            $rep_response->push([
+                'user_id' => $user_rep[0]['user_id'],
+                'email' => $user_rep[0]['email'],
+                'rep_results' =>  $user_rep_result,
+            ]);
+        }
+        $rep_results->push([
+            'year' => $key,
+            'rep_response' => $rep_response
+        ]);
+    }
+    $pdf = App::make('dompdf.wrapper');
+    $pdfFile = $pdf->loadView('pdf.onboarding', compact('grant_results', 'rep_results'));
+    // return $pdf->stream();
+    $fullpath = 'pdf/grant/report.pdf';
+    Storage::disk('local')->put($fullpath, $pdf->output());
+    $url = Storage::disk('local')->url($fullpath);
+    return $url;
   }
 }

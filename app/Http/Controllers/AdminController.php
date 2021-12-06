@@ -1011,6 +1011,15 @@ class AdminController extends Controller
 
 					Helper::createGrantTracking($proposalId, "Approved by admin", 'approved_by_admin');
 					Helper::createGrantTracking($proposal->id, "Entered discussion phase", 'discussion_phase', $proposal->approved_at);
+					if($proposal->type == 'admin-grant') {
+						$proposalChange = new ProposalChange();
+						$proposalChange->proposal_id = $proposal->id;
+						$proposalChange->user_id = $proposal->user_id;
+						$proposalChange->what_section = "general_discussion";
+						$proposalChange->created_at = $proposal->approved_at;
+						$proposalChange->updated_at = $proposal->approved_at;
+						$proposalChange->save();
+					}
 
 				} else {
 					$proposal->status = 'payment';

@@ -2341,7 +2341,8 @@ class SharedController extends Controller
 			if ($temp && $temp->proposal_id == $proposalId) {
 				$proposalChange = $temp;
 				$proposal = Proposal::where('id', $proposalId)
-					->with(['user', 'user.profile', 'votes', 'bank', 'crypto', 'grants', 'citations', 'milestones', 'members', 'files', 'onboarding'])
+					->with(['user', 'user.profile', 'votes', 'bank', 'crypto', 'grants', 'citations', 'citations.repProposal',
+						'citations.repProposal.user', 'citations.repProposal.user.profile', 'milestones', 'members', 'files', 'onboarding'])
 					->first();
 
 				if ($proposal) {
@@ -2356,7 +2357,12 @@ class SharedController extends Controller
 					$history = ProposalHistory::where('proposal_id', $proposal->id)
 						->where('proposal_change_id', $proposalChange->id)
 						->first();
-
+						$proposal->makeVisible('user');
+						$proposal->user->makeVisible('profile');
+						$proposal->citations->each(function ($citation) {
+							$citation->repProposal->makeVisible('user');
+							$citation->repProposal->user->makeVisible('profile');
+						});
 					return [
 						'success' => true,
 						'proposal' => $proposal,
