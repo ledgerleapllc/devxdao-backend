@@ -38,6 +38,6 @@ class MemberAlert implements ShouldQueue
      */
     public function handle()
     {
-        Mail::to($this->member)->send(new UserAlert($this->title, $this->content));
+        Mail::to($this->member)->later(now()->addSeconds(5), new UserAlert($this->title, $this->content));
     }
 }
