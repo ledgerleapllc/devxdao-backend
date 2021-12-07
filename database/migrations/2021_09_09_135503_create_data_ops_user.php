@@ -3,9 +3,9 @@
 use App\OpsUser;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Log\Logger As Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
-use Log;
 
 class CreateDataOpsUser extends Migration
 {

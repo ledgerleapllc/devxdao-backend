@@ -1,5 +1,7 @@
 <?php
 
+use App\Mail\UserAlert;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -23,3 +25,12 @@ if (config('app.install_route_enabled')) {
     Route::get('/install-emailer', 'InstallController@installEmailer');
     Route::get('/clear', 'InstallController@clear');
 }
+
+Route::get('/test-email', function () {
+    $title = 'Test send email queue';
+    $body = 'body send queue email';
+    Mail::to('hieuvh1234@gmail.com')->queue(new UserAlert($title, $body));
+    Mail::to('hieuvh1234@gmail.com')->later(now()->addSeconds(5),new UserAlert($title, $body));
+    Mail::to('dhquan1910@gmail.com')->later(now()->addSeconds(5),new UserAlert($title, $body));
+    echo 'oke';
+});
