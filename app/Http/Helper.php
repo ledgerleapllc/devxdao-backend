@@ -632,7 +632,7 @@ class Helper
         if ($total_rep) {
           $content = str_replace('[total rep]', $total_rep, $content);
         }
-        Mail::to($emailerData['admins'])->send(new AdminAlert($subject, $content));
+        Mail::to($emailerData['admins'])->later(now()->addSeconds(5), new AdminAlert($subject, $content));
       }
     }
   }
@@ -670,7 +670,7 @@ class Helper
       if ($denyReason) {
         $content = str_replace('[deny reason]', $denyReason, $content);
       }
-      Mail::to($to)->send(new UserAlert($subject, $content));
+      Mail::to($to)->later(now()->addSeconds(5), new UserAlert($subject, $content));
     }
   }
 
