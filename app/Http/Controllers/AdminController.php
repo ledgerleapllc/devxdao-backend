@@ -4963,4 +4963,151 @@ class AdminController extends Controller
 			'success' => true
 		];
 	}
+
+	public function adminReportOnboading(Request $request)
+	{
+		$year = $request->year ?? now()->year;
+		$onboardings = OnBoarding::has('proposal')->with(['proposal'])->whereYear('onboarding.created_at', $year)
+		->join('users', 'users.id', '=', 'onboarding.user_id')
+		->where('users.is_member', 1)
+		->orderBy('onboarding.id', 'asc')
+		->select(['onboarding.*'])
+		->get();
+		$collection = collect();
+		foreach ($onboardings as $onboarding) {
+			$month =  $onboarding->created_at->format('M');
+			$collection->push([
+				'id' => $onboarding->id,
+				'month' => $month,
+				'end_month' => Carbon::parse($onboarding->created_at)->endOfMonth()->toDateTimeString()
+			]);
+		}
+		$onboarding_results = [];
+		$groupByMonths = $collection->groupBy('month');
+		foreach ($groupByMonths as $key => $value) {
+			$end_month = $value[0]['end_month'];
+			$total = $onboardings->where('created_at', '<=', $end_month)->count();
+			$onboarding_results[] = [
+				'month' => $key,
+				'number_onboarded' => count($value),
+				'total' => $total,
+			];
+		}
+		return [
+			'success' => true,
+			'onboarding_results' => $onboarding_results,
+		];
+	}
+
+	public function adminReportReputation(Request $request)
+	{
+		$year = $request->year ?? now()->year;
+		$reptutions = Reputation::join('users', 'users.id', '=', 'reputation.user_id')
+		->whereYear('reputation.created_at', $year)
+		->where('users.is_member', 1)
+		->select(['reputation.*','users.first_name', 'users.last_name', 'users.email', DB::raw('YEAR(reputation.created_at) year, MONTH(reputation.created_at) month')])
+		->orderBy('reputation.id', 'asc')->get();
+		$rep_collection = collect();
+		$rep_response = collect();
+		foreach ($reptutions as $value) {
+			$rep_collection->push([
+				'id' => $value->id,
+				'user_id' => $value->user_id,
+				'username' => $value->first_name . ' ' . $value->last_name,
+				'email' => $value->email,
+				'value' => $value->value,
+				'type' => $value->type,
+				'staked' => $value->staked,
+				'pending' => $value->pending,
+				'month' => $value->month,
+				'year' => $value->year,
+				'created_at' => $value->created_at,
+			]);
+		}
+		$grouped = $rep_collection->groupBy('user_id');
+		foreach ($grouped as $user_rep) {
+			$user_rep_result = array();
+			for ($i = 1; $i <= 12; $i++) {
+				$user_rep_filter = $user_rep->where('month', $i);
+				$total_stake = $user_rep_filter->where('type', 'Staked')->sum('staked');
+				$total_minted = $user_rep_filter->whereIn('type', ['Gained', 'Minted', 'Stake Lost', 'Lost'])->sum('value');
+				$total = $total_minted -  $total_stake;
+				$key_month = date('M', mktime(0, 0, 0, $i, 10));
+				array_push($user_rep_result, [
+					'i' => $i,
+					'total' => $total > 0 ? $total : 0,
+					'month' => $key_month,
+				]);
+			}
+			$rep_response->push([
+				'user_id' => $user_rep[0]['user_id'],
+				'username' => $user_rep[0]['username'],
+				'email' => $user_rep[0]['email'],
+				'rep_pending' => $user_rep->sum('pending'),
+				'rep_results' =>  $user_rep_result,
+			]);
+		}
+		return [
+			'success' => true,
+			'rep_results' => $rep_response,
+		];
+	}
+
+	public function adminReportRepAvailable(Request $request)
+	{
+		$year = $request->year ?? now()->year;
+		$reptutions = Reputation::join('users', 'users.id', '=', 'reputation.user_id')
+			->whereYear('reputation.created_at', $year)
+			->where('users.is_member', 1)
+			->select(['reputation.*', 'users.first_name', 'users.last_name', 'users.email', DB::raw('YEAR(reputation.created_at) year, MONTH(reputation.created_at) month')])
+			->orderBy('reputation.id', 'asc')->get();
+		$rep_collection = collect();
+		$rep_response = collect();
+		foreach ($reptutions as $value) {
+			$rep_collection->push([
+				'id' => $value->id,
+				'user_id' => $value->user_id,
+				'email' => $value->email,
+				'username' => $value->first_name . ' ' . $value->last_name,
+				'value' => $value->value,
+				'type' => $value->type,
+				'staked' => $value->staked,
+				'pending' => $value->pending,
+				'month' => $value->month,
+				'year' => $value->year,
+				'created_at' => $value->created_at,
+			]);
+		}
+		$grouped = $rep_collection->groupBy('user_id');
+		foreach ($grouped as $user_rep) {
+			$total_staked = $user_rep->where('type', 'Staked')->sum('staked');
+			$total_minted = $user_rep->whereIn('type', ['Gained', 'Minted', 'Stake Lost', 'Lost'])->sum('value');
+			$total = abs($total_staked) + $total_minted ;
+			$rep_response->push([
+				'user_id' => $user_rep[0]['user_id'],
+				'email' => $user_rep[0]['email'],
+				'username' => $user_rep[0]['username'],
+				'total_rep' => $total > 0 ? $total : 0,
+			]);
+		}
+		$total_rep = $rep_response->sum('total_rep');
+		return [
+			'success' => true,
+			'rep_results' => $rep_response,
+			'total_rep' => $total_rep,
+		];
+	}
+
+	public function exportPdfAdminReport(Request $request) {
+		$onboardings = $this->adminReportOnboading($request);
+		$onboarding_results = $onboardings['onboarding_results'];
+		$reputations = $this->adminReportReputation($request);
+		$reputation_results =$reputations['rep_results'];
+		$total_reputations = $this->adminReportRepAvailable($request);
+		$total_reputation_results = $total_reputations['rep_results'];
+		$pdf = App::make('dompdf.wrapper');
+		$pdfFile = $pdf->loadView('pdf.admin_report', compact('onboarding_results', 'reputation_results', 'total_reputation_results'));
+		return $pdf->download("admin_report.pdf");
+		// return $pdf->stream();
+	}
 }

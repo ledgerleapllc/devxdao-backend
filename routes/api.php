@@ -244,6 +244,11 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth:api']], function () {
 	Route::get('/survey-rfp/{id}/user-vote', 'AdminController@getListUserVoteSurveyRfp');
 	Route::get('/survey-rfp/{id}/result', 'AdminController@getVoteBidSurveyRfp');
 	Route::get('/survey-rfp/{id}/user-not-submit', 'AdminController@getNotSubmittedSurveyRfp');
+	Route::get('/report-onboarding', 'AdminController@adminReportOnboading');
+	Route::get('/report-reputation', 'AdminController@adminReportReputation');
+	Route::get('/report-total-rep', 'AdminController@adminReportRepAvailable');
+	Route::get('/export-report', 'AdminController@exportPdfAdminReport');
+
 
 
 	// POST
