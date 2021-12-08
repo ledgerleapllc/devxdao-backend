@@ -676,6 +676,7 @@ class OpsController extends Controller
             'pm_verified_corprus' => 'nullable|in:0,1',
             'pm_verified_crdao' => 'nullable|in:0,1',
             'pm_verified_subs' => 'nullable|in:0,1',
+            'crdao_valid_respone' => 'nullable',
         ]);
 
         if ($validator->fails()) {
@@ -765,6 +766,8 @@ class OpsController extends Controller
                     'pm_verified_crdao_notes' => $request->pm_verified_crdao_notes,
                     'pm_verified_subs_notes' => $request->pm_verified_subs_notes,
                     'addition_note' => $request->addition_note,
+                    'crdao_valid_respone' => $request->crdao_valid_respone,
+                    'crdao_valid_respone_note' => $request->crdao_valid_respone_note,
                 ]
             );
             if ($status == 'approved') {
@@ -916,6 +919,8 @@ class OpsController extends Controller
             $milestone_checklist->pm_verified_subs_notes = $request->pm_verified_subs_notes;
         if ($request->addition_note)
             $milestone_checklist->addition_note = $request->addition_note;
+        if ($request->crdao_valid_respone_note)
+            $milestone_checklist->crdao_valid_respone_note = $request->crdao_valid_respone_note;
         $milestone_checklist->save();
         return [
             'success' => true,
