@@ -23,6 +23,10 @@ class Survey extends Model
         return $this->hasMany('App\SurveyRfpRank', 'survey_id', 'id');
     }
 
+    public function surveyRfpWin() {
+        return $this->hasOne('App\SurveyRfpRank', 'survey_id', 'id')->where('is_winner', 1);
+    }
+
     public function surveyRfpBids() {
         return $this->hasMany('App\SurveyRfpBid', 'survey_id', 'id');
     }
