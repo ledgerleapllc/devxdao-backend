@@ -32,6 +32,7 @@ use App\Mail\ResetPasswordLink;
 use App\Mail\LoginTwoFA;
 use App\Survey;
 use App\SurveyRfpBid;
+use App\SurveyRfpRank;
 
 class APIController extends Controller
 {
@@ -878,12 +879,35 @@ class APIController extends Controller
   }
 
   public function getSurveyDetail($id) {
-      $survey = Survey::with(['surveyRfpBids'])->where('id', $id)->where('type', 'rfp')->first();
+      $survey = Survey::with(['surveyRfpBids'])
+      ->where('id', $id)->where('type', 'rfp')
+      ->select([
+        'survey.id',
+        'survey.time_unit',
+        'survey.time',
+        'survey.end_time',
+        'survey.status',
+        'survey.user_responded',
+        'survey.created_at',
+        'survey.type',
+        'survey.job_title',
+        'survey.job_description',
+        'survey.total_price',
+        'survey.job_start_date',
+        'survey.job_end_date',
+      ])->first();
       if(!$survey) {
         return [
             'success' => false,
             'survey' => 'Survey not found'
           ];
+      }
+      $survey_rfp_win = SurveyRfpRank::where('survey_id', $id)->where('is_winner', 1)->first();
+      if( $survey_rfp_win) {
+        $survey_bid = SurveyRfpBid::where('id', $survey_rfp_win->bid_id)->first();
+        $survey->survey_rfp_win = $survey_bid;
+      } else {
+        $survey->survey_rfp_win = null;
       }
       return [
         'success' => true,
