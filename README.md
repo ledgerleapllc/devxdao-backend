@@ -6,13 +6,9 @@
 
 The DevxDao's grant and voting associates portal hosted at http://portal.devxdao.com
 
-This is the backend repo of the portal. Frontends for this backend API are listed below.
+This is the backend repo of the portal. Frontend for this backend API is listed below.
 
 Main portal: https://github.com/ledgerleapllc/devxdao-frontend
-
-Project Management portal: https://github.com/ledgerleapllc/devxdao-pm
-
-Compliance portal: https://github.com/ledgerleapllc/devxdao-compliance
 
 ### Prerequisites
 
