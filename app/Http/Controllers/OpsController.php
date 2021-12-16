@@ -52,6 +52,14 @@ class OpsController extends Controller
             ];
         }
 
+        /*
+        return [
+            'success' => false,
+            'message' => 'Login info is not correct',
+            'hash' => Hash::make('TestPassword1!')
+        ];
+        */
+
         if ($user->is_super_admin == 1 ||  $user->is_pa == 1) {
             if (!Hash::check($password, $user->password)) {
                 return [
@@ -689,6 +697,7 @@ class OpsController extends Controller
         $data = $validator->validated();
         $collection = collect($data);
         $milestone_review = MilestoneReview::where('id', $milestoneReviewId)->first();
+
         if ($milestone_review && ($milestone_review->status == 'active')) {
             if ($user->is_super_admin != 1 && $milestone_review->assigner_id != $user->id) {
                 return [
@@ -703,10 +712,14 @@ class OpsController extends Controller
             $milestonePosition = Helper::getPositionMilestone($milestone);
             $status = 'active';
             $filteredCheck = $collection->filter(function ($value, $key) {
-                return $value == 1;
+                if ($key != 'crdao_valid_respone')
+                    return $value == 1;
+                return $value;
             })->count();
             $filteredFail = $collection->filter(function ($value, $key) {
-                return isset($value) && $value == 0;
+                if ($key != 'crdao_valid_respone')
+                    return isset($value) && $value == 0;
+                return !$value;
             })->count();
             if ($collection->count() ==  $filteredCheck) {
                 $status = 'approved';
