@@ -782,11 +782,16 @@ class AdminController extends Controller
 			}
 
 			if ($onboarding) {
+				$shuftipro = Shuftipro::where('user_id', $proposal->user_id)->where('status', 'approved')->first();
 				$onboarding->status = "completed";
 				$onboarding->compliance_status = "approved";
 				$onboarding->compliance_reviewed_at = now();
-				$onboarding->admin_email = $user->email;
-				$onboarding->force_to_formal = 1;
+				if(!$onboarding->admin_email) {
+					$onboarding->admin_email = $user->email;
+				}
+				if(!$shuftipro || $onboarding->compliance_status != 'approved') {
+					$onboarding->force_to_formal = 1;
+				}
 				$onboarding->save();
 				Helper::createGrantTracking($proposalId, "ETA compliance complete", 'eta_compliance_complete');
 			}
@@ -3855,15 +3860,21 @@ class AdminController extends Controller
 		Helper::createGrantTracking($proposalId, "ETA compliance complete", 'eta_compliance_complete');
 		$shuftipro = Shuftipro::where('user_id', $onboarding->user_id)->where('status', 'approved')->first();
 		if($shuftipro) {
-			$onboarding->status = 'completed';
-			$onboarding->save();
 			$vote = Vote::find($onboarding->vote_id);
 			$op = User::find($onboarding->user_id);
 			$emailerData = Helper::getEmailerData();
 			if ($vote && $op && $proposal) {
 				Helper::triggerUserEmail($op, 'Passed Informal Grant Vote', $emailerData, $proposal, $vote);
 			}
-			Helper::startFormalVote($vote);
+			$settings = Helper::getSettings();
+			if (
+				$vote->content_type == 'grant'
+				&& ($settings['autostart_grant_formal_votes'] ?? null) == 'yes'
+			) {
+				$onboarding->status = 'completed';
+				$onboarding->save();
+				Helper::startFormalVote($vote);
+			}
 		}
 		return [
 			'success' => true,

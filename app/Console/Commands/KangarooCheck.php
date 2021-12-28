@@ -77,15 +77,14 @@ class KangarooCheck extends Command
                     $shuftipro->address_result = isset($invite['address_document']) ? 1 : 0;
                     $shuftipro->save();
                     // Update Temp Record
-                    if ($status == 'approved' || $status == 'denined') {
+                    if ($status == 'approved' || $status == 'denied') {
                         $record->status = 'processed';
                         $record->save();
                     }
                     if ($status == 'approved') {
+                        $settings = Helper::getSettings();
                         $onboardings = OnBoarding::where('user_id', $record->user_id)->where('status', 'pending')->where('compliance_status', 'approved')->get();
                         foreach ($onboardings as $onboarding) {
-                            $onboarding->status = 'completed';
-                            $onboarding->save();
                             $vote = Vote::find($onboarding->vote_id);
                             $proposal = Proposal::find($onboarding->proposal_id);
                             $op = User::find($onboarding->user_id);
@@ -93,7 +92,14 @@ class KangarooCheck extends Command
                             if ($vote && $op && $proposal) {
                                 Helper::triggerUserEmail($op, 'Passed Informal Grant Vote', $emailerData, $proposal, $vote);
                             }
-                            Helper::startFormalVote($vote);
+                            if (
+                                $vote->content_type == 'grant'
+                                && ($settings['autostart_grant_formal_votes'] ?? null) == 'yes'
+                            ) {
+                                $onboarding->status = 'completed';
+                                $onboarding->save();
+                                Helper::startFormalVote($vote);
+                            }
                         }
                         $proposals = Proposal::where('user_id', $record->user_id)->get();
                         foreach($proposals as $proposal) {

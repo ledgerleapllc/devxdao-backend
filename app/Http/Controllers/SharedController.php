@@ -96,32 +96,6 @@ class SharedController extends Controller
 			if ($profile) {
 				$profile->hellosign_form = $filepath;
 				$profile->save();
-			} else if ($proposal) {
-				$proposal->hellosign_form = $filepath;
-				$proposal->save();
-				$signObject = Signature::where('proposal_id', $proposal->id)->where('signed', 0)->first();
-				if ($signObject) {
-					$signObject->signed = 1;
-					$signObject->save();
-					$informalVote = Vote::where('proposal_id',  $proposal->id)
-						->where('type', 'informal')
-						->where('content_type', '!=', 'milestone')
-						->where('status', 'completed')
-						->first();
-					if ($informalVote
-						&& $proposal->type == 'grant'
-						&& ($settings['autostart_grant_formal_votes'] ?? null) == 'yes'
-					) {
-						$vote = Helper::startFormalVote($informalVote);
-						if ($vote) {
-							// Emailer Admin
-							Helper::triggerAdminEmail('Vote Started', $emailerData, $proposal, $vote);
-
-							// Emailer Member
-							Helper::triggerMemberEmail('New Vote', $emailerData, $proposal, $vote);
-						}
-					}
-				}
 			} else if ($proposalGrant) {
 				$proposalGrant->grant_hellosign_form = $filepath;
 				$proposalGrant->save();

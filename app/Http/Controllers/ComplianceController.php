@@ -553,15 +553,21 @@ class ComplianceController extends Controller
         Helper::createGrantTracking($proposalId, "ETA compliance complete", 'eta_compliance_complete');
         $shuftipro = Shuftipro::where('user_id', $onboarding->user_id)->where('status', 'approved')->first();
         if ($shuftipro) {
-            $onboarding->status = 'completed';
-            $onboarding->save();
             $vote = Vote::find($onboarding->vote_id);
             $op = User::find($onboarding->user_id);
             $emailerData = Helper::getEmailerData();
             if ($vote && $op && $proposal) {
                 Helper::triggerUserEmail($op, 'Passed Informal Grant Vote', $emailerData, $proposal, $vote);
             }
-            Helper::startFormalVote($vote);
+            $settings = Helper::getSettings();
+			if (
+				$vote->content_type == 'grant'
+				&& ($settings['autostart_grant_formal_votes'] ?? null) == 'yes'
+			) {
+                $onboarding->status = 'completed';
+                $onboarding->save();
+                Helper::startFormalVote($vote);
+            }
         }
         return [
             'success' => true,
