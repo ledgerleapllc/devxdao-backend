@@ -7,6 +7,7 @@ use App\Proposal;
 use App\Vote;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 class VADailySummary extends Command
 {
@@ -79,19 +80,19 @@ class VADailySummary extends Command
         $discussions = Proposal::has('user')
             ->where('status', 'approved')
             ->whereNotNull('approved_at')
-            ->where('approved_at', '>=', $yesterday)
+            ->whereDate('approved_at', '>=', $yesterday)
             ->get();
         $votes = Vote::join('proposal', 'proposal.id', '=', 'vote.proposal_id')
-            ->where('vote.created_at', '>=', $yesterday)
+            ->whereDate('vote.created_at', '>=', $yesterday)
             ->select(['vote.id', 'vote.type', 'vote.content_type', 'proposal.title'])->get();
 
         $noQuorumVotes = Vote::join('proposal', 'proposal.id', '=', 'vote.proposal_id')
             ->where('vote.result', 'no-quorum')
-            ->where('vote.updated_at', '>=', $yesterday)
+            ->whereDate('vote.updated_at', '>=', $yesterday)
             ->select(['vote.id', 'vote.type', 'vote.content_type', 'proposal.title', 'vote.updated_at', 'vote.created_at'])->get();
         $noQuorumVotes2 = Vote::join('proposal', 'proposal.id', '=', 'vote.proposal_id')
             ->where('vote.status', 'active')
-            ->select(['vote.*', 'proposal.title'])->get();
+            ->select(['vote.*', 'proposal.title'])->get();     
         foreach ($noQuorumVotes2 as $vote) {
             if ($vote->content_type == 'grant') {
                 $quorumRate = (float) $settings['quorum_rate'];
