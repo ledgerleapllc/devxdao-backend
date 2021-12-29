@@ -39,6 +39,7 @@ use App\ShuftiproTemp;
 use App\SignatureGrant;
 use App\Survey;
 use App\SurveyResult;
+use App\SurveyRfpResult;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\App;
@@ -1374,12 +1375,21 @@ class Helper
 
   public static function checkActiveSurvey($user)
   {
-    $survey = Survey::where('status', 'active')->first();
-    if(!$survey) {
+    $surveys = Survey::where('status', 'active')->get();
+    if(count($surveys) == 0) {
       return false;
     }
-    $checkSurveyResult = SurveyResult::where('survey_id', $survey->id)->where('user_id', $user->id)->first();
-    return $checkSurveyResult ? false : true;
+    foreach($surveys as $survey) {
+      if($survey->type == 'grant') {
+        $surveyResult = SurveyResult::where('survey_id', $survey->id)->where('user_id', $user->id)->first();
+        if(!$surveyResult) return true;
+      } else {
+        $surveRfpResult = SurveyRfpResult::where('survey_id', $survey->id)->where('user_id', $user->id)->first();
+        if(!$surveRfpResult) return true;
+      }
+
+    }
+    return false;
   }
 
   public static function createRepHistory($user_id, $value, $rep, $type, $event = null, $proposal_id = null, $vote_id = null, $function_name = null)
