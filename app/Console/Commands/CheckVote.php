@@ -26,6 +26,7 @@ use App\Mail\AdminAlert;
 use App\Mail\ComplianceReview;
 use App\Mail\UserAlert;
 use App\Shuftipro;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -90,11 +91,18 @@ class CheckVote extends Command
                 $emailerData = Helper::getEmailerData();
 
                 if ($result == "success") {
-                    Helper::createGrantTracking($proposal->id, "Informal vote passed", 'informal_vote_passed');
-                    $shuftipro = Shuftipro::where('user_id', $proposal->user_id)->where('status', 'approved')->first();
-                    if ($shuftipro) {
-                        Helper::createGrantTracking($proposal->id, "KYC checks complete", 'kyc_checks_complete');
+                    try {
+                        Log::info("Start create tracking Informal vote of proposal $proposal->id");
+                        Helper::createGrantTracking($proposal->id, "Informal vote passed", 'informal_vote_passed');
+                        $shuftipro = Shuftipro::where('user_id', $proposal->user_id)->where('status', 'approved')->first();
+                        if ($shuftipro) {
+                            Helper::createGrantTracking($proposal->id, "KYC checks complete", 'kyc_checks_complete');
+                        }
+                        Log::info("Completed create tracking Informal vote of proposal $proposal->id");
+                    } catch (Exception $e) {
+                        Log::info($e->getMessage());
                     }
+                    
                     Helper::startOnboarding($proposal, $vote);
                     Helper::sendKycKangarooUser($op);
                     // Emailer
