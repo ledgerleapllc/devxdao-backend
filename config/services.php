@@ -67,5 +67,11 @@ return [
         'eth' => [
             'secret_code' => env('ETH_SECRET_CODE')
         ]
-    ]
+    ],
+
+    'discourse' => [
+        'url' => env('DISCOURSE_URL'),
+        'api_key' => env('DISCOURSE_API_KEY'),
+        'admin_username' => env('DISCOURSE_ADMIN_USERNAME'),
+    ],
 ];

@@ -46,12 +46,14 @@ use App\Mail\TwoFA;
 use App\Mail\AdminAlert;
 use App\Mail\UserAlert;
 use App\MilestoneReview;
+use App\Services\DiscourseService;
 use App\ShuftiproTemp;
 use App\SignatureGrant;
 use App\Survey;
 use App\SurveyDownVoteRank;
 use App\SurveyRank;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
@@ -229,7 +231,7 @@ class SharedController extends Controller
 								'role' => 'system',
 								'type' => 'completed',
 							]);
-     						Helper::createGrantTracking($proposalGrant->id, 'Grant activated by ETA', 'grant_activated');
+							Helper::createGrantTracking($proposalGrant->id, 'Grant activated by ETA', 'grant_activated');
 						}
 					}
 				}
@@ -728,10 +730,10 @@ class SharedController extends Controller
 			else if ($proposal->type == "admin-grant")
 				$vote->content_type = "admin-grant";
 			else if ($proposal->type == "advance-payment") {
-                $vote->content_type = "advance-payment";
-                $proposal->proposal_advance_status = 'in-voting';
-                $proposal->save();
-            }
+				$vote->content_type = "advance-payment";
+				$proposal->proposal_advance_status = 'in-voting';
+				$proposal->save();
+			}
 			$vote->save();
 
 			// Emailer Admin
@@ -811,7 +813,6 @@ class SharedController extends Controller
 					$op->profile->rep = (float) $op->profile->rep + $rep;
 					$op->profile->save();
 					Helper::createRepHistory($op->id, $rep,	$op->profile->rep, 'Gained', 'forceWithdrawProposal', null);
-
 				}
 			}
 			// remove proposal change
@@ -945,7 +946,7 @@ class SharedController extends Controller
 				}
 			} else {
 				// OP can only edit denied proposal
-				if  ($proposal->user_id != $user->id) {
+				if ($proposal->user_id != $user->id) {
 					return [
 						'success' => false,
 						'message' => 'Invalid proposal'
@@ -1370,16 +1371,17 @@ class SharedController extends Controller
 	}
 
 	// update grant Proposal
-	public function updateAdminGrantProposal($proposalId, Request $request) {
+	public function updateAdminGrantProposal($proposalId, Request $request)
+	{
 		$user = Auth::user();
 
 		if ($user) {
 			// Validator
 			$validator = Validator::make($request->all(), [
-			'title' => 'required',
-			'total_grant' => 'required',
-			'things_delivered' => 'required',
-			'delivered_at' => 'required',
+				'title' => 'required',
+				'total_grant' => 'required',
+				'things_delivered' => 'required',
+				'delivered_at' => 'required',
 			]);
 			if ($validator->fails()) {
 				return [
@@ -1419,8 +1421,8 @@ class SharedController extends Controller
 				}
 			}
 			$otherProposal = Proposal::where('title', $title)
-			->where('id', '!=', $proposalId)
-			->first();
+				->where('id', '!=', $proposalId)
+				->first();
 
 			if ($otherProposal) {
 				return [
@@ -1514,7 +1516,7 @@ class SharedController extends Controller
 	}
 
 	// Get Single Proposal
-	public function getSingleProposal($proposalId, Request $request)
+	public function getSingleProposal($proposalId, Request $request, DiscourseService $discourse)
 	{
 		$user = Auth::user();
 
@@ -1554,6 +1556,23 @@ class SharedController extends Controller
 			->has('user.profile')
 			->first();
 		if ($proposal) {
+			try {
+				// Create Discourse Topic if Not Exists
+				if (is_null($proposal->discourse_topic_id)) {
+					$topic = $discourse->createPost([
+						'title' => $proposal->title,
+						'raw' => $proposal->short_description,
+					], $user->profile->forum_name);
+
+					if ($topic) {
+						$proposal->discourse_topic_id = $topic['topic_id'];
+						$proposal->save();
+					}
+				}
+			} catch (Exception $e) {
+				info('Failed to setting discourse topic id for proposal', [$e->getMessage()]);
+			}
+
 			// Latest Changes
 			$sections = ['short_description', 'total_grant', 'previous_work', 'other_work'];
 			$changes = [];
@@ -1748,16 +1767,16 @@ class SharedController extends Controller
 				$proposals = $proposals->where('final_grant.status', '!=', 'pending');
 			}
 			$proposals = $proposals->has('proposal.milestones')
-			->has('user')
-			->where(function ($subQuery)  use ($search) {
-				$subQuery->whereHas('proposal', function ($query) use ($search) {
-					$query->where('proposal.title', 'like', '%' . $search . '%')
-						->orWhere('proposal.id', 'like', '%' . $search . '%');
+				->has('user')
+				->where(function ($subQuery)  use ($search) {
+					$subQuery->whereHas('proposal', function ($query) use ($search) {
+						$query->where('proposal.title', 'like', '%' . $search . '%')
+							->orWhere('proposal.id', 'like', '%' . $search . '%');
+					})
+						->orWhereHas('user', function ($query)  use ($search) {
+							$query->where('users.email', 'like', '%' . $search . '%');
+						});
 				})
-					->orWhereHas('user', function ($query)  use ($search) {
-						$query->where('users.email', 'like', '%' . $search . '%');
-					});
-			})
 				->orderBy($sort_key, $sort_direction)
 				->offset($start)
 				->limit($limit)
@@ -1768,7 +1787,7 @@ class SharedController extends Controller
 				if (count($milestones)) {
 					$milestone_ids = $milestones->pluck('id')->toArray();
 					$milestoneReview = MilestoneReview::whereIn('milestone_id', $milestone_ids)->whereIn('status', ['pending', 'active'])->first();
-					if($milestoneReview)  {
+					if ($milestoneReview) {
 						$in_review = 1;
 					}
 				}
@@ -1776,17 +1795,17 @@ class SharedController extends Controller
 			}
 		} else {
 			$proposals = FinalGrant::with(['proposal', 'proposal.user', 'proposal.milestones', 'proposal.milestones.votes', 'proposal.milestones.milestoneReview', 'proposal.votes', 'user', 'signtureGrants'])
-			->has('proposal.milestones')
-			->has('proposal.votes')
-			->has('user')
-			->whereHas('proposal', function ($query) use ($search , $hide_completed) {
-				if($search) {
-					$query->where('proposal.title', 'like', '%' . $search . '%');
-				}
-				if($hide_completed) {
-					$query->where('final_grant.status', '!=', 'completed');
-				}
-			})
+				->has('proposal.milestones')
+				->has('proposal.votes')
+				->has('user')
+				->whereHas('proposal', function ($query) use ($search, $hide_completed) {
+					if ($search) {
+						$query->where('proposal.title', 'like', '%' . $search . '%');
+					}
+					if ($hide_completed) {
+						$query->where('final_grant.status', '!=', 'completed');
+					}
+				})
 				->where('user_id', $user->id)
 				->orderBy($sort_key, $sort_direction)
 				->offset($start)
@@ -1798,7 +1817,7 @@ class SharedController extends Controller
 				if (count($milestones)) {
 					$milestone_ids = $milestones->pluck('id')->toArray();
 					$milestoneReview = MilestoneReview::whereIn('milestone_id', $milestone_ids)->whereIn('status', ['pending', 'active'])->first();
-					if($milestoneReview)  {
+					if ($milestoneReview) {
 						$in_review = 1;
 					}
 				}
@@ -1879,7 +1898,7 @@ class SharedController extends Controller
 		}
 
 		$proposals->each(function ($proposal, $key) {
-			$proposal->makeHidden([ 'onboarding' ]);
+			$proposal->makeHidden(['onboarding']);
 		});
 
 		return [
@@ -1932,7 +1951,7 @@ class SharedController extends Controller
 			->get();
 
 		$proposals->each(function ($proposal, $key) {
-			$proposal->makeHidden([ 'onboarding' ]);
+			$proposal->makeHidden(['onboarding']);
 		});
 
 		return [
@@ -2033,7 +2052,7 @@ class SharedController extends Controller
 		}
 
 		$proposals->each(function ($proposal, $key) {
-			$proposal->makeHidden([ 'onboarding' ]);
+			$proposal->makeHidden(['onboarding']);
 		});
 
 		return [
@@ -2110,7 +2129,7 @@ class SharedController extends Controller
 		}
 
 		$proposals->each(function ($proposal, $key) {
-			$proposal->makeHidden([ 'onboarding' ]);
+			$proposal->makeHidden(['onboarding']);
 		});
 
 		return [
@@ -2202,7 +2221,7 @@ class SharedController extends Controller
 			$proposals = Proposal::where('proposal.status', 'approved')
 				->with(['surveyRanks' => function ($q) {
 					$q->where('is_winner', 1)
-					->orderBy('rank', 'desc');
+						->orderBy('rank', 'desc');
 				}])
 				->doesntHave('votes')
 				->where(function ($query) use ($search, $is_winner, $ignore_previous_winner, $ignore_previous_loser) {
@@ -2210,12 +2229,12 @@ class SharedController extends Controller
 						$query->where('proposal.title', 'like', '%' . $search . '%')
 							->orWhere('proposal.member_reason', 'like', '%' . $search . '%');
 					}
-					if($is_winner) {
-						$query->whereHas('surveyRanks', function($q){
+					if ($is_winner) {
+						$query->whereHas('surveyRanks', function ($q) {
 							$q->where('is_winner', 1);
 						});
 					}
-					if($ignore_previous_winner == 1) {
+					if ($ignore_previous_winner == 1) {
 						$survey_rank_ids = SurveyRank::where('is_winner', 1)->pluck('proposal_id');
 						$survey_downvote_rank_ids = SurveyDownVoteRank::where('is_winner', 1)->pluck('proposal_id');
 						$query->whereNotIn('proposal.id', $survey_rank_ids->toArray())
@@ -2315,8 +2334,10 @@ class SharedController extends Controller
 			if ($temp && $temp->proposal_id == $proposalId) {
 				$proposalChange = $temp;
 				$proposal = Proposal::where('id', $proposalId)
-					->with(['user', 'user.profile', 'votes', 'bank', 'crypto', 'grants', 'citations', 'citations.repProposal',
-						'citations.repProposal.user', 'citations.repProposal.user.profile', 'milestones', 'members', 'files', 'onboarding'])
+					->with([
+						'user', 'user.profile', 'votes', 'bank', 'crypto', 'grants', 'citations', 'citations.repProposal',
+						'citations.repProposal.user', 'citations.repProposal.user.profile', 'milestones', 'members', 'files', 'onboarding'
+					])
 					->first();
 
 				if ($proposal) {
@@ -2331,12 +2352,12 @@ class SharedController extends Controller
 					$history = ProposalHistory::where('proposal_id', $proposal->id)
 						->where('proposal_change_id', $proposalChange->id)
 						->first();
-						$proposal->makeVisible('user');
-						$proposal->user->makeVisible('profile');
-						$proposal->citations->each(function ($citation) {
-							$citation->repProposal->makeVisible('user');
-							$citation->repProposal->user->makeVisible('profile');
-						});
+					$proposal->makeVisible('user');
+					$proposal->user->makeVisible('profile');
+					$proposal->citations->each(function ($citation) {
+						$citation->repProposal->makeVisible('user');
+						$citation->repProposal->user->makeVisible('profile');
+					});
 					return [
 						'success' => true,
 						'proposal' => $proposal,
@@ -2520,11 +2541,11 @@ class SharedController extends Controller
 		if ($user) {
 			if ($user->hasRole('member')) {
 				$unvoted_informal =  Vote::join('proposal', 'proposal.id', '=', 'vote.proposal_id')
-				->join('users', 'users.id', '=', 'proposal.user_id')
-				->leftJoin('vote_result', function ($join) use ($user) {
-					$join->on('vote_result.vote_id', '=', 'vote.id');
-					$join->where('vote_result.user_id', $user->id);
-				})
+					->join('users', 'users.id', '=', 'proposal.user_id')
+					->leftJoin('vote_result', function ($join) use ($user) {
+						$join->on('vote_result.vote_id', '=', 'vote.id');
+						$join->where('vote_result.user_id', $user->id);
+					})
 					->leftJoin('milestone', 'vote.milestone_id', '=', 'milestone.id')
 					->where('vote.type', 'informal')
 					->where('vote.status', 'completed')
@@ -2557,20 +2578,20 @@ class SharedController extends Controller
 								->orWhere('proposal.member_reason', 'like', '%' . $search . '%')
 								->orWhere('proposal.id', 'like', '%' . $search . '%');
 						}
-						if($show_unvoted) {
+						if ($show_unvoted) {
 							$query->where('users.id', '!=', $user->id)
 								->whereNotIn('vote.id', $unvoted_informal->toArray())
-								->whereNotExists(function($query) use($user) {
-								$query->selectRaw('vote_result2.user_id')
-									->from('vote')
-									->join('vote as vote2', function ($join) {
-										$join->on('vote.proposal_id', '=', 'vote2.proposal_id');
-										$join->where('vote2.type', 'informal');
-										$join->on('vote2.content_type', 'vote.content_type');
-									})
-									->join('vote_result as vote_result2', 'vote_result2.vote_id', 'vote2.id')
-									->where('vote_result.user_id', $user->id);
-							});
+								->whereNotExists(function ($query) use ($user) {
+									$query->selectRaw('vote_result2.user_id')
+										->from('vote')
+										->join('vote as vote2', function ($join) {
+											$join->on('vote.proposal_id', '=', 'vote2.proposal_id');
+											$join->where('vote2.type', 'informal');
+											$join->on('vote2.content_type', 'vote.content_type');
+										})
+										->join('vote_result as vote_result2', 'vote_result2.vote_id', 'vote2.id')
+										->where('vote_result.user_id', $user->id);
+								});
 						}
 					})
 					->select([
@@ -2594,22 +2615,22 @@ class SharedController extends Controller
 							ELSE null END ) AS timeLeft")
 
 					]);
-					if($sort_key == 'vote_result_type' &&  $sort_direction == 'asc' ) {
-						$votes = $votes->orderByRaw('-vote_result.type ASC');
-					}
-					$votes = $votes
+				if ($sort_key == 'vote_result_type' &&  $sort_direction == 'asc') {
+					$votes = $votes->orderByRaw('-vote_result.type ASC');
+				}
+				$votes = $votes
 					->orderBy($sort_key, $sort_direction)
 					->groupBy('vote.id')
 					->offset($start)
 					->limit($limit)
 					->get();
-				foreach($votes as $vote) {
+				foreach ($votes as $vote) {
 					$is_voted_informal = false;
 
-                    $vote_informal = Vote::where('proposal_id', $vote->proposal_id)->where('type', 'informal')
-					->where('result', 'success')
-                    ->where('milestone_id', $vote->milestone_id)->where('content_type', $vote->content_type)->first();
-					if($vote_informal) {
+					$vote_informal = Vote::where('proposal_id', $vote->proposal_id)->where('type', 'informal')
+						->where('result', 'success')
+						->where('milestone_id', $vote->milestone_id)->where('content_type', $vote->content_type)->first();
+					if ($vote_informal) {
 						$check_vote_informal = VoteResult::where('vote_id', $vote_informal->id)->where('user_id', $user->id)->count();
 						$is_voted_informal = $check_vote_informal  > 0 ? true : false;
 					}
@@ -2617,39 +2638,39 @@ class SharedController extends Controller
 				}
 
 				$total_unvoted =  Vote::join('proposal', 'proposal.id', '=', 'vote.proposal_id')
-				->join('users', 'users.id', '=', 'proposal.user_id')
-				->leftJoin('vote_result', function ($join) use ($user) {
-					$join->on('vote_result.vote_id', '=', 'vote.id');
-					$join->where('vote_result.user_id', $user->id);
-				})
-				->leftJoin('milestone', 'vote.milestone_id', '=', 'milestone.id')
-				->join('vote as vote2', function ($join) {
-					$join->on('vote.proposal_id', '=', 'vote2.proposal_id');
-					$join->where('vote2.type', 'informal');
-					$join->on('vote2.content_type', 'vote.content_type');
-				})
-				->where('vote.type', 'formal')
-				->where('vote.status', 'active')
-				->where('users.id', '!=', $user->id)
-				->whereNotIn('vote.id', $unvoted_informal->toArray())
-				->whereNotExists(function($query) use($user) {
-					$query->selectRaw('vote_result2.user_id')
-						->from('vote')
-						->join('vote as vote2', function ($join) {
-							$join->on('vote.proposal_id', '=', 'vote2.proposal_id');
-							$join->where('vote2.type', 'informal');
-							$join->on('vote2.content_type', 'vote.content_type');
-						})
-						->join('vote_result as vote_result2', 'vote_result2.vote_id', 'vote2.id')
-						->where('vote_result.user_id', $user->id);
-				})
-				->where(function ($query) use ($search, $show_unvoted, $user) {
-					if ($search) {
-						$query->where('proposal.title', 'like', '%' . $search . '%')
-							->orWhere('proposal.member_reason', 'like', '%' . $search . '%')
-							->orWhere('proposal.id', 'like', '%' . $search . '%');
-					}
-				})->distinct()->count('vote.id');
+					->join('users', 'users.id', '=', 'proposal.user_id')
+					->leftJoin('vote_result', function ($join) use ($user) {
+						$join->on('vote_result.vote_id', '=', 'vote.id');
+						$join->where('vote_result.user_id', $user->id);
+					})
+					->leftJoin('milestone', 'vote.milestone_id', '=', 'milestone.id')
+					->join('vote as vote2', function ($join) {
+						$join->on('vote.proposal_id', '=', 'vote2.proposal_id');
+						$join->where('vote2.type', 'informal');
+						$join->on('vote2.content_type', 'vote.content_type');
+					})
+					->where('vote.type', 'formal')
+					->where('vote.status', 'active')
+					->where('users.id', '!=', $user->id)
+					->whereNotIn('vote.id', $unvoted_informal->toArray())
+					->whereNotExists(function ($query) use ($user) {
+						$query->selectRaw('vote_result2.user_id')
+							->from('vote')
+							->join('vote as vote2', function ($join) {
+								$join->on('vote.proposal_id', '=', 'vote2.proposal_id');
+								$join->where('vote2.type', 'informal');
+								$join->on('vote2.content_type', 'vote.content_type');
+							})
+							->join('vote_result as vote_result2', 'vote_result2.vote_id', 'vote2.id')
+							->where('vote_result.user_id', $user->id);
+					})
+					->where(function ($query) use ($search, $show_unvoted, $user) {
+						if ($search) {
+							$query->where('proposal.title', 'like', '%' . $search . '%')
+								->orWhere('proposal.member_reason', 'like', '%' . $search . '%')
+								->orWhere('proposal.id', 'like', '%' . $search . '%');
+						}
+					})->distinct()->count('vote.id');
 			} else {
 				$votes = Vote::join('proposal', 'proposal.id', '=', 'vote.proposal_id')
 					->join('users', 'users.id', '=', 'proposal.user_id')
@@ -2785,7 +2806,7 @@ class SharedController extends Controller
 								->orWhere('proposal.member_reason', 'like', '%' . $search . '%')
 								->orWhere('proposal.id', 'like', '%' . $search . '%');
 						}
-						if($show_unvoted) {
+						if ($show_unvoted) {
 							$query->where('vote_result.type', null)->where('users.id', '!=', $user->id);
 						}
 					})
@@ -2808,33 +2829,33 @@ class SharedController extends Controller
 							WHEN vote.content_type = 'admin-grant' THEN TIMEDIFF(vote.created_at + INTERVAL $minsSimple MINUTE, current_timestamp())
 							ELSE null END ) AS timeLeft")
 					]);
-					if($sort_key == 'vote_result_type' &&  $sort_direction == 'asc' ) {
-						$votes = $votes->orderByRaw('-vote_result.type ASC');
-					}
-					$votes = $votes
+				if ($sort_key == 'vote_result_type' &&  $sort_direction == 'asc') {
+					$votes = $votes->orderByRaw('-vote_result.type ASC');
+				}
+				$votes = $votes
 					->orderBy($sort_key, $sort_direction)
 					->groupBy('vote.id')
 					->offset($start)
 					->limit($limit)
 					->get();
-					$total_unvoted =  Vote::join('proposal', 'proposal.id', '=', 'vote.proposal_id')
-						->join('users', 'users.id', '=', 'proposal.user_id')
-						->leftJoin('vote_result', function ($join) use ($user) {
-							$join->on('vote_result.vote_id', '=', 'vote.id');
-							$join->where('vote_result.user_id', $user->id);
-						})
-						->leftJoin('milestone', 'vote.milestone_id', '=', 'milestone.id')
-						->where('vote.type', 'informal')
-						->where('vote.status', 'active')
-						->where('vote_result.type', null)
-						->where('users.id', '!=', $user->id)
-						->where(function ($query) use ($search) {
-							if ($search) {
-								$query->where('proposal.title', 'like', '%' . $search . '%')
-									->orWhere('proposal.member_reason', 'like', '%' . $search . '%')
-									->orWhere('proposal.id', 'like', '%' . $search . '%');
-							}
-						})->count();
+				$total_unvoted =  Vote::join('proposal', 'proposal.id', '=', 'vote.proposal_id')
+					->join('users', 'users.id', '=', 'proposal.user_id')
+					->leftJoin('vote_result', function ($join) use ($user) {
+						$join->on('vote_result.vote_id', '=', 'vote.id');
+						$join->where('vote_result.user_id', $user->id);
+					})
+					->leftJoin('milestone', 'vote.milestone_id', '=', 'milestone.id')
+					->where('vote.type', 'informal')
+					->where('vote.status', 'active')
+					->where('vote_result.type', null)
+					->where('users.id', '!=', $user->id)
+					->where(function ($query) use ($search) {
+						if ($search) {
+							$query->where('proposal.title', 'like', '%' . $search . '%')
+								->orWhere('proposal.member_reason', 'like', '%' . $search . '%')
+								->orWhere('proposal.id', 'like', '%' . $search . '%');
+						}
+					})->count();
 			} else {
 				$votes = Vote::join('proposal', 'proposal.id', '=', 'vote.proposal_id')
 					->join('users', 'users.id', '=', 'proposal.user_id')
@@ -2883,26 +2904,26 @@ class SharedController extends Controller
 	public function getDeatilProposal2($proposalId)
 	{
 		$proposal = Proposal::where('id', $proposalId)
-		->with([
-			'user',
-			'user.profile',
-			'user.shuftipro',
-			'bank',
-			'crypto',
-			'grants',
-			'milestones',
-			'citations',
-			'citations.repProposal',
-			'citations.repProposal.user',
-			'citations.repProposal.user.profile',
-			'members',
-			'files',
-			'votes',
-			'onboarding'
-		])
-		->has('user')
-		->has('user.profile')
-		->first();
+			->with([
+				'user',
+				'user.profile',
+				'user.shuftipro',
+				'bank',
+				'crypto',
+				'grants',
+				'milestones',
+				'citations',
+				'citations.repProposal',
+				'citations.repProposal.user',
+				'citations.repProposal.user.profile',
+				'members',
+				'files',
+				'votes',
+				'onboarding'
+			])
+			->has('user')
+			->has('user.profile')
+			->first();
 		if (!$proposal) {
 			return [
 				'success' => false,
@@ -2967,7 +2988,7 @@ class SharedController extends Controller
 			])
 			->orderBy($sort_key, $sort_direction)
 			->get();
-			return Excel::download(new ProposalExport($proposals), 'proposal.csv');
+		return Excel::download(new ProposalExport($proposals), 'proposal.csv');
 	}
 
 	public function resendKycKangaroo(Request $request)
@@ -3018,32 +3039,32 @@ class SharedController extends Controller
 		$minsInformal = $minsSimple = $minsMileStone = $minsFormal = 0;
 
 		if ($settings['time_unit_formal'] == 'min')
-		$minsFormal = (int) $settings['time_formal'];
+			$minsFormal = (int) $settings['time_formal'];
 		else if ($settings['time_unit_formal'] == 'hour')
-		$minsFormal = (int) $settings['time_formal'] * 60;
+			$minsFormal = (int) $settings['time_formal'] * 60;
 		else if ($settings['time_unit_formal'] == 'day')
-		$minsFormal = (int) $settings['time_formal'] * 60 * 24;
+			$minsFormal = (int) $settings['time_formal'] * 60 * 24;
 
 		if ($settings['time_unit_informal'] == 'min')
-		$minsInformal = (int) $settings['time_informal'];
+			$minsInformal = (int) $settings['time_informal'];
 		else if ($settings['time_unit_informal'] == 'hour')
-		$minsInformal = (int) $settings['time_informal'] * 60;
+			$minsInformal = (int) $settings['time_informal'] * 60;
 		else if ($settings['time_unit_informal'] == 'day')
-		$minsInformal = (int) $settings['time_informal'] * 60 * 24;
+			$minsInformal = (int) $settings['time_informal'] * 60 * 24;
 
 		if ($settings['time_unit_simple'] == 'min')
-		$minsSimple = (int) $settings['time_simple'];
+			$minsSimple = (int) $settings['time_simple'];
 		else if ($settings['time_unit_simple'] == 'hour')
-		$minsSimple = (int) $settings['time_simple'] * 60;
+			$minsSimple = (int) $settings['time_simple'] * 60;
 		else if ($settings['time_unit_simple'] == 'day')
-		$minsSimple = (int) $settings['time_simple'] * 60 * 24;
+			$minsSimple = (int) $settings['time_simple'] * 60 * 24;
 
 		if ($settings['time_unit_milestone'] == 'min')
-		$minsMileStone = (int) $settings['time_milestone'];
+			$minsMileStone = (int) $settings['time_milestone'];
 		else if ($settings['time_unit_milestone'] == 'hour')
-		$minsMileStone = (int) $settings['time_milestone'] * 60;
+			$minsMileStone = (int) $settings['time_milestone'] * 60;
 		else if ($settings['time_unit_milestone'] == 'day')
-		$minsMileStone = (int) $settings['time_milestone'] * 60 * 24;
+			$minsMileStone = (int) $settings['time_milestone'] * 60 * 24;
 		$proposal = Proposal::find($proposalId);
 		if (!$proposal) {
 			return [
@@ -3087,22 +3108,22 @@ class SharedController extends Controller
 		}
 		$proposal->milestone = $milestone;
 		$proposal->voteResults  = VoteResult::join('profile', 'profile.user_id', '=', 'vote_result.user_id')
-		->where('vote_id',  $voteId)
-		->where('proposal_id', $proposal->id)
-		->select([
-			'vote_result.*',
-			'profile.forum_name'
-		])
+			->where('vote_id',  $voteId)
+			->where('proposal_id', $proposal->id)
+			->select([
+				'vote_result.*',
+				'profile.forum_name'
+			])
 			->orderBy('vote_result.created_at', 'asc')
 			->get();
 		$summary_preview = '';
-		if($proposal->type == 'simple') {
+		if ($proposal->type == 'simple') {
 			$summary_preview = $proposal->short_description;
-		} else if($proposal->type == 'grant') {
+		} else if ($proposal->type == 'grant') {
 			$summary_preview = $proposal->short_description;
-		} else if($proposal->type == 'admin-grant') {
+		} else if ($proposal->type == 'admin-grant') {
 			$summary_preview = $proposal->things_delivered;
-		} else if($proposal->type == 'advance-payment') {
+		} else if ($proposal->type == 'advance-payment') {
 			$summary_preview =  $proposal->amount_advance_detail;
 		}
 		$proposal->summary_preview = $summary_preview;
@@ -3112,14 +3133,14 @@ class SharedController extends Controller
 	public function exportCSVProposal($proposalId, $voteId)
 	{
 		$proposal = $this->getInfoVoteProposal($proposalId, $voteId);
-        return Excel::download(new VoteResultExport($proposal), "proposal_" . $proposalId . "_vote_results_.xlsx");
+		return Excel::download(new VoteResultExport($proposal), "proposal_" . $proposalId . "_vote_results_.xlsx");
 	}
 
 	public function generateVoteProposalDetail($proposalId, $voteId)
 	{
 		$proposal = $this->getInfoVoteProposal($proposalId, $voteId);
 		$pdf = App::make('dompdf.wrapper');
-        $pdfFile = $pdf->loadView('pdf.vote_detail', compact('proposal'));
+		$pdfFile = $pdf->loadView('pdf.vote_detail', compact('proposal'));
 		return $pdf->download("vote_results_$voteId.pdf");
 	}
 }
