@@ -1920,6 +1920,7 @@ class SharedController extends Controller
 						->orWhere('proposal.type', 'like', '%' . $search . '%');
 				}
 			})
+			->where('proposal.status', '!=', 'pending')
 			->select([
 				'proposal.*',
 				'users.first_name',
