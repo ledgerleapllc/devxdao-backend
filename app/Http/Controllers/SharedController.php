@@ -814,6 +814,8 @@ class SharedController extends Controller
 
 				}
 			}
+			// return rep for user
+			Helper::returenRepProposalDeleted($proposalId);
 			// remove proposal change
 			$proposalChange = ProposalChange::where('proposal_id', $proposalId)->pluck('id');
 			if ($proposalChange) {

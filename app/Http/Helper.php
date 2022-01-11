@@ -1794,4 +1794,31 @@ class Helper
     $url = Storage::disk('local')->url($fullpath);
     return $url;
   }
+
+  public static function returenRepProposalDeleted($proposalId)
+  {
+    $checks = Reputation::where('proposal_id', $proposalId)->where('type', '!=', 'Staked')->count();
+    if ($checks > 0) {
+        return;
+    }
+    $reputations = Reputation::where('proposal_id', $proposalId)->whereNotNull('vote_id')->where('type', 'Staked')->get();
+    foreach ($reputations as $reputation) {
+      $user = User::find($reputation->user_id);
+      if (!$user) {
+        continue;
+      }
+      // Create Reputation Tracking
+      $record = new Reputation;
+      $record->user_id = $reputation->user_id;
+      $record->proposal_id = $reputation->proposal_id;
+      $record->vote_id = $reputation->vote_id;
+      $record->value = abs($reputation->staked);
+      $record->event = "Proposal Vote Result";
+      $record->type = "Gained";
+      $record->return_type = "Return";
+      $record->save();
+      Helper::updateRepProfile($reputation->user_id, (float) abs($reputation->staked));
+      Helper::createRepHistory($reputation->user_id, abs($reputation->staked), $user->profile->rep, 'Gained', 'Proposal Vote Result', $reputation->proposal_id,  $reputation->vote_id, 'ReturnRepForUsersCommand');
+    }
+  }
 }
