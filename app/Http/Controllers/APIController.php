@@ -30,9 +30,11 @@ use App\Mail\AdminAlert;
 use App\Mail\UserAlert;
 use App\Mail\ResetPasswordLink;
 use App\Mail\LoginTwoFA;
+use App\Services\DiscourseService;
 use App\Survey;
 use App\SurveyRfpBid;
 use App\SurveyRfpRank;
+use Exception;
 
 class APIController extends Controller
 {
@@ -57,7 +59,7 @@ class APIController extends Controller
     }
 
     $user = DB::table('users')->join('profile', 'users.id', '=', 'profile.user_id')
-    ->where('users.is_member', 1)->where('users.email', $email_address)
+      ->where('users.is_member', 1)->where('users.email', $email_address)
       ->select(['users.id as user_id', 'users.email', 'users.first_name', 'users.last_name', 'profile.forum_name'])
       ->first();
     if ($user) {
@@ -84,9 +86,9 @@ class APIController extends Controller
     }
 
     $users = DB::table('users')->join('profile', 'users.id', '=', 'profile.user_id')
-    ->where('users.is_member', 1)
-    ->select(['users.id as user_id', 'users.email', 'users.first_name', 'users.last_name', 'profile.forum_name'])
-    ->get();
+      ->where('users.is_member', 1)
+      ->select(['users.id as user_id', 'users.email', 'users.first_name', 'users.last_name', 'profile.forum_name'])
+      ->get();
 
     return [
       'success' => true,
@@ -95,7 +97,8 @@ class APIController extends Controller
   }
 
 
-  public function resetPassword(Request $request) {
+  public function resetPassword(Request $request)
+  {
     // Validator
     $validator = Validator::make($request->all(), [
       'email' => 'required|email',
@@ -110,8 +113,8 @@ class APIController extends Controller
 
     // Token Check
     $temp = DB::table('password_resets')
-              ->where('email', $email)
-              ->first();
+      ->where('email', $email)
+      ->first();
     if (!$temp) return ['success' => false];
     if (!Hash::check($token, $temp->token)) return ['success' => false];
 
@@ -129,13 +132,14 @@ class APIController extends Controller
 
     // Clear Tokens
     DB::table('password_resets')
-        ->where('email', $email)
-        ->delete();
+      ->where('email', $email)
+      ->delete();
 
     return ['success' => true];
   }
 
-  public function sendResetEmail(Request $request) {
+  public function sendResetEmail(Request $request)
+  {
     // This API always returns true
 
     // Validator
@@ -151,8 +155,8 @@ class APIController extends Controller
 
     // Clear Tokens
     DB::table('password_resets')
-        ->where('email', $email)
-        ->delete();
+      ->where('email', $email)
+      ->delete();
 
     // Generate New One
     $token = Str::random(60);
@@ -169,10 +173,11 @@ class APIController extends Controller
     return ['success' => true];
   }
 
-  public function downloadCSV(Request $request) {
+  public function downloadCSV(Request $request)
+  {
     $filename = 'export_' . date('Y-m-d') . '_' . date('H:i:s') . '.csv';
     header('Content-Type: application/csv');
-    header('Content-Disposition: attachment; filename="'.$filename.'";');
+    header('Content-Disposition: attachment; filename="' . $filename . '";');
 
     $output = fopen('php://output', 'w');
     $action = $request->get('action');
@@ -205,12 +210,13 @@ class APIController extends Controller
             ]);
           }
         }
-      break;
+        break;
     }
   }
 
-	public function login(Request $request) {
-		// Validator
+  public function login(Request $request, DiscourseService $discourse)
+  {
+    // Validator
     $validator = Validator::make($request->all(), [
       'email' => 'required',
       'password' => 'required'
@@ -226,9 +232,9 @@ class APIController extends Controller
     $password = $request->get('password');
 
     $user = User::with(['profile', 'shuftipro', 'shuftiproTemp', 'permissions'])
-                ->has('profile')
-                ->where('email', $email)
-                ->first();
+      ->has('profile')
+      ->where('email', $email)
+      ->first();
     if (!$user) {
       return [
         'success' => false,
@@ -237,14 +243,13 @@ class APIController extends Controller
     }
 
     if (
-    	(
-    		$user->hasRole('admin') ||
+      ($user->hasRole('admin') ||
         $user->hasRole('super-admin') ||
-    		$user->hasRole('member') ||
+        $user->hasRole('member') ||
         $user->hasRole('participant') ||
         $user->hasRole('guest')
-    	) &&
-    	$user->profile
+      ) &&
+      $user->profile
     ) {
       if (!Hash::check($password, $user->password)) {
         return [
@@ -305,13 +310,41 @@ class APIController extends Controller
         'last_login_ip_address'
       ]);
       if ($user->profile ?? false) {
-        $user->profile->makeVisible([ 'rep', 'rep_pending','company',
-        'dob',
-        'country_citizenship',
-        'country_residence',
-        'address',
-        'city',
-        'zip']);
+        $user->profile->makeVisible([
+          'rep', 'rep_pending', 'company',
+          'dob',
+          'country_citizenship',
+          'country_residence',
+          'address',
+          'city',
+          'zip'
+        ]);
+      }
+
+      if (is_null($user->discourse_user_id)) {
+        try {
+          $findDiscourseUser = $discourse->user($user->profile->forum_name);
+
+          if (is_null($findDiscourseUser)) {
+            $registerToDiscord = $discourse->register($user);
+
+            if (isset($registerToDiscord['user_id'])) {
+              $discourseUserId = $registerToDiscord['user_id'];
+
+              if ($user->hasRole('admin')) {
+                $discourse->grantModeration($discourseUserId);
+              } elseif ($user->hasRole('super-admin')) {
+                $discourse->grantAdmin($discourseUserId);
+              }
+
+              User::where('id', $user->id)->update(['discourse_user_id' => $discourseUserId]);
+            } else {
+              info('Error when registering to discourse', [$registerToDiscord]);
+            }
+          }
+        } catch (Exception $e) {
+          info('Error when registering to discourse', [$e->getMessage()]);
+        }
       }
 
       return [
@@ -329,10 +362,11 @@ class APIController extends Controller
       'success' => false,
       'message' => 'Login info is not correct'
     ];
-	}
+  }
 
   // User Pre Registration
-  public function registerPre(Request $request) {
+  public function registerPre(Request $request)
+  {
     // Validator
     $validator = Validator::make($request->all(), [
       'email' => 'required|email',
@@ -392,7 +426,8 @@ class APIController extends Controller
   }
 
   // User Registration
-  public function register(Request $request) {
+  public function register(Request $request)
+  {
     // Validator
     $validator = Validator::make($request->all(), [
       'email' => 'required|email',
@@ -548,7 +583,8 @@ class APIController extends Controller
   }
 
   // Start Guest
-  public function startGuest(Request $request) {
+  public function startGuest(Request $request)
+  {
     $guest_key = $request->get('guest_key');
 
     if ($guest_key) {
@@ -600,7 +636,8 @@ class APIController extends Controller
   }
 
   // Resend Code
-  public function resendCode(Request $request) {
+  public function resendCode(Request $request)
+  {
     $user = Auth::user();
 
     if ($user) {
@@ -618,15 +655,16 @@ class APIController extends Controller
     return ['success' => false];
   }
 
-	// Get Me
-	public function getMe(Request $request) {
-		$user = Auth::user();
+  // Get Me
+  public function getMe(Request $request)
+  {
+    $user = Auth::user();
 
     if ($user) {
       $userId = (int) $user->id;
       $user = User::with(['profile', 'shuftipro', 'shuftiproTemp', 'permissions'])
-                  ->where('id', $userId)
-                  ->first();
+        ->where('id', $userId)
+        ->first();
 
       // Total Members
       $user->totalMembers = Helper::getTotalMembers();
@@ -648,7 +686,8 @@ class APIController extends Controller
         'last_login_ip_address',
       ]);
       if ($user->profile ?? false) {
-        $user->profile->makeVisible([ 'rep', 'rep_pending','company',
+        $user->profile->makeVisible([
+          'rep', 'rep_pending', 'company',
           'dob',
           'country_citizenship',
           'country_residence',
@@ -665,14 +704,15 @@ class APIController extends Controller
     }
 
     return ['success' => false];
-	}
+  }
 
-	// Verify Code
-	public function verifyCode(Request $request) {
-		$code = $request->get('code');
-		$user = Auth::user();
+  // Verify Code
+  public function verifyCode(Request $request)
+  {
+    $code = $request->get('code');
+    $user = Auth::user();
 
-		if ($user && $user->confirmation_code == $code) {
+    if ($user && $user->confirmation_code == $code) {
       $user->email_verified = true;
       $user->email_verified_at = Date::now();
       $user->save();
@@ -680,10 +720,11 @@ class APIController extends Controller
     } else {
       return ['success' => false, 'message' => 'Confirmation code is invalid'];
     }
-	}
+  }
 
   // Complete Review Step 2
-  public function completeStepReview2(Request $request) {
+  public function completeStepReview2(Request $request)
+  {
     $user = Auth::user();
 
     if ($user) {
@@ -800,20 +841,20 @@ class APIController extends Controller
     $survey->status = 'active';
     $survey->type = 'rfp';
     $survey->save();
-    foreach($request->bids as $bid) {
-        $number_response = SurveyRfpBid::where('survey_id', $survey->id)->count();
-        $surveyRfpBid = new SurveyRfpBid();
-        $surveyRfpBid->survey_id = $survey->id;
-        $surveyRfpBid->bid =  $number_response + 1;
-        $surveyRfpBid->name = $bid['name'];
-        $surveyRfpBid->forum = $bid['forum'];
-        $surveyRfpBid->email = $bid['email'];
-        $surveyRfpBid->delivery_date = $bid['delivery_date'];
-        $surveyRfpBid->amount_of_bid = $bid['amount_of_bid'];
-        $surveyRfpBid->additional_note = $bid['additional_note'];
-        $surveyRfpBid->save();
-        $survey->number_response = $number_response + 1;
-        $survey->save();
+    foreach ($request->bids as $bid) {
+      $number_response = SurveyRfpBid::where('survey_id', $survey->id)->count();
+      $surveyRfpBid = new SurveyRfpBid();
+      $surveyRfpBid->survey_id = $survey->id;
+      $surveyRfpBid->bid =  $number_response + 1;
+      $surveyRfpBid->name = $bid['name'];
+      $surveyRfpBid->forum = $bid['forum'];
+      $surveyRfpBid->email = $bid['email'];
+      $surveyRfpBid->delivery_date = $bid['delivery_date'];
+      $surveyRfpBid->amount_of_bid = $bid['amount_of_bid'];
+      $surveyRfpBid->additional_note = $bid['additional_note'];
+      $surveyRfpBid->save();
+      $survey->number_response = $number_response + 1;
+      $survey->save();
     }
 
     $members = User::where('is_member', 1)->where('banned', 0)->get();
@@ -878,8 +919,9 @@ class APIController extends Controller
     ];
   }
 
-  public function getSurveyDetail($id) {
-      $survey = Survey::with(['surveyRfpBids'])
+  public function getSurveyDetail($id)
+  {
+    $survey = Survey::with(['surveyRfpBids'])
       ->where('id', $id)->where('type', 'rfp')
       ->select([
         'survey.id',
@@ -896,22 +938,22 @@ class APIController extends Controller
         'survey.job_start_date',
         'survey.job_end_date',
       ])->first();
-      if(!$survey) {
-        return [
-            'success' => false,
-            'survey' => 'Survey not found'
-          ];
-      }
-      $survey_rfp_win = SurveyRfpRank::where('survey_id', $id)->where('is_winner', 1)->first();
-      if( $survey_rfp_win) {
-        $survey_bid = SurveyRfpBid::where('id', $survey_rfp_win->bid_id)->first();
-        $survey->survey_rfp_win = $survey_bid;
-      } else {
-        $survey->survey_rfp_win = null;
-      }
+    if (!$survey) {
       return [
-        'success' => true,
-        'survey' => $survey
+        'success' => false,
+        'survey' => 'Survey not found'
       ];
+    }
+    $survey_rfp_win = SurveyRfpRank::where('survey_id', $id)->where('is_winner', 1)->first();
+    if ($survey_rfp_win) {
+      $survey_bid = SurveyRfpBid::where('id', $survey_rfp_win->bid_id)->first();
+      $survey->survey_rfp_win = $survey_bid;
+    } else {
+      $survey->survey_rfp_win = null;
+    }
+    return [
+      'success' => true,
+      'survey' => $survey
+    ];
   }
 }

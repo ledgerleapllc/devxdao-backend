@@ -50,26 +50,38 @@ class User extends Authenticatable
 
     protected $appends = ['accessToken'];
 
-    public function getAccessTokenAttribute() {
+    public function getAccessTokenAttribute()
+    {
         return session('accessToken');
     }
 
-    public function profile() {
+    public function profile()
+    {
         return $this->hasOne('App\Profile', 'user_id');
     }
 
-    public function shuftipro() {
+    public function shuftipro()
+    {
         return $this->hasOne('App\Shuftipro', 'user_id');
     }
 
-    public function shuftiproTemp() {
+    public function shuftiproTemp()
+    {
         return $this->hasOne('App\ShuftiproTemp', 'user_id');
     }
 
-    public function ipHistories() {
+    public function ipHistories()
+    {
         return $this->hasMany('App\Models\IpHistory', 'user_id');
     }
-    public function permissions() {
+
+    public function permissions()
+    {
         return $this->hasMany('Spatie\Permission\Models\Permission', 'user_id');
+    }
+
+    public function reputations()
+    {
+        return $this->hasMany(Reputation::class);
     }
 }
