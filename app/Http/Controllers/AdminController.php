@@ -2127,6 +2127,17 @@ class AdminController extends Controller
 	// resned Send grant Hellosign Request
 	public static function resendHellosignGrant($grantId)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$admin = Auth::user();
 		if ($admin) {
 			$finalGrant = FinalGrant::with(['proposal', 'user'])
@@ -2198,6 +2209,17 @@ class AdminController extends Controller
 	// remind Send grant Hellosign Request
 	public static function remindHellosignGrant($grantId)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		try {
 			$admin = Auth::user();
 			if ($admin) {
@@ -2290,6 +2312,17 @@ class AdminController extends Controller
 
 	public function getUrlFileHellosignGrant($grantId)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$admin = Auth::user();
 		if ($admin) {
 			$finalGrant = FinalGrant::where('id', $grantId)->first();
@@ -2315,6 +2348,17 @@ class AdminController extends Controller
 	}
 	public function getListUserNotVote($id, Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$page_id = 0;
 		$data = $request->all();
 		if ($data && is_array($data)) extract($data);
@@ -2343,6 +2387,17 @@ class AdminController extends Controller
 
 	private function getUserNotVoteInformal($vote, $start, $limit)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$users = User::where('is_member', 1)
 			->where('banned', 0)
 			->where('can_access', 1)
@@ -2369,6 +2424,17 @@ class AdminController extends Controller
 
 	private function getUserNotVoteFormal($vote, $start, $limit)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$informal = Vote::where('content_type', $vote->content_type)
 			->where('type', 'informal')
 			->where('proposal_id', $vote->proposal_id)->first();
@@ -2403,6 +2469,17 @@ class AdminController extends Controller
 
 	public function getMetrics()
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$totalGrant = FinalGrant::join('proposal', 'final_grant.proposal_id', '=', 'proposal.id')
 			->where('final_grant.status', '!=', 'pending')
 			->sum('proposal.total_grant');
@@ -2416,6 +2493,15 @@ class AdminController extends Controller
 	public function getListMilestoneReview(Request $request)
 	{
 		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
 
 		// Variables
 		$sort_key = $sort_direction = '';
@@ -2459,6 +2545,17 @@ class AdminController extends Controller
 
 	public function getMilestoneDetailReview($milestoneId)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$milestoneReview = MilestoneReview::with(['milestones'])
 			->join('milestone', 'milestone.id', '=', 'milestone_review.milestone_id')
 			->join('proposal', 'milestone.proposal_id', '=', 'proposal.id')
@@ -2614,6 +2711,17 @@ class AdminController extends Controller
 
 	public function getProposalHasMilestone()
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$proposalIds = Milestone::distinct('proposal_id')->pluck('proposal_id');
 		return [
 			'success' => true,
@@ -2623,6 +2731,17 @@ class AdminController extends Controller
 
 	public function getOPHasMilestone()
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$emails = Milestone::join('proposal', 'proposal.id', '=', 'milestone.proposal_id')
 			->join('users', 'users.id', '=', 'proposal.user_id')
 			->distinct('users.email')
@@ -2635,6 +2754,17 @@ class AdminController extends Controller
 
 	public function getAllMilestone(Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		// Variables
 		$email = $request->email;
 		$proposalId = $request->proposalId;
@@ -2724,6 +2854,17 @@ class AdminController extends Controller
 
 	public function getMilestoneDetail($milestoneId)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$milestone = Milestone::with(['milestones', 'milestoneCheckList'])
 			->join('proposal', 'milestone.proposal_id', '=', 'proposal.id')
 			->join('users', 'proposal.user_id', '=', 'users.id')
@@ -2757,6 +2898,15 @@ class AdminController extends Controller
 	public function getListMilestoneLog(Request $request, $milestoneId)
 	{
 		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
 
 		// Variables
 		$sort_key = $sort_direction = '';
@@ -2823,8 +2973,17 @@ class AdminController extends Controller
 
 	public function getListAdmin(Request $request)
 	{
-		// Users DataTable
 		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$users = [];
 
 		// Variables
@@ -2864,6 +3023,17 @@ class AdminController extends Controller
 
 	public function inviteAdmin(Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$validator = Validator::make($request->all(), [
 			'email' => 'required|email',
 		]);
@@ -2936,6 +3106,17 @@ class AdminController extends Controller
 
 	public function resendLink(Request $request, $id)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$user = User::find($id);
 		if ($user && $user->is_admin == 1 & $user->is_super_admin != 1) {
 			$code = Str::random(6);
@@ -2957,6 +3138,17 @@ class AdminController extends Controller
 
 	public function revokeAdmin(Request $request, $id)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$user = User::find($id);
 		if ($user && $user->is_admin == 1 & $user->is_super_admin != 1) {
 			$user->banned = 1;
@@ -2975,6 +3167,17 @@ class AdminController extends Controller
 
 	public function undoRevokeAdmin(Request $request, $id)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$user = User::find($id);
 		if ($user && $user->is_admin == 1 & $user->is_super_admin != 1) {
 			$user->banned = 0;
@@ -2997,6 +3200,17 @@ class AdminController extends Controller
 
 	public function getIpHistories(Request $request, $id)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$user = User::find($id);
 		if (!$user) {
 			return [
@@ -3033,6 +3247,17 @@ class AdminController extends Controller
 
 	public function addminResetPassword(Request $request, $id)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$user = User::find($id);
 		if ($user && $user->is_admin == 1 & $user->is_super_admin != 1) {
 			// Clear Tokens
@@ -3063,6 +3288,17 @@ class AdminController extends Controller
 
 	public function changeAdminPermissions(Request $request, $id)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$validator = Validator::make($request->all(), [
 			'users' => 'nullable|in:0,1',
 			'new_proposal' => 'nullable|in:0,1',
@@ -3151,6 +3387,17 @@ class AdminController extends Controller
 
 	public function getDosFee(Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		// Variables
 		$sort_key = $sort_direction = $search = '';
 		$page_id = 0;
@@ -3516,6 +3763,17 @@ class AdminController extends Controller
 
 	public function getSurvey(Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		// Variables
 		$sort_key = $sort_direction = '';
 		$page_id = 0;
@@ -3550,6 +3808,17 @@ class AdminController extends Controller
 
 	public function getDetailSurvey($id)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$survey = Survey::where('id', $id)->with(['surveyRanks' => function ($q) {
 			$q->orderBy('rank', 'desc');
 		}])->with(['surveyRanks.proposal'])
@@ -3580,6 +3849,17 @@ class AdminController extends Controller
 
 	public function getDisscustionVote($id, Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$survey = Survey::where('id', $id)->first();
 		if (!$survey) {
 			return [
@@ -3645,6 +3925,16 @@ class AdminController extends Controller
 	public function getVoteSurvey($id, Request $request)
 	{
 		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		// Variables
 		$sort_key = $sort_direction = '';
 		$propopsl_id = $request->proposal_id;
@@ -3686,6 +3976,16 @@ class AdminController extends Controller
 	public function getVoteSurveyByUser($id, $userId, Request $request)
 	{
 		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		// Variables
 		$sort_key = $sort_direction = '';
 		$page_id = 0;
@@ -3729,6 +4029,16 @@ class AdminController extends Controller
 	public function getListUserVoteSurvey($id, Request $request)
 	{
 		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		// Variables
 		$sort_key = $sort_direction = '';
 		$page_id  = $limit = 0;
@@ -3760,6 +4070,16 @@ class AdminController extends Controller
 	public function getNotSubmittedSurvey($id, Request $request)
 	{
 		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		// Variables
 		$sort_key = $sort_direction = '';
 		$page_id  = $limit = 0;
@@ -3792,6 +4112,17 @@ class AdminController extends Controller
 
 	public function sendReminderSurvey($id)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$survey = Survey::where('id', $id)->where('status', 'active')->where('type', 'grant')->first();
 		if (!$survey) {
 			return [
@@ -3818,6 +4149,16 @@ class AdminController extends Controller
 	public function resendComplianceEmail(Request $request)
 	{
 		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		// Validator
 		$validator = Validator::make($request->all(), [
 			'proposalId' => 'required',
@@ -3856,6 +4197,17 @@ class AdminController extends Controller
 
 	public function approveComplianceReview(Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$validator = Validator::make($request->all(), [
 			'proposalId' => 'required',
 			'token' => 'required',
@@ -3919,6 +4271,17 @@ class AdminController extends Controller
 
 	public function denyComplianceReview(Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$validator = Validator::make($request->all(), [
 			'proposalId' => 'required',
 			'token' => 'required',
@@ -3965,6 +4328,17 @@ class AdminController extends Controller
 
 	public function getSurveyWin(Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$page_id = 0;
 		$sort_key = $sort_direction  = '';
 		$data = $request->all();
@@ -4189,6 +4563,16 @@ class AdminController extends Controller
 	public function getMentorProposal($userId, Request $request)
 	{
 		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$userInfo = User::where('id', $userId)->with(['profile'])->first();
 		if (!$userInfo) {
 			return [
@@ -4308,6 +4692,17 @@ class AdminController extends Controller
 
 	public function updateShuftiproId($userId, Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		if(!$request->reference_id) {
 			return [
 				'success' => false,
@@ -4358,6 +4753,17 @@ class AdminController extends Controller
 
     public function sendKycKangaroo(Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
         $user = User::find($request->user_id);
         if(!$user) {
             return [
@@ -4398,6 +4804,17 @@ class AdminController extends Controller
 
 	public function getSurveyDownvote(Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$page_id = 0;
 		$sort_key = $sort_direction  = '';
 		$data = $request->all();
@@ -4465,6 +4882,17 @@ class AdminController extends Controller
 
 	public function approveDowvote(Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$proposalId = $request->proposalId;
 		$proposal = Proposal::find($proposalId);
 		if(!$proposal) {
@@ -4496,6 +4924,17 @@ class AdminController extends Controller
 
 	public function getDisscustionDownvote($id, Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$survey = Survey::where('id', $id)->first();
 		if (!$survey) {
 			return [
@@ -4683,6 +5122,17 @@ class AdminController extends Controller
 
 	public function getVote($id)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$admin = Auth::user();
 		if ($admin) {
 			$vote = Vote::with([
@@ -4711,6 +5161,17 @@ class AdminController extends Controller
 
 	public function getVoteResult($id, Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$admin = Auth::user();
 		if ($admin) {
 			$voteResults = [];
@@ -4826,6 +5287,17 @@ class AdminController extends Controller
 
 	public function getSurveyRfp(Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		// Variables
 		$sort_key = $sort_direction = '';
 		$page_id = 0;
@@ -4866,6 +5338,16 @@ class AdminController extends Controller
 	public function getListUserVoteSurveyRfp($id, Request $request)
 	{
 		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		// Variables
 		$sort_key = $sort_direction = '';
 		$page_id  = $limit = 0;
@@ -4894,7 +5376,17 @@ class AdminController extends Controller
 
 	public function getVoteSurveyrfpByUser($id, $userId, Request $request)
 	{
-		$admin = Auth::user();
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		// Variables
 		$sort_key = $sort_direction = '';
 		$data = $request->all();
@@ -4923,6 +5415,17 @@ class AdminController extends Controller
 
 	public function getVoteBidSurveyRfp($id, Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$survey = Survey::where('id', $id)->first();
 		if (!$survey) {
 			return [
@@ -5044,6 +5547,16 @@ class AdminController extends Controller
 	public function getNotSubmittedSurveyRfp($id, Request $request)
 	{
 		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		// Variables
 		$sort_key = $sort_direction = '';
 		$page_id  = $limit = 0;
@@ -5074,6 +5587,17 @@ class AdminController extends Controller
 
 	public function sendReminderSurveyRfp($id)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$survey = Survey::where('id', $id)->where('status', 'active')->where('type', 'rfp')->first();
 		if (!$survey) {
 			return [
@@ -5097,6 +5621,17 @@ class AdminController extends Controller
 
 	public function adminReportOnboading(Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$year = $request->year ?? now()->year;
 		$onboardings = OnBoarding::has('proposal')->with(['proposal'])->whereYear('onboarding.created_at', $year)
 		->join('users', 'users.id', '=', 'onboarding.user_id')
@@ -5132,6 +5667,17 @@ class AdminController extends Controller
 
 	public function adminReportReputation(Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$year = $request->year ?? now()->year;
 		$reptutions = Reputation::join('users', 'users.id', '=', 'reputation.user_id')
 		->whereYear('reputation.created_at', $year)
@@ -5186,6 +5732,17 @@ class AdminController extends Controller
 
 	public function adminReportRepAvailable(Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$year = $request->year ?? now()->year;
 		$reptutions = Reputation::join('users', 'users.id', '=', 'reputation.user_id')
 			->whereYear('reputation.created_at', $year)
@@ -5230,6 +5787,17 @@ class AdminController extends Controller
 	}
 
 	public function exportPdfAdminReport(Request $request) {
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$onboardings = $this->adminReportOnboading($request);
 		$onboarding_results = $onboardings['onboarding_results'];
 		$reputations = $this->adminReportReputation($request);
