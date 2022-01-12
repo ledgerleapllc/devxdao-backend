@@ -175,6 +175,17 @@ class APIController extends Controller
 
   public function downloadCSV(Request $request)
   {
+    $user = Auth::user();
+
+    if($user && $user->hasRole('admin')) {
+      //
+    } else {
+      return [
+        'success' => false,
+        'message' => 'Not authorized'
+      ];
+    }
+
     $filename = 'export_' . date('Y-m-d') . '_' . date('H:i:s') . '.csv';
     header('Content-Type: application/csv');
     header('Content-Disposition: attachment; filename="' . $filename . '";');

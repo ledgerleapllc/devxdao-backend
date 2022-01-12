@@ -2966,6 +2966,18 @@ class SharedController extends Controller
 
 	public function exportProposal(Request $request)
 	{
+
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$search = $request->search;
 		$sort_key = $request->sort_key ?? 'proposal.id';
 		$sort_direction = $request->sort_direction ?? 'desc';
@@ -3135,12 +3147,34 @@ class SharedController extends Controller
 
 	public function exportCSVProposal($proposalId, $voteId)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$proposal = $this->getInfoVoteProposal($proposalId, $voteId);
 		return Excel::download(new VoteResultExport($proposal), "proposal_" . $proposalId . "_vote_results_.xlsx");
 	}
 
 	public function generateVoteProposalDetail($proposalId, $voteId)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$proposal = $this->getInfoVoteProposal($proposalId, $voteId);
 		$pdf = App::make('dompdf.wrapper');
 		$pdfFile = $pdf->loadView('pdf.vote_detail', compact('proposal'));

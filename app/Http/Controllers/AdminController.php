@@ -2785,6 +2785,17 @@ class AdminController extends Controller
 	}
 	public function exportMilestone(Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		// Variables
 		$email = $request->email;
 		$proposalId = $request->proposalId;
@@ -3246,6 +3257,17 @@ class AdminController extends Controller
 
 	public function exportCSVDosFee(Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		// Variables
 		$sort_key = $sort_direction = $search = '';
 		$start_date = $request->start_date;
@@ -3291,6 +3313,17 @@ class AdminController extends Controller
 
 	public function exportCSVUser(Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		// Variables
 		$sort_key = $sort_direction = $search = '';
 		$page_id = 0;
@@ -3997,6 +4030,16 @@ class AdminController extends Controller
 	// Reputation By User
 	public function exportCSVReputationByUser($userId, Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
 
 		// Variables
 		$sort_key = $sort_direction = $search = '';
@@ -4024,6 +4067,17 @@ class AdminController extends Controller
 
 	public function exportCSVtSurveyWin(Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$start_date = $request->start_date;
 		$end_date = $request->end_date;
 		$sort_key = $request->sort_key ?? 'rank';
@@ -4075,6 +4129,17 @@ class AdminController extends Controller
 
 	public function exportCSVVoteSurvey($id, Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$survey = Survey::where('id', $id)->first();
 		if (!$survey) {
 			return [
@@ -4163,6 +4228,17 @@ class AdminController extends Controller
 
 	public function exportCSVMentorProposal($userId, Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$userInfo = User::where('id', $userId)->with(['profile'])->first();
 		if (!$userInfo) {
 			return [
@@ -4190,6 +4266,17 @@ class AdminController extends Controller
 	// Get Grants
 	public function exxportCSVActiveGrants(Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		// Variables
 		$sort_key = $sort_direction = $search = '';
 		$data = $request->all();
@@ -4473,6 +4560,17 @@ class AdminController extends Controller
 
 	public function exportCSVDownvoteSurvey($id, Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$survey = Survey::where('id', $id)->first();
 		if (!$survey) {
 			return [
@@ -4521,6 +4619,17 @@ class AdminController extends Controller
 
 	public function exportCSVSurveyDownvote(Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$start_date = $request->start_date;
 		$end_date = $request->end_date;
 		$sort_key = $request->sort_key ?? 'rank';
@@ -4876,6 +4985,17 @@ class AdminController extends Controller
 
 	public function exportCSVVoteSurveyRfp($id, Request $request)
 	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
 		$survey = Survey::where('id', $id)->first();
 		if (!$survey) {
 			return [
