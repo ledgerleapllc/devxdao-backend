@@ -255,8 +255,6 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth:api']], function () {
 	Route::get('/report-total-rep', 'AdminController@adminReportRepAvailable');
 	Route::get('/export-report', 'AdminController@exportPdfAdminReport');
 
-
-
 	// POST
 	Route::post('/formal-voting', 'AdminController@startFormalVoting');
 	Route::post('/formal-milestone-voting', 'AdminController@startFormalMilestoneVoting');
@@ -434,9 +432,9 @@ Route::group(['prefix' => 'compliance', 'middleware' => ['auth:compliance_api']]
 });
 
 Route::group(['prefix' => 'compliance'], function () {
-	Route::get('/shared/milestone/export-csv', 'AdminController@exportMilestone');
-	Route::get('/shared/dos-fee/export-csv', 'AdminController@exportCSVDosFee');
-	Route::get('/shared/invoice-all/export-csv', 'ComplianceController@exportCSVInvoices');
+	// Route::get('/shared/milestone/export-csv', 'AdminController@exportMilestone');
+	// Route::get('/shared/dos-fee/export-csv', 'AdminController@exportCSVDosFee');
+	// Route::get('/shared/invoice-all/export-csv', 'ComplianceController@exportCSVInvoices');
 
 	Route::post('/login-user', 'ComplianceController@loginWithUserVa');
 });

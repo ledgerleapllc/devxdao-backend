@@ -1905,7 +1905,7 @@ class UserController extends Controller
 		return ['success' => false];
 	}
 
-	// Submit Milestone
+	// * Submit Milestone
 	public function submitMilestone(Request $request)
 	{
 		$user = Auth::user();

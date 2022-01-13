@@ -94,6 +94,7 @@ class ComplianceController extends Controller
         ];
     }
 
+    // *
     public function logout()
     {
         auth()->user()->token()->revoke();
@@ -102,17 +103,24 @@ class ComplianceController extends Controller
         ];
     }
 
+    // *
     public function getMe()
     {
         $user = Auth::user();
-        // Total Members
-        $user->totalMembers = Helper::getTotalMembers();
+        if ($user) {
+            // Total Members
+            $user->totalMembers = Helper::getTotalMembers();
+            return [
+                'success' => true,
+                'me' => $user
+            ];
+        }
         return [
-            'success' => true,
-            'me' => $user
+            'success' => false,
         ];
     }
 
+    // *
     public function createPAUser(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -133,6 +141,7 @@ class ComplianceController extends Controller
                 'message' => 'This email has already been exist'
             ];
         }
+
         $user = new ComplianceUser;
         $user->first_name = '';
         $user->last_name = '';
@@ -141,6 +150,7 @@ class ComplianceController extends Controller
         $user->status = 'active';
         $user->is_pa = 1;
         $user->save();
+        
         return [
             'success' => true,
         ];
@@ -1176,6 +1186,7 @@ class ComplianceController extends Controller
         ];
     }
 
+    // *
     public function loginWithUserVa(Request $request)
     {
         // Validator
