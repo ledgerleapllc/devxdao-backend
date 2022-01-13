@@ -79,13 +79,6 @@ use Spatie\Permission\Models\Permission;
 
 class AdminController extends Controller
 {
-	// Test Email
-	public function testEmail()
-	{
-		// Emailer Admin
-		$emailerData = Helper::getEmailerData();
-	}
-
 	// Update Emailer Trigger Member
 	public function updateEmailerTriggerMember($recordId, Request $request)
 	{
@@ -482,7 +475,7 @@ class AdminController extends Controller
 		$start = $limit * ($page_id - 1);
 
 		// We need to get successfully completed informal votes
-		if ($user->hasRole('admin')) {
+		if ($user && $user->hasRole('admin')) {
 			$votes = Vote::join('proposal', 'proposal.id', '=', 'vote.proposal_id')
 				->join('users', 'users.id', '=', 'proposal.user_id')
 				->where('vote.status', 'completed')
@@ -614,7 +607,7 @@ class AdminController extends Controller
 		];
 	}
 
-	// Get Emailer Data
+	// * Get Emailer Data
 	public function getEmailerData(Request $request)
 	{
 		$user = Auth::user();
@@ -630,7 +623,6 @@ class AdminController extends Controller
 				'triggerAdmin' => $triggerAdmin,
 				'triggerUser' => $triggerUser,
 				'triggerMember' => $triggerMember,
-				// 'data' => $request->headers->get('origin')
 			];
 		}
 
@@ -1491,7 +1483,7 @@ class AdminController extends Controller
 		];
 	}
 
-	// Proposals By User
+	// * Proposals By User
 	public function getProposalsByUser($userId, Request $request)
 	{
 		$user = Auth::user();
@@ -1553,7 +1545,7 @@ class AdminController extends Controller
 		];
 	}
 
-	// Single Proposal By Id
+	// * Single Proposal By Id
 	public function getProposalById($proposalId, Request $request)
 	{
 		$user = Auth::user();
@@ -1601,7 +1593,7 @@ class AdminController extends Controller
 		return ['success' => false];
 	}
 
-	// Pending Actions DataTable
+	// * Pending Actions DataTable
 	public function getPendingActions(Request $request)
 	{
 		$user = Auth::user();
@@ -1654,7 +1646,7 @@ class AdminController extends Controller
 		];
 	}
 
-	// Single User
+	// * Single User
 	public function getSingleUser($userId, Request $request)
 	{
 		$user = Auth::user();
@@ -1809,7 +1801,7 @@ class AdminController extends Controller
 		];
 	}
 
-	// Users DataTable
+	// * Users DataTable
 	public function getUsers(Request $request)
 	{
 		$user = Auth::user();
@@ -2310,21 +2302,11 @@ class AdminController extends Controller
 		return ['success' => false];
 	}
 
+	// *
 	public function getUrlFileHellosignGrant($grantId)
 	{
-		$user = Auth::user();
-
-		if($user && $user->hasRole('admin')) {
-			//
-		} else {
-			return [
-				'success' => false,
-				'message' => 'Not authorized'
-			];
-		}
-
 		$admin = Auth::user();
-		if ($admin) {
+		if ($admin && $admin->hasRole('admin')) {
 			$finalGrant = FinalGrant::where('id', $grantId)->first();
 			if (!$finalGrant) {
 				return ['success' => false];
@@ -2346,6 +2328,8 @@ class AdminController extends Controller
 		}
 		return ['success' => false];
 	}
+
+	// *
 	public function getListUserNotVote($id, Request $request)
 	{
 		$user = Auth::user();
@@ -2467,6 +2451,7 @@ class AdminController extends Controller
 		];
 	}
 
+	// *
 	public function getMetrics()
 	{
 		$user = Auth::user();
@@ -2484,12 +2469,14 @@ class AdminController extends Controller
 			->where('final_grant.status', '!=', 'pending')
 			->sum('proposal.total_grant');
 		$data['totalGrant'] = $totalGrant;
+
 		return [
 			'success' => true,
 			'data' => $data
 		];
 	}
 
+	// *
 	public function getListMilestoneReview(Request $request)
 	{
 		$user = Auth::user();
@@ -2543,6 +2530,7 @@ class AdminController extends Controller
 		];
 	}
 
+	// *
 	public function getMilestoneDetailReview($milestoneId)
 	{
 		$user = Auth::user();
@@ -2570,6 +2558,7 @@ class AdminController extends Controller
 				'users.id as user_id',
 				'users.email'
 			])->where('milestone_review.milestone_id', $milestoneId)->first();
+
 		if ($milestoneReview) {
 			return [
 				'success' => true,
@@ -2709,6 +2698,7 @@ class AdminController extends Controller
 		return ['success' => false];
 	}
 
+	// *
 	public function getProposalHasMilestone()
 	{
 		$user = Auth::user();
@@ -2723,12 +2713,14 @@ class AdminController extends Controller
 		}
 
 		$proposalIds = Milestone::distinct('proposal_id')->pluck('proposal_id');
+		
 		return [
 			'success' => true,
 			'proposalIds' => $proposalIds
 		];
 	}
 
+	// *
 	public function getOPHasMilestone()
 	{
 		$user = Auth::user();
@@ -2752,6 +2744,7 @@ class AdminController extends Controller
 		];
 	}
 
+	// *
 	public function getAllMilestone(Request $request)
 	{
 		$user = Auth::user();
@@ -2852,6 +2845,7 @@ class AdminController extends Controller
 		];
 	}
 
+	// *
 	public function getMilestoneDetail($milestoneId)
 	{
 		$user = Auth::user();
@@ -2895,6 +2889,7 @@ class AdminController extends Controller
 		];
 	}
 
+	// *
 	public function getListMilestoneLog(Request $request, $milestoneId)
 	{
 		$user = Auth::user();
@@ -2933,6 +2928,7 @@ class AdminController extends Controller
 			'milestoneLogs' => $milestoneLogs,
 		];
 	}
+
 	public function exportMilestone(Request $request)
 	{
 		$user = Auth::user();
@@ -3165,6 +3161,7 @@ class AdminController extends Controller
 		}
 	}
 
+	// *
 	public function undoRevokeAdmin(Request $request, $id)
 	{
 		$user = Auth::user();
@@ -3385,6 +3382,7 @@ class AdminController extends Controller
 		return ['success' => true];
 	}
 
+	// *
 	public function getDosFee(Request $request)
 	{
 		$user = Auth::user();
@@ -3761,6 +3759,7 @@ class AdminController extends Controller
 		}
 	}
 
+	// *
 	public function getSurvey(Request $request)
 	{
 		$user = Auth::user();
@@ -3806,6 +3805,7 @@ class AdminController extends Controller
 		];
 	}
 
+	// *
 	public function getDetailSurvey($id)
 	{
 		$user = Auth::user();
@@ -3847,6 +3847,7 @@ class AdminController extends Controller
 		];
 	}
 
+	// *
 	public function getDisscustionVote($id, Request $request)
 	{
 		$user = Auth::user();
@@ -3973,6 +3974,7 @@ class AdminController extends Controller
 		];
 	}
 
+	// *
 	public function getVoteSurveyByUser($id, $userId, Request $request)
 	{
 		$user = Auth::user();
@@ -4026,6 +4028,7 @@ class AdminController extends Controller
 		];
 	}
 
+	// *
 	public function getListUserVoteSurvey($id, Request $request)
 	{
 		$user = Auth::user();
@@ -4067,6 +4070,7 @@ class AdminController extends Controller
 		];
 	}
 
+	// *
 	public function getNotSubmittedSurvey($id, Request $request)
 	{
 		$user = Auth::user();
@@ -4326,6 +4330,7 @@ class AdminController extends Controller
 		];
 	}
 
+	// *
 	public function getSurveyWin(Request $request)
 	{
 		$user = Auth::user();
@@ -4371,6 +4376,7 @@ class AdminController extends Controller
 					$query->whereDate('survey.end_time', '<=', $end_date);
 				}
 			})->orderBy('survey_rank.rank', 'asc')->get();
+
 		foreach ($proposals as $proposal) {
 			$status =  Helper::getStatusProposal($proposal);
 			$key_status = str_replace(' ', '_', strtolower($status));
@@ -4560,6 +4566,7 @@ class AdminController extends Controller
 		return Excel::download(new SurveyVoteExport($sorted, $survey), "survey_" . $survey->id . "_vote.csv");
 	}
 
+	// *
 	public function getMentorProposal($userId, Request $request)
 	{
 		$user = Auth::user();
@@ -4802,6 +4809,7 @@ class AdminController extends Controller
         }
     }
 
+    // *
 	public function getSurveyDownvote(Request $request)
 	{
 		$user = Auth::user();
@@ -4922,6 +4930,7 @@ class AdminController extends Controller
 		];
 	}
 
+	// *
 	public function getDisscustionDownvote($id, Request $request)
 	{
 		$user = Auth::user();
@@ -5285,6 +5294,7 @@ class AdminController extends Controller
 		return ['success' => false];
 	}
 
+	// *
 	public function getSurveyRfp(Request $request)
 	{
 		$user = Auth::user();
@@ -5335,6 +5345,8 @@ class AdminController extends Controller
 			'finished' => count($surveys) < $limit ? true : false
 		];
 	}
+
+	// *
 	public function getListUserVoteSurveyRfp($id, Request $request)
 	{
 		$user = Auth::user();
@@ -5374,6 +5386,7 @@ class AdminController extends Controller
 		];
 	}
 
+	// *
 	public function getVoteSurveyrfpByUser($id, $userId, Request $request)
 	{
 		$user = Auth::user();
@@ -5413,6 +5426,7 @@ class AdminController extends Controller
 		];
 	}
 
+	// *
 	public function getVoteBidSurveyRfp($id, Request $request)
 	{
 		$user = Auth::user();
@@ -5544,6 +5558,7 @@ class AdminController extends Controller
 		return Excel::download(new SurveyVoteRfpExport($bids, $survey), "survey_rfp_" . $survey->id . "_vote.csv");
 	}
 
+	// *
 	public function getNotSubmittedSurveyRfp($id, Request $request)
 	{
 		$user = Auth::user();
@@ -5619,6 +5634,7 @@ class AdminController extends Controller
 		];
 	}
 
+	// *
 	public function adminReportOnboading(Request $request)
 	{
 		$user = Auth::user();

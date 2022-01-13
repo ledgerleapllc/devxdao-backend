@@ -31,7 +31,6 @@ class User extends Authenticatable
         'password',
         'remember_token',
         'twoFA_login_code',
-        'profile',
         'shuftipro',
         'shuftiproTemp',
         'accessToken',

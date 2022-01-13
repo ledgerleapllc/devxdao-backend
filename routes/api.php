@@ -16,9 +16,6 @@ use Illuminate\Support\Facades\Storage;
 |
 */
 
-Route::get('/test-email', 'AdminController@testEmail');
-Route::get('/test-stripe', 'UserController@testStripe');
-Route::get('/test-job', 'UserController@testJob');
 Route::get('/pre-register-user', 'SharedController@getPreRegisterUser');
 Route::get('/shared/all-proposals-2', 'SharedController@getAllProposals2');
 Route::get('/shared/all-proposals-2/{proposalId}', 'SharedController@getDeatilProposal2');
@@ -56,7 +53,6 @@ Route::group(['prefix' => 'rfp'], function () {
 	Route::post('/survey/{id}/bid', 'APIController@createSurveyBid');
 	Route::get('/survey/{id}', 'APIController@getSurveyDetail');
 });
-
 
 Route::group(['middleware' => ['auth:api']], function () {
 	// GET
@@ -169,7 +165,6 @@ Route::group(['prefix' => 'user', 'middleware' => ['auth:api']], function () {
 	Route::put('/show-unvoted-informal', 'UserController@checkShowUnvotedInformal');
 	Route::put('/show-unvoted-formal', 'UserController@checkShowUnvotedFormal');
 
-
 	// GET
 	Route::get('/reputation-track', 'UserController@getReputationTrack');
 	Route::get('/reputation-track/export-csv', 'UserController@exportCSVReputationTrack');
@@ -261,8 +256,6 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth:api']], function () {
 	Route::get('/report-reputation', 'AdminController@adminReportReputation');
 	Route::get('/report-total-rep', 'AdminController@adminReportRepAvailable');
 	Route::get('/export-report', 'AdminController@exportPdfAdminReport');
-
-
 
 	// POST
 	Route::post('/formal-voting', 'AdminController@startFormalVoting');
@@ -441,9 +434,9 @@ Route::group(['prefix' => 'compliance', 'middleware' => ['auth:compliance_api']]
 });
 
 Route::group(['prefix' => 'compliance'], function () {
-	Route::get('/shared/milestone/export-csv', 'AdminController@exportMilestone');
-	Route::get('/shared/dos-fee/export-csv', 'AdminController@exportCSVDosFee');
-	Route::get('/shared/invoice-all/export-csv', 'ComplianceController@exportCSVInvoices');
+	// Route::get('/shared/milestone/export-csv', 'AdminController@exportMilestone');
+	// Route::get('/shared/dos-fee/export-csv', 'AdminController@exportCSVDosFee');
+	// Route::get('/shared/invoice-all/export-csv', 'ComplianceController@exportCSVInvoices');
 
 	Route::post('/login-user', 'ComplianceController@loginWithUserVa');
 });
