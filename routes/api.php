@@ -16,9 +16,6 @@ use Illuminate\Support\Facades\Storage;
 |
 */
 
-Route::get('/test-email', 'AdminController@testEmail');
-Route::get('/test-stripe', 'UserController@testStripe');
-Route::get('/test-job', 'UserController@testJob');
 Route::get('/pre-register-user', 'SharedController@getPreRegisterUser');
 Route::get('/shared/all-proposals-2', 'SharedController@getAllProposals2');
 Route::get('/shared/all-proposals-2/{proposalId}', 'SharedController@getDeatilProposal2');
@@ -68,7 +65,6 @@ Route::group(['prefix' => 'rfp'], function () {
 	Route::post('/survey/{id}/bid', 'APIController@createSurveyBid');
 	Route::get('/survey/{id}', 'APIController@getSurveyDetail');
 });
-
 
 Route::group(['middleware' => ['auth:api']], function () {
 	// GET
@@ -177,7 +173,6 @@ Route::group(['prefix' => 'user', 'middleware' => ['auth:api']], function () {
 	Route::put('/proposal/{proposalId}/payment-form', 'UserController@updatePaymentForm');
 	Route::put('/show-unvoted-informal', 'UserController@checkShowUnvotedInformal');
 	Route::put('/show-unvoted-formal', 'UserController@checkShowUnvotedFormal');
-
 
 	// GET
 	Route::get('/reputation-track', 'UserController@getReputationTrack');

@@ -79,13 +79,6 @@ use Spatie\Permission\Models\Permission;
 
 class AdminController extends Controller
 {
-	// Test Email
-	public function testEmail()
-	{
-		// Emailer Admin
-		$emailerData = Helper::getEmailerData();
-	}
-
 	// Update Emailer Trigger Member
 	public function updateEmailerTriggerMember($recordId, Request $request)
 	{

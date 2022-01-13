@@ -1108,22 +1108,32 @@ class ComplianceController extends Controller
         ];
     }
 
+    // *
     public function getCurrentAddressPaymentUser()
     {
         $user = Auth::user();
-        $payment_address = PaymentAddress::where('user_id', $user->id)->first();
-        if (!$payment_address) {
+
+        if ($user && $user->email_verified) {
+            $payment_address = PaymentAddress::where('user_id', $user->id)->first();
+            if (!$payment_address) {
+                return [
+                    'success' => false,
+                    'message' => 'payment address not found'
+                ];
+            }
             return [
-                'success' => false,
-                'message' => 'payment address not found'
+                'success' => true,
+                'payment_address' => $payment_address
             ];
         }
+
         return [
-            'success' => true,
-            'payment_address' => $payment_address
+            'success' => false,
+            'message' => 'Not authorized'
         ];
     }
 
+    // *
     public function changePaymentAddress(Request $request)
     {
         $user = Auth::user();
@@ -1137,25 +1147,32 @@ class ComplianceController extends Controller
                 'message' => 'Provide all the necessary information'
             ];
         }
-        $checkAddress = PaymentAddress::where('cspr_address', $request->cspr_address)->first();
-        if ($checkAddress) {
-            $userExist = User::find($checkAddress->user_id);
+        if ($user && $user->email_verified) {
+            $checkAddress = PaymentAddress::where('cspr_address', $request->cspr_address)->first();
+            if ($checkAddress) {
+                $userExist = User::find($checkAddress->user_id);
+                return [
+                    'success' => false,
+                    'message' => "This address is already inuse by user $userExist->email",
+                ];
+            }
+            $payment_address_change = PaymentAddressChange::where('user_id', $user->id)->orderBy('id', 'desc')->first();
+            if (!$payment_address_change || $payment_address_change->status == 'approved') {
+                $payment_address_change = new PaymentAddressChange();
+            }
+            $payment_address_change->user_id = $user->id;
+            $payment_address_change->cspr_address = $request->cspr_address;
+            $payment_address_change->request_ip = request()->ip();
+            $payment_address_change->status = 'pending';
+            $payment_address_change->save();
             return [
-                'success' => false,
-                'message' => "This address is already inuse by user $userExist->email",
+                'success' => true,
             ];
         }
-        $payment_address_change = PaymentAddressChange::where('user_id', $user->id)->orderBy('id', 'desc')->first();
-        if (!$payment_address_change || $payment_address_change->status == 'approved') {
-            $payment_address_change = new PaymentAddressChange();
-        }
-        $payment_address_change->user_id = $user->id;
-        $payment_address_change->cspr_address = $request->cspr_address;
-        $payment_address_change->request_ip = request()->ip();
-        $payment_address_change->status = 'pending';
-        $payment_address_change->save();
+
         return [
-            'success' => true,
+            'success' => false,
+            'message' => 'Not authorized'
         ];
     }
 

@@ -60,15 +60,10 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class UserController extends Controller
 {
-	public function testJob()
-	{
-		Test::dispatch();
-	}
-
-	// Request Help
+	// * Request Help
 	public function requestHelp(Request $request) {
 		$user = Auth::user();
-		if ($user && $user->hasRole(['member', 'participant'])) {
+		if ($user && $user->hasRole(['member', 'participant']) && $user->email_verified) {
 			$text = $request->get('text');
 			if ($text) {
 				// Mail to Admin
@@ -82,10 +77,10 @@ class UserController extends Controller
 		return ['success' => false];
 	}
 
-	// Send Hellosign Request
+	// * Send Hellosign Request
 	public function sendHellosignRequest(Request $request) {
 		$user = Auth::user();
-		if ($user) {
+		if ($user && $user->email_verified) {
 			$client = new \HelloSign\Client(config('services.hellosign.api_key'));
     	$client_id = config('services.hellosign.client_id');
 
@@ -102,19 +97,19 @@ class UserController extends Controller
 	    $initial = strtoupper(substr($user->first_name, 0, 1)) . strtoupper(substr($user->last_name, 0, 1));
 	    $request->setCustomFieldValue('Initial', $initial);
 
-        $request->setClientId($client_id);
+      $request->setClientId($client_id);
 
 	    $embedded_request = new \HelloSign\EmbeddedSignatureRequest($request, $client_id);
 	    $response = $client->createEmbeddedSignatureRequest($embedded_request);
 
-		Helper::createHellosignLogging(
-			$user->id,
-			'Create Embedded Signature Request',
-			'create_embedded_signature_request',
-			json_encode([
-				'Subject' => "Program Associate Agreement",
-			])
-		);
+			Helper::createHellosignLogging(
+				$user->id,
+				'Create Embedded Signature Request',
+				'create_embedded_signature_request',
+				json_encode([
+					'Subject' => "Program Associate Agreement",
+				])
+			);
 
 	    $signature_request_id = $response->getId();
 
@@ -134,7 +129,7 @@ class UserController extends Controller
 		return ['success' => false];
 	}
 
-	// Update Shuftipro Temp Status
+	// * Update Shuftipro Temp Status
   public function updateShuftiProTemp(Request $request) {
     // Validator
     $validator = Validator::make($request->all(), [
@@ -170,7 +165,7 @@ class UserController extends Controller
     return ['success' => false];
   }
 
-	// Save Shuftipro Temp
+	// * Save Shuftipro Temp
   public function saveShuftiproTemp(Request $request) {
     // Validator
     $validator = Validator::make($request->all(), [
@@ -192,11 +187,11 @@ class UserController extends Controller
     return ['success' => true];
   }
 
-	// Get Active Proposal By Id - For Discussions
+	// * Get Active Proposal By Id - For Discussions
 	public function getActiveProposalById($proposalId, Request $request) {
 		$user = Auth::user();
 
-		if ($user && $user->hasRole(['participant', 'member'])) {
+		if ($user && $user->hasRole(['participant', 'member']) && $user->email_verified) {
 			$proposal = Proposal::where('id', $proposalId)
 													->with(['bank', 'citations', 'crypto', 'grants', 'milestones', 'members', 'files', 'votes'])
 													->first();
@@ -246,11 +241,11 @@ class UserController extends Controller
 		return ['success' => false];
 	}
 
-	// Get My Denied Proposal By Id - For Edit
+	// * Get My Denied Proposal By Id - For Edit
 	public function getMyDeniedProposalById($proposalId, Request $request) {
 		$user = Auth::user();
 
-		if ($user && $user->hasRole(['participant', 'member'])) {
+		if ($user && $user->hasRole(['participant', 'member']) && $user->email_verified) {
 			$proposal = Proposal::where('id', $proposalId)
 													->with(['bank', 'crypto', 'grants', 'citations', 'milestones', 'members', 'files'])
 													->first();
@@ -266,7 +261,7 @@ class UserController extends Controller
 		return ['success' => false];
 	}
 
-	// Get Onboardings
+	// * Get Onboardings
 	public function getOnboardings(Request $request)
 	{
 		$user = Auth::user();
@@ -287,7 +282,7 @@ class UserController extends Controller
 		$start = $limit * ($page_id - 1);
 
 		// Records
-		if ($user && $user->hasRole(['participant', 'member'])) {
+		if ($user && $user->hasRole(['participant', 'member']) && $user->email_verified) {
 			// OnBoarding
 			$onboardings = OnBoarding::join('proposal', 'proposal.id', '=', 'onboarding.proposal_id')
 			->leftJoin('final_grant', 'onboarding.proposal_id', '=', 'final_grant.proposal_id')
@@ -337,7 +332,7 @@ class UserController extends Controller
 		];
 	}
 
-	// Get Reputation Track
+	// * Get Reputation Track
 	public function getReputationTrack(Request $request) {
 		$user = Auth::user();
 		$items = [];
@@ -358,7 +353,7 @@ class UserController extends Controller
 		$start = $limit * ($page_id - 1);
 
 		// Records
-		if ($user && $user->hasRole(['member', 'participant'])) {
+		if ($user && $user->hasRole(['member', 'participant']) && $user->email_verified) {
 			$total_staked = DB::table('reputation')
 													->where('user_id', $user->id)
                           ->where('type', 'Staked')
@@ -396,7 +391,7 @@ class UserController extends Controller
 		];
 	}
 
-	// Get Active Proposals
+	// * Get Active Proposals
 	public function getActiveProposals(Request $request) {
 		$user = Auth::user();
 		$proposals = [];
@@ -416,7 +411,7 @@ class UserController extends Controller
 		$start = $limit * ($page_id - 1);
 
 		// Records
-		if ($user && $user->hasRole(['participant', 'member', 'guest'])) {
+		if ($user && $user->hasRole(['participant', 'member', 'guest']) && $user->email_verified) {
 			$proposals = Proposal::with('votes')
 														->whereIn('status', ['approved', 'completed'])
 														->where(function ($query) use ($search) {
@@ -438,12 +433,12 @@ class UserController extends Controller
 		];
 	}
 
-	// Get My Payment Proposals
+	// * Get My Payment Proposals
 	public function getMyPaymentProposals(Request $request) {
 		$user = Auth::user();
 		$proposals = [];
 
-		if ($user && $user->hasRole(['participant', 'member'])) {
+		if ($user && $user->hasRole(['participant', 'member']) && $user->email_verified) {
 			$proposals = Proposal::where('proposal.user_id', $user->id)
 														->whereIn('proposal.status', ['payment'])
 														->where('dos_paid', 0)
@@ -458,12 +453,12 @@ class UserController extends Controller
 		];
 	}
 
-	// Get My Active Proposals
+	// * Get My Active Proposals
 	public function getMyActiveProposals(Request $request) {
 		$user = Auth::user();
 		$proposals = [];
 
-		if ($user && $user->hasRole(['participant', 'member'])) {
+		if ($user && $user->hasRole(['participant', 'member']) && $user->email_verified) {
 			$proposals = Proposal::leftJoin('proposal_change', function ($join) {
 															$join->on('proposal_change.proposal_id', '=', 'proposal.id');
 															$join->where('proposal_change.status', 'pending');
@@ -483,12 +478,12 @@ class UserController extends Controller
 		];
 	}
 
-	// Get My Pending Proposals
+	// * Get My Pending Proposals
 	public function getMyPendingProposals(Request $request) {
 		$user = Auth::user();
 		$proposals = [];
 
-		if ($user && $user->hasRole(['participant', 'member'])) {
+		if ($user && $user->hasRole(['participant', 'member']) && $user->email_verified) {
 			$proposals = Proposal::where('user_id', $user->id)
 														->whereIn('status', ['pending', 'denied'])
 														->orderBy('created_at', 'desc')
@@ -501,11 +496,11 @@ class UserController extends Controller
 		];
 	}
 
-	// Support UP Proposal Change
+	// * Support UP Proposal Change
 	public function supportUpProposalChange($proposalChangeId, Request $request) {
 		$user = Auth::user();
 
-		if ($user && $user->hasRole(['participant', 'member'])) {
+		if ($user && $user->hasRole(['participant', 'member']) && $user->email_verified) {
 			$proposalChange = ProposalChange::find($proposalChangeId);
 			if (!$proposalChange) {
 				return [
@@ -569,11 +564,11 @@ class UserController extends Controller
 		return ['success' => false];
 	}
 
-	// Support DOWN Proposal Change
+	// * Support DOWN Proposal Change
 	public function supportDownProposalChange($proposalChangeId, Request $request) {
 		$user = Auth::user();
 
-		if ($user && $user->hasRole(['participant', 'member'])) {
+		if ($user && $user->hasRole(['participant', 'member']) && $user->email_verified) {
 			$proposalChange = ProposalChange::find($proposalChangeId);
 			if (!$proposalChange) {
 				return [
@@ -637,11 +632,11 @@ class UserController extends Controller
 		return ['success' => false];
 	}
 
-	// Force Approve KYC
+	// * Force Approve KYC
 	public function forceApproveKYC(Request $request) {
 		$user = Auth::user();
 
-    if ($user) {
+    if ($user && $user->email_verified) {
       $userId = (int) $user->id;
 
       $record = Shuftipro::where('user_id', $userId)->first();
@@ -676,11 +671,11 @@ class UserController extends Controller
     return ['success' => false];
 	}
 
-	// Force Deny KYC
+	// * Force Deny KYC
 	public function forceDenyKYC(Request $request) {
 		$user = Auth::user();
 
-    if ($user) {
+    if ($user && $user->email_verified) {
       $userId = (int) $user->id;
 
       $record = Shuftipro::where('user_id', $userId)->first();
@@ -715,12 +710,12 @@ class UserController extends Controller
     return ['success' => false];
 	}
 
-	// Stake CC
+	// * Stake CC
 	public function stakeCC($proposalId, Request $request) {
 		$user = Auth::user();
 		$setting = Helper::getSettings();
 		$dos_fee_amount = $setting['dos_fee_amount'] ?? 0;
-		if ($user) {
+		if ($user && $user->email_verified) {
 			// Profile Check
 			$profile = Profile::where('user_id', $user->id)->first();
 			if (!$profile) {
@@ -760,7 +755,7 @@ class UserController extends Controller
 			// Emailer Member
 	    $emailerData = Helper::getEmailerData();
 	    Helper::triggerMemberEmail('New Proposal Discussion', $emailerData, $proposal);
-		Helper::createGrantTracking($proposalId, "Entered discussion phase", 'discussion_phase');
+			Helper::createGrantTracking($proposalId, "Entered discussion phase", 'discussion_phase');
 
 			return ['success' => true];
 		}
@@ -768,11 +763,11 @@ class UserController extends Controller
 		return ['success' => false];
 	}
 
-	// Stake Reputation
+	// * Stake Reputation
 	public function stakeReputation($proposalId, Request $request) {
 		$user = Auth::user();
 		$dos_fee_amount = $setting['dos_fee_amount'] ?? 0;
-		if ($user && $user->hasRole('member')) {
+		if ($user && $user->hasRole('member') && $user->email_verified) {
 			// Member Check
 			$profile = Profile::where('user_id', $user->id)->first();
 			if (!$profile) {
@@ -831,7 +826,7 @@ class UserController extends Controller
 				$reputation->save();
 			}
 
-            // Create Change Record
+      // Create Change Record
 			$proposalChange = new ProposalChange;
 			$proposalChange->proposal_id = $proposalId;
 			$proposalChange->user_id = $user->id;
@@ -839,8 +834,8 @@ class UserController extends Controller
 			$proposalChange->save();
 
 			// Emailer Member
-            $emailerData = Helper::getEmailerData();
-            Helper::triggerMemberEmail('New Proposal Discussion', $emailerData, $proposal);
+      $emailerData = Helper::getEmailerData();
+      Helper::triggerMemberEmail('New Proposal Discussion', $emailerData, $proposal);
 			Helper::createGrantTracking($proposalId, "Entered discussion phase", 'discussion_phase');
 
 			return ['success' => true];
@@ -849,11 +844,11 @@ class UserController extends Controller
 		return ['success' => false];
 	}
 
-	// Update Payment Form
+	// * Update Payment Form
 	public function updatePaymentForm($proposalId, Request $request) {
 		$user = Auth::user();
 
-		if ($user && $user->hasRole(['participant', 'member'])) {
+		if ($user && $user->hasRole(['participant', 'member']) && $user->email_verified) {
 			$bank_name = $request->get('bank_name');
 			$iban_number = $request->get('iban_number');
 			$swift_number = $request->get('swift_number');
@@ -929,34 +924,16 @@ class UserController extends Controller
 		return ['success' => false];
 	}
 
-	public function testStripe() {
-		ini_set('display_errors', 1);
-		error_reporting(E_ALL);
-
-		$stripe = new \Stripe\StripeClient(
-			config('services.stripe.sk_live')
-		);
-		$paymentIntent = $stripe->paymentIntents->create([
-		  'amount' => 100,
-		  'currency' => 'eur',
-		  // 'payment_method_types' => ['card'],
-		]);
-	}
-
-	// Create Payment Intent
+	// * Create Payment Intent
 	public function createPaymentIntent(Request $request) {
-		/*
-		config('services.stripe.sk_live')
-		config('services.stripe.sk_test')
-		*/
-
 		$user = Auth::user();
 		$amount = (float) $request->get('amount');
 
 		if (
 			$user &&
 			$user->hasRole(['participant', 'member']) &&
-			$amount > 0
+			$amount > 0 &&
+			$user->email_verified
 		) {
 			$amount = (int) (100 * $amount);
 
@@ -1011,11 +988,11 @@ class UserController extends Controller
 		return ['success' => false];
 	}
 
-	// Update Payment Proposal - ETH
+	// * Update Payment Proposal - ETH
 	public function updatePaymentProposal($proposalId, Request $request) {
 		$user = Auth::user();
 		$dos_fee_amount = $setting['dos_fee_amount'] ?? 0;
-		if ($user && $user->hasRole(['participant', 'member'])) {
+		if ($user && $user->hasRole(['participant', 'member']) && $user->email_verified) {
 			$dos_txid = $request->get('dos_txid');
 			$dos_eth_amount = (float) $request->get('dos_eth_amount');
 
@@ -1058,7 +1035,7 @@ class UserController extends Controller
 			$proposal->rep = 0;
 			$proposal->save();
 
-            // Create Change Record
+      // Create Change Record
 			$proposalChange = new ProposalChange;
 			$proposalChange->proposal_id = $proposalId;
 			$proposalChange->user_id = $user->id;
@@ -1066,8 +1043,8 @@ class UserController extends Controller
 			$proposalChange->save();
 
 			// Emailer Admin
-            $emailerData = Helper::getEmailerData();
-            Helper::triggerAdminEmail('DOS Fee Paid', $emailerData, $proposal);
+      $emailerData = Helper::getEmailerData();
+      Helper::triggerAdminEmail('DOS Fee Paid', $emailerData, $proposal);
 
 			return ['success' => true];
 		}
@@ -1075,11 +1052,11 @@ class UserController extends Controller
 		return ['success' => false];
 	}
 
-	// Approve Proposal Change
+	// * Approve Proposal Change
 	public function approveProposalChange($proposalChangeId, Request $request) {
 		$user = Auth::user();
 
-		if ($user && $user->hasRole(['participant', 'member'])) {
+		if ($user && $user->hasRole(['participant', 'member']) && $user->email_verified) {
 			$proposalChange = ProposalChange::find($proposalChangeId);
 			if (!$proposalChange) {
 				return [
@@ -1224,11 +1201,11 @@ class UserController extends Controller
 		return ['success' => false];
 	}
 
-	// Deny Proposal Change
+	// * Deny Proposal Change
 	public function denyProposalChange($proposalChangeId, Request $request) {
 		$user = Auth::user();
 
-		if ($user && $user->hasRole(['participant', 'member'])) {
+		if ($user && $user->hasRole(['participant', 'member']) && $user->email_verified) {
 			$proposalChange = ProposalChange::find($proposalChangeId);
 			if (!$proposalChange) {
 				return [
@@ -1278,11 +1255,11 @@ class UserController extends Controller
 		return ['success' => false];
 	}
 
-	// Withdraw Proposal Change
+	// * Withdraw Proposal Change
 	public function withdrawProposalChange($proposalChangeId, Request $request) {
 		$user = Auth::user();
 
-		if ($user && $user->hasRole(['participant', 'member'])) {
+		if ($user && $user->hasRole(['participant', 'member']) && $user->email_verified) {
 			$proposalChange = ProposalChange::find($proposalChangeId);
 			if (!$proposalChange) {
 				return [
@@ -1332,11 +1309,11 @@ class UserController extends Controller
 		return ['success' => false];
 	}
 
-	// Submit Vote
+	// * Submit Vote
 	public function submitVote(Request $request) {
 		$user = Auth::user();
 
-		if ($user && $user->hasRole('member')) {
+		if ($user && $user->hasRole('member') && $user->email_verified) {
 			// Validator
 	    $validator = Validator::make($request->all(), [
 	    	'proposalId' => 'required',
@@ -1354,12 +1331,13 @@ class UserController extends Controller
 	    $voteId = (int) $request->get('voteId');
 	    $type = $request->get('type');
 	    $value = (float) $request->get('value');
-		if($value <= 0) {
-			return [
+
+			if($value <= 0) {
+				return [
 	    		'success' => false,
 	    		'message' => 'Invalid value'
 	    	];
-		}
+			}
 
 	    // Vote Check
 	    $vote = Vote::find($voteId);
@@ -1434,7 +1412,8 @@ class UserController extends Controller
 	    if ($vote->type == "formal") {
 		    $profile->rep = (float) $profile->rep - $value;
 		    $profile->save();
-			Helper::createRepHistory($profile->user_id, - $value, $profile->rep, 'Staked', 'Proposal Vote', $proposalId, $voteResult->id, 'submitVote');
+
+				Helper::createRepHistory($profile->user_id, - $value, $profile->rep, 'Staked', 'Proposal Vote', $proposalId, $voteResult->id, 'submitVote');
 
 		    // Create Reputation Track
 		    if ($value != 0) {
@@ -1463,11 +1442,11 @@ class UserController extends Controller
 		return ['success' => false];
 	}
 
-	// Submit Proposal Change Comment
+	// * Submit Proposal Change Comment
 	public function submitProposalChangeComment(Request $request) {
 		$user = Auth::user();
 
-		if ($user && $user->hasRole(['participant', 'member'])) {
+		if ($user && $user->hasRole(['participant', 'member']) && $user->email_verified) {
 			// Validator
 	    $validator = Validator::make($request->all(), [
 	    	'proposalChange' => 'required',
@@ -1521,18 +1500,18 @@ class UserController extends Controller
 		return ['success' => false];
 	}
 
-	// Submit Proposal Change
+	// * Submit Proposal Change
 	public function submitProposalChange(Request $request) {
 		$user = Auth::user();
 
-		if ($user && $user->hasRole(['participant', 'member'])) {
+		if ($user && $user->hasRole(['participant', 'member']) && $user->email_verified) {
 			// Validator
 	    $validator = Validator::make($request->all(), [
 	    	'proposal' => 'required',
 	      'what_section' => 'required',
-	      	// 'change_to' => 'required',
+	      // 'change_to' => 'required',
 	    	// 'additional_notes' => 'required',
-		]);
+			]);
 	    if ($validator->fails()) {
 	    	return [
 	    		'success' => false,
@@ -1545,13 +1524,13 @@ class UserController extends Controller
 
 	    $what_section = $request->get('what_section');
 	    $change_to = $request->get('change_to');
-		$additional_notes = $request->get('additional_notes');
-		if ($what_section != 'extra_notes_update' && !$additional_notes) {
-			return [
+			$additional_notes = $request->get('additional_notes');
+			if ($what_section != 'extra_notes_update' && !$additional_notes) {
+				return [
 	    		'success' => false,
 	    		'message' => 'Provide all the necessary information'
 	    	];
-		}
+			}
 
 			$grant = (float) $request->get('grant');
 			$grant = round($grant, 2);
@@ -1583,11 +1562,11 @@ class UserController extends Controller
 		return ['success' => false];
 	}
 
-	// Submit Simple Proposal
+	// * Submit Simple Proposal
 	public function submitSimpleProposal(Request $request) {
 		$user = Auth::user();
 
-		if ($user && $user->hasRole('member')) {
+		if ($user && $user->hasRole('member') && $user->email_verified) {
 			// Validator
 	    $validator = Validator::make($request->all(), [
 	      'title' => 'required',
@@ -1633,11 +1612,11 @@ class UserController extends Controller
 		return ['success' => false];
 	}
 
-	// Submit Simple Proposal
+	// * Submit Simple Proposal
 	public function submitAdminGrantProposal(Request $request) {
 		$user = Auth::user();
 
-		if ($user && $user->hasRole('member')) {
+		if ($user && $user->hasRole('member') && $user->email_verified) {
 			// Validator
 			$validator = Validator::make($request->all(), [
 			'title' => 'required',
@@ -1725,12 +1704,13 @@ class UserController extends Controller
 		}
 
 		return ['success' => false];
-    }
+  }
 
-    public function submitAdvancePaymentProposal(Request $request)
-    {
+  // * Submit Advanced Payment Proposal
+  public function submitAdvancePaymentProposal(Request $request)
+  {
 		$user = Auth::user();
-		if ($user && $user->hasRole('member')) {
+		if ($user && $user->hasRole('member') && $user->email_verified) {
 			// Validator
 			$validator = Validator::make($request->all(), [
                 'total_grant' => 'required',
@@ -1743,16 +1723,19 @@ class UserController extends Controller
 					'message' => 'Provide all the necessary information'
 				];
 			}
-            $proposalRequest = Proposal::where('status', '!=', 'completed')->where('id', $request->proposal_id)->first();
-            if(!$proposalRequest ) {
-                return [
+      $proposalRequest = Proposal::where('status', '!=', 'completed')
+      														->where('id', $request->proposal_id)
+      														->first();
+      if(!$proposalRequest ) {
+      	return [
 					'success' => false,
 					'message' => 'Provide request invalid'
 				];
-            }
+      }
+
 			$names = $request->get('names');
 			$files = $request->file('files');
-            $title = "Payment advance for grant $request->proposal_id";
+      $title = "Payment advance for grant $request->proposal_id";
 			$proposal = Proposal::where('title', $title)->first();
 			if ($proposal) {
 				return [
@@ -1819,13 +1802,13 @@ class UserController extends Controller
 		}
 
 		return ['success' => false];
-    }
+  }
 
-	// Check Sponsor Code
+	// * Check Sponsor Code
 	public function checkSponsorCode(Request $request) {
 		$user = Auth::user();
 
-		if ($user && $user->hasRole('participant')) {
+		if ($user && $user->hasRole('participant') && $user->email_verified) {
 			$code = $request->get('code');
 			if (!$code) return ['success' => false];
 
@@ -1846,12 +1829,12 @@ class UserController extends Controller
 		return ['success' => false];
 	}
 
-	// Get Sponsor Codes
+	// * Get Sponsor Codes
 	public function getSponsorCodes(Request $request) {
 		$user = Auth::user();
 		$codes = [];
 
-		if ($user && $user->hasRole('member')) {
+		if ($user && $user->hasRole('member') && $user->email_verified) {
 			$sort_key = $sort_direction = $search = '';
 			$data = $request->all();
 			if ($data && is_array($data)) extract($data);
@@ -1870,11 +1853,11 @@ class UserController extends Controller
 		];
 	}
 
-	// Revoke Sponsor Code
+	// * Revoke Sponsor Code
 	public function revokeSponsorCode($codeId, Request $request) {
 		$user = Auth::user();
 
-		if ($user && $user->hasRole('member')) {
+		if ($user && $user->hasRole('member') && $user->email_verified) {
 			$codeObject = SponsorCode::find($codeId);
 			if (!$codeObject || $codeObject->user_id != $user->id || $codeObject->used) {
 				return [
@@ -1894,7 +1877,7 @@ class UserController extends Controller
 	public function createSponsorCode(Request $request) {
 		$user = Auth::user();
 
-		if ($user && $user->hasRole('member')) {
+		if ($user && $user->hasRole('member') && $user->email_verified) {
 			$code = Helper::generateRandomString(6);
 			$codeObject = SponsorCode::where('code', $code)->first();
 			if ($codeObject) return ['success' => false];
@@ -1927,7 +1910,7 @@ class UserController extends Controller
 	{
 		$user = Auth::user();
 
-		if ($user && $user->hasRole(['participant', 'member'])) {
+		if ($user && $user->hasRole(['participant', 'member']) && $user->email_verified) {
 			// Validator
 			$validator = Validator::make($request->all(), [
 				'proposalId' => 'required',
@@ -1953,7 +1936,9 @@ class UserController extends Controller
 			$url = $request->get('url');
 			$comment = $request->get('comment');
 
-			$finalGrant = FinalGrant::where('proposal_id', $proposalId)->where('status', 'active')->first();
+			$finalGrant = FinalGrant::where('proposal_id', $proposalId)
+															->where('status', 'active')
+															->first();
 			$milestone = Milestone::find($milestoneId);
 
 			if (
@@ -2027,8 +2012,6 @@ class UserController extends Controller
 					$finalGrant->milestones_submitted = (int) $finalGrant->milestones_submitted + 1;
 					$finalGrant->save();
 
-
-
 					$emailerData = Helper::getEmailerData();
 					Helper::triggerUserEmail($user, 'Milestone Submitted', $emailerData);
 
@@ -2062,12 +2045,12 @@ class UserController extends Controller
 		return ['success' => false];
 	}
 
-	// Submit Proposal
+	// * Submit Proposal
 	public function submitProposal(Request $request)
 	{
 		$user = Auth::user();
 
-		if ($user && $user->hasRole(['participant', 'member'])) {
+		if ($user && $user->hasRole(['participant', 'member']) && $user->email_verified) {
 			// Validator
 			$validator = Validator::make($request->all(), [
 				'title' => 'required',
@@ -2450,10 +2433,11 @@ class UserController extends Controller
 		return ['success' => false];
 	}
 
+	// * Associate Agreement
 	public function associateAgreement()
 	{
 		$user = Auth::user();
-		if ($user && $user->hasRole(['participant', 'member'])) {
+		if ($user && $user->hasRole(['participant', 'member']) && $user->email_verified) {
 			$profile = $user->profile;
 			if (!$profile) {
 				return ['success' => false];
@@ -2480,11 +2464,11 @@ class UserController extends Controller
 		return ['success' => true];
 	}
 
-	// Start Formal Milestone Voting
+	// * Start Formal Milestone Voting
 	public function startFormalMilestoneVoting(Request $request, $proposalId) {
 		$user = Auth::user();
 
-		if ($user && $user->hasRole(['participant', 'member'])) {
+		if ($user && $user->hasRole(['participant', 'member']) && $user->email_verified) {
 			$voteId = (int) $request->get('voteId');
 
 			$proposal = Proposal::find($proposalId);
@@ -2547,7 +2531,7 @@ class UserController extends Controller
 	public function submitDraftProposal(Request $request)
 	{
 		$user = Auth::user();
-		if ($user && $user->hasRole(['participant', 'member'])) {
+		if ($user && $user->hasRole(['participant', 'member']) && $user->email_verified) {
 			$title = $request->title;
 			if (!$title) {
 				return [
@@ -2618,26 +2602,30 @@ class UserController extends Controller
 	public function getDraftProposal(Request $request)
 	{
 		$user = Auth::user();
-		// Variables
-		$sort_key = $sort_direction = '';
-		$page_id = 0;
-		$data = $request->all();
-		if ($data && is_array($data)) extract($data);
+		$proposals = [];
 
-		if (!$sort_key) $sort_key = 'proposal_draft.updated_at';
-		if (!$sort_direction) $sort_direction = 'desc';
-		$page_id = (int) $page_id;
-		if ($page_id <= 0) $page_id = 1;
+		if ($user && $user->email_verified) {
+			// Variables
+			$sort_key = $sort_direction = '';
+			$page_id = 0;
+			$data = $request->all();
+			if ($data && is_array($data)) extract($data);
 
-		$limit = 30;
-		$start = $limit * ($page_id - 1);
+			if (!$sort_key) $sort_key = 'proposal_draft.updated_at';
+			if (!$sort_direction) $sort_direction = 'desc';
+			$page_id = (int) $page_id;
+			if ($page_id <= 0) $page_id = 1;
 
-		// Records
-		$proposals = ProposalDraft::where('user_id', $user->id)
-			->orderBy($sort_key, $sort_direction)
-			->offset($start)
-			->limit($limit)
-			->get();
+			$limit = 30;
+			$start = $limit * ($page_id - 1);
+
+			// Records
+			$proposals = ProposalDraft::where('user_id', $user->id)
+				->orderBy($sort_key, $sort_direction)
+				->offset($start)
+				->limit($limit)
+				->get();
+		}
 		return [
 			'success' => true,
 			'proposals' => $proposals,
@@ -2648,12 +2636,14 @@ class UserController extends Controller
 	public function getDraftProposalDetail($id)
 	{
 		$user = Auth::user();
-		$proposal = ProposalDraft::with(['files'])->where('user_id', $user->id)->where('id', $id)->first();
-		if ($proposal) {
-			return [
-				'success' => true,
-				'proposal' => $proposal,
-			];
+		if ($user && $user->email_verified) {
+			$proposal = ProposalDraft::with(['files'])->where('user_id', $user->id)->where('id', $id)->first();
+			if ($proposal) {
+				return [
+					'success' => true,
+					'proposal' => $proposal,
+				];
+			}
 		}
 		return [
 			'success' => false,
@@ -2664,13 +2654,17 @@ class UserController extends Controller
 	public function deleteDraftProposal($id)
 	{
 		$user = Auth::user();
-		$proposal = ProposalDraft::where('user_id', $user->id)->where('id', $id)->first();
-		if ($proposal) {
-			$proposal->delete();
-			return [
-				'success' => true,
-			];
+
+		if ($user && $user->email_verified) {
+			$proposal = ProposalDraft::where('user_id', $user->id)->where('id', $id)->first();
+			if ($proposal) {
+				$proposal->delete();
+				return [
+					'success' => true,
+				];
+			}
 		}
+
 		return [
 			'success' => false,
 			'message' => 'Proposal draft not found'
@@ -2680,7 +2674,7 @@ class UserController extends Controller
 	public function submitSurvey(Request $request, $id)
 	{
 		$user = Auth::user();
-		if ($user->hasRole('member') || true) {
+		if ($user && $user->hasRole('member') $user->email_verified) {
 			$survey = Survey::where('id', $id)->where('status', 'active')->first();
 			if (!$survey) {
 				return [
@@ -2779,37 +2773,44 @@ class UserController extends Controller
 	public function getCurentSurvey()
 	{
 		$user = Auth::user();
-		$survey = Survey::with(['surveyRanks' => function ($q) {
-				$q->orderBy('rank', 'desc');
-			}])
-			->with(['surveyRanks.proposal'])
-			->with(['surveyDownvoteRanks' => function ($q) {
-				$q->orderBy('rank', 'desc');
-			}])
-			->with(['surveyDownvoteRanks.proposal'])
-			->with(['surveyRfpRanks' => function ($q) {
-				$q->orderBy('rank', 'desc');
-			}])
-			->with(['surveyRfpRanks.surveyRfpBid', 'surveyRfpBids'])
 
-			->orderBy('created_at', 'desc')->first();
+		if ($user && $user->email_verified) {
+			$survey = Survey::with(['surveyRanks' => function ($q) {
+					$q->orderBy('rank', 'desc');
+				}])
+				->with(['surveyRanks.proposal'])
+				->with(['surveyDownvoteRanks' => function ($q) {
+					$q->orderBy('rank', 'desc');
+				}])
+				->with(['surveyDownvoteRanks.proposal'])
+				->with(['surveyRfpRanks' => function ($q) {
+					$q->orderBy('rank', 'desc');
+				}])
+				->with(['surveyRfpRanks.surveyRfpBid', 'surveyRfpBids'])
 
-		if (!$survey) {
+				->orderBy('created_at', 'desc')->first();
+
+			if (!$survey) {
+				return [
+					'success' => false,
+					'message' => 'Not found survey'
+				];
+			}
+			$survey_result = SurveyResult::where('survey_id', $survey->id)->where('user_id', $user->id)->count();
+			$survey->is_submitted = $survey_result > 0 ? true : false;
+			$time_left = null;
+			if ($survey->status == 'active') {
+				$time_left = Carbon::parse($survey->end_time)->diff(now())->format('%dd %hh:%mm');;
+			}
+			$survey->time_left = $time_left;
 			return [
-				'success' => false,
-				'message' => 'Not found survey'
+				'success' => true,
+				'survey' => $survey,
 			];
 		}
-		$survey_result = SurveyResult::where('survey_id', $survey->id)->where('user_id', $user->id)->count();
-		$survey->is_submitted = $survey_result > 0 ? true : false;
-		$time_left = null;
-		if ($survey->status == 'active') {
-			$time_left = Carbon::parse($survey->end_time)->diff(now())->format('%dd %hh:%mm');;
-		}
-		$survey->time_left = $time_left;
 		return [
-			'success' => true,
-			'survey' => $survey,
+			'success' => false,
+			'message' => 'Not found survey'
 		];
 	}
 
@@ -2817,7 +2818,7 @@ class UserController extends Controller
 	{
 		$user = Auth::user();
 
-		if ($user) {
+		if ($user && $user->email_verified) {
 			$proposalDraftId = (int) $request->get('proposal_draft_id');
 			$proposalDraft = ProposalDraft::where('id', $proposalDraftId)->where('user_id', $user->id)->first();
 			$ids_to_remove = $request->get('ids_to_remove');
@@ -2873,214 +2874,234 @@ class UserController extends Controller
 
 	public function getListUserVA(Request $request)
 	{
-		// Variables
-		$sort_key = $sort_direction = $search = '';
-		$page_id = 0;
-		$data = $request->all();
-		if ($data && is_array($data)) extract($data);
+		$user = Auth::user();
 
-		if (!$sort_key) $sort_key = 'id';
-		if (!$sort_direction) $sort_direction = 'desc';
-		$page_id = (int) $page_id;
-		if ($page_id <= 0) $page_id = 1;
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
-		$start = $limit * ($page_id - 1);
+		if ($user && $user->email_verified) {
+			// Variables
+			$sort_key = $sort_direction = $search = '';
+			$page_id = 0;
+			$data = $request->all();
+			if ($data && is_array($data)) extract($data);
 
-		// Records
-		$users = User::join('profile', 'users.id', '=', 'profile.user_id')
-		->where('users.is_admin', 0)
-		->where('users.is_guest', 0)
-		->where('can_access', 1)
-		->where('users.is_member', 1)
-		->where(function ($query) use ($search) {
-			if ($search) {
-				$query->where('users.first_name', 'like', '%' . $search . '%')
-					->orWhere('users.last_name', 'like', '%' . $search . '%')
-					->orWhere('users.email', 'like', '%' . $search . '%');
-			}
-		})
-		->select([
-			'users.*',
-			'profile.company',
-			'profile.dob',
-			'profile.country_citizenship',
-			'profile.country_residence',
-			'profile.address',
-			'profile.city',
-			'profile.zip',
-			'profile.step_review',
-			'profile.step_kyc',
-			'profile.rep',
-			'profile.forum_name',
-			'profile.telegram',
-		])->get();
-		foreach ($users as $user) {
-			$member_at = Carbon::parse($user->member_at)->format('Y-m-d');
-				$total_informal_votes = Vote::where('type', 'informal')->where('result', '!=', 'no-quorum')
-					->where('created_at', '>=', $member_at)
+			if (!$sort_key) $sort_key = 'id';
+			if (!$sort_direction) $sort_direction = 'desc';
+			$page_id = (int) $page_id;
+			if ($page_id <= 0) $page_id = 1;
+			$limit = isset($data['limit']) ? $data['limit'] : 10;
+			$start = $limit * ($page_id - 1);
+
+			// Records
+			$users = User::join('profile', 'users.id', '=', 'profile.user_id')
+			->where('users.is_admin', 0)
+			->where('users.is_guest', 0)
+			->where('can_access', 1)
+			->where('users.is_member', 1)
+			->where(function ($query) use ($search) {
+				if ($search) {
+					$query->where('users.first_name', 'like', '%' . $search . '%')
+						->orWhere('users.last_name', 'like', '%' . $search . '%')
+						->orWhere('users.email', 'like', '%' . $search . '%');
+				}
+			})
+			->select([
+				'users.*',
+				'profile.company',
+				'profile.dob',
+				'profile.country_citizenship',
+				'profile.country_residence',
+				'profile.address',
+				'profile.city',
+				'profile.zip',
+				'profile.step_review',
+				'profile.step_kyc',
+				'profile.rep',
+				'profile.forum_name',
+				'profile.telegram',
+			])->get();
+			foreach ($users as $user) {
+				$member_at = Carbon::parse($user->member_at)->format('Y-m-d');
+					$total_informal_votes = Vote::where('type', 'informal')->where('result', '!=', 'no-quorum')
+						->where('created_at', '>=', $member_at)
+						->whereHas('proposal', function ($query) use ($user) {
+							$query->where('proposal.user_id', '!=', $user->id);
+						})->count();
+					$total_voted = VoteResult::join('vote', 'vote.id', '=', 'vote_result.vote_id')
+					->where('vote_result.user_id', $user->id)->where('vote.type', 'informal')
+					->where('vote.result', '!=', 'no-quorum')->where('vote.created_at', '>=', $member_at)->count();
+				$user->total_vote_percent = $total_informal_votes > 0 ? ($total_voted / $total_informal_votes) * 100 : 0 ;
+				$total_staked = DB::table('reputation')
+				->where('user_id', $user->id)
+					->where('type', 'Staked')
+					->sum('staked');
+				$user->total_rep = abs($total_staked) + $user->rep;
+
+				// get last month
+				$firstDayofPreviousMonth = Carbon::now()->startOfMonth()->subMonth()->format('Y-m-d');
+				$lastDayofPreviousMonth = Carbon::now()->subMonth()->endOfMonth()->format('Y-m-d');
+				$start_date = $member_at >= $firstDayofPreviousMonth  ?  $member_at : $firstDayofPreviousMonth;
+				$last_month_informal_votes = Vote::where('type', 'informal')
+					->where('vote.result', '!=', 'no-quorum')
 					->whereHas('proposal', function ($query) use ($user) {
 						$query->where('proposal.user_id', '!=', $user->id);
+					})
+					->where(function ($query) use ($start_date, $lastDayofPreviousMonth) {
+						if ($start_date) {
+							$query->whereDate('created_at', '>=', $start_date);
+						}
+						if ($lastDayofPreviousMonth) {
+							$query->whereDate('created_at', '<=', $lastDayofPreviousMonth);
+						}
 					})->count();
-				$total_voted = VoteResult::join('vote', 'vote.id', '=', 'vote_result.vote_id')
+				$last_month_voted = VoteResult::join('vote', 'vote.id', '=', 'vote_result.vote_id')
 				->where('vote_result.user_id', $user->id)->where('vote.type', 'informal')
-				->where('vote.result', '!=', 'no-quorum')->where('vote.created_at', '>=', $member_at)->count();
-			$user->total_vote_percent = $total_informal_votes > 0 ? ($total_voted / $total_informal_votes) * 100 : 0 ;
-			$total_staked = DB::table('reputation')
-			->where('user_id', $user->id)
-				->where('type', 'Staked')
-				->sum('staked');
-			$user->total_rep = abs($total_staked) + $user->rep;
-
-			// get last month
-			$firstDayofPreviousMonth = Carbon::now()->startOfMonth()->subMonth()->format('Y-m-d');
-			$lastDayofPreviousMonth = Carbon::now()->subMonth()->endOfMonth()->format('Y-m-d');
-			$start_date = $member_at >= $firstDayofPreviousMonth  ?  $member_at : $firstDayofPreviousMonth;
-			$last_month_informal_votes = Vote::where('type', 'informal')
 				->where('vote.result', '!=', 'no-quorum')
-				->whereHas('proposal', function ($query) use ($user) {
-					$query->where('proposal.user_id', '!=', $user->id);
-				})
 				->where(function ($query) use ($start_date, $lastDayofPreviousMonth) {
 					if ($start_date) {
-						$query->whereDate('created_at', '>=', $start_date);
+						$query->whereDate('vote.created_at', '>=', $start_date);
 					}
 					if ($lastDayofPreviousMonth) {
-						$query->whereDate('created_at', '<=', $lastDayofPreviousMonth);
+						$query->whereDate('vote.created_at', '<=', $lastDayofPreviousMonth);
 					}
 				})->count();
-			$last_month_voted = VoteResult::join('vote', 'vote.id', '=', 'vote_result.vote_id')
-			->where('vote_result.user_id', $user->id)->where('vote.type', 'informal')
-			->where('vote.result', '!=', 'no-quorum')
-			->where(function ($query) use ($start_date, $lastDayofPreviousMonth) {
-				if ($start_date) {
-					$query->whereDate('vote.created_at', '>=', $start_date);
-				}
-				if ($lastDayofPreviousMonth) {
-					$query->whereDate('vote.created_at', '<=', $lastDayofPreviousMonth);
-				}
-			})->count();
-			$user->last_month_vote_percent = $last_month_informal_votes > 0 ? ($last_month_voted / $last_month_informal_votes) * 100 : 0 ;
+				$user->last_month_vote_percent = $last_month_informal_votes > 0 ? ($last_month_voted / $last_month_informal_votes) * 100 : 0 ;
 
-			$firstDayofMonth = Carbon::now()->startOfMonth()->format('Y-m-d');
-			$start_date = $member_at >= $firstDayofMonth  ?  $member_at : $firstDayofMonth;
-			$this_month_informal_votes = Vote::where('type', 'informal')
+				$firstDayofMonth = Carbon::now()->startOfMonth()->format('Y-m-d');
+				$start_date = $member_at >= $firstDayofMonth  ?  $member_at : $firstDayofMonth;
+				$this_month_informal_votes = Vote::where('type', 'informal')
+					->where('vote.result', '!=', 'no-quorum')
+					->whereHas('proposal', function ($query) use ($user) {
+						$query->where('proposal.user_id', '!=', $user->id);
+					})
+					->where(function ($query) use ($start_date) {
+						if ($start_date) {
+							$query->whereDate('created_at', '>=', $start_date);
+						}
+					})->count();
+				$this_month_voted = VoteResult::join('vote', 'vote.id', '=', 'vote_result.vote_id')
+				->where('vote_result.user_id', $user->id)->where('vote.type', 'informal')
 				->where('vote.result', '!=', 'no-quorum')
-				->whereHas('proposal', function ($query) use ($user) {
-					$query->where('proposal.user_id', '!=', $user->id);
-				})
 				->where(function ($query) use ($start_date) {
 					if ($start_date) {
-						$query->whereDate('created_at', '>=', $start_date);
+						$query->whereDate('vote.created_at', '>=', $start_date);
 					}
 				})->count();
-			$this_month_voted = VoteResult::join('vote', 'vote.id', '=', 'vote_result.vote_id')
-			->where('vote_result.user_id', $user->id)->where('vote.type', 'informal')
-			->where('vote.result', '!=', 'no-quorum')
-			->where(function ($query) use ($start_date) {
-				if ($start_date) {
-					$query->whereDate('vote.created_at', '>=', $start_date);
-				}
-			})->count();
-			$user->this_month_vote_percent = $this_month_voted > 0 ? ($this_month_voted / $this_month_informal_votes) * 100 : 0 ;
+				$user->this_month_vote_percent = $this_month_voted > 0 ? ($this_month_voted / $this_month_informal_votes) * 100 : 0 ;
+			}
+			if ($sort_direction == 'asc') {
+				$sorted = $users->sortBy($sort_key)->values();
+			} else {
+				$sorted = $users->sortByDesc($sort_key)->values();
+			}
+			$response = $sorted->slice($start, $limit)->values();
+			return [
+				'success' => true,
+				'total_members' => Helper::getTotalMembers(),
+				'users' => $response,
+				'finished' => count($response) < $limit ? true : false
+			];
 		}
-		if ($sort_direction == 'asc') {
-			$sorted = $users->sortBy($sort_key)->values();
-		} else {
-			$sorted = $users->sortByDesc($sort_key)->values();
-		}
-		$response = $sorted->slice($start, $limit)->values();
 		return [
 			'success' => true,
-			'total_members' => Helper::getTotalMembers(),
-			'users' => $response,
-			'finished' => count($response) < $limit ? true : false
+			'total_members' => 0,
+			'users' => [],
+			'finished' => false
 		];
 	}
 
 	public function sendKycKangaroo()
 	{
 		$user = Auth::user();
-		$shuftipro_temp = ShuftiproTemp::where('user_id', $user->id)->first();
-		$invite_id =  $shuftipro_temp->invite_id ?? null;
-		$shuftipro = Shuftipro::where('user_id', $user->id)->where('status', 'approved')->first();
-		if(!$shuftipro) {
-			ShuftiproTemp::where('user_id', $user->id)->delete();
-			$kyc_response = Helper::inviteKycKangaroo("$user->first_name $user->last_name", $user->email, $invite_id);
-			if(isset($kyc_response['success']) && $kyc_response['success'] == false) {
-				Helper::processKycKangaroo($kyc_response, $user->id);
+		if ($user && $user->email_verified) {
+			$shuftipro_temp = ShuftiproTemp::where('user_id', $user->id)->first();
+			$invite_id =  $shuftipro_temp->invite_id ?? null;
+			$shuftipro = Shuftipro::where('user_id', $user->id)->where('status', 'approved')->first();
+			if(!$shuftipro) {
+				ShuftiproTemp::where('user_id', $user->id)->delete();
+				$kyc_response = Helper::inviteKycKangaroo("$user->first_name $user->last_name", $user->email, $invite_id);
+				if(isset($kyc_response['success']) && $kyc_response['success'] == false) {
+					Helper::processKycKangaroo($kyc_response, $user->id);
+					return [
+						'success' => false,
+						'message' => $kyc_response['message'] ?? '',
+						'invite' => $kyc_response['invite'] ?? ''
+					];
+				}
+				$shuftipro_temp = new ShuftiproTemp();
+				$shuftipro_temp->user_id = $user->id;
+				$shuftipro_temp->reference_id = '';
+				$shuftipro_temp->status = 'booked';
+				$shuftipro_temp->invite_id = $kyc_response['invite_id'] ?? null;
+				$shuftipro_temp->invited_at = now();
+				$shuftipro_temp->save();
+				return [
+					'success' => true,
+				];
+			} else {
 				return [
 					'success' => false,
-					'message' => $kyc_response['message'] ?? '',
-					'invite' => $kyc_response['invite'] ?? ''
 				];
 			}
-			$shuftipro_temp = new ShuftiproTemp();
-			$shuftipro_temp->user_id = $user->id;
-			$shuftipro_temp->reference_id = '';
-			$shuftipro_temp->status = 'booked';
-			$shuftipro_temp->invite_id = $kyc_response['invite_id'] ?? null;
-			$shuftipro_temp->invited_at = now();
-			$shuftipro_temp->save();
-			return [
-				'success' => true,
-			];
-		} else {
-			return [
-				'success' => false,
-			];
 		}
+		return [
+			'success' => false,
+		];
 	}
 
-	// Get Reputation Track
+	// * Get Reputation Track
 	public function exportCSVReputationTrack(Request $request)
 	{
 		$user = Auth::user();
-		// Variables
-		$sort_key = $sort_direction = $search = '';
-		$data = $request->all();
-		if ($data && is_array($data)) extract($data);
+		if ($user && $user->email_verified) {
+			// Variables
+			$sort_key = $sort_direction = $search = '';
+			$data = $request->all();
+			if ($data && is_array($data)) extract($data);
 
-		if (!$sort_key) $sort_key = 'reputation.id';
-		if (!$sort_direction) $sort_direction = 'desc';
+			if (!$sort_key) $sort_key = 'reputation.id';
+			if (!$sort_direction) $sort_direction = 'desc';
 
-		$items = Reputation::leftJoin('proposal', 'proposal.id', '=', 'reputation.proposal_id')
-		->leftJoin('users', 'users.id', '=', 'proposal.user_id')
-		->where('reputation.user_id', $user->id)
-		->where(function ($query) use ($search) {
-			if ($search) {
-				$query->where('proposal.title', 'like', '%' . $search . '%')
-				->orWhere('reputation.type', 'like', '%' . $search . '%');
-			}
-		})
-		->select([
-			'reputation.*',
-			'proposal.include_membership',
-			'proposal.title as proposal_title',
-			'users.first_name as op_first_name',
-			'users.last_name as op_last_name'
-		])
-		->orderBy($sort_key, $sort_direction)
-		->get();
-		return Excel::download(new MyReputationExport($items), 'my_reputation.csv');
+			$items = Reputation::leftJoin('proposal', 'proposal.id', '=', 'reputation.proposal_id')
+			->leftJoin('users', 'users.id', '=', 'proposal.user_id')
+			->where('reputation.user_id', $user->id)
+			->where(function ($query) use ($search) {
+				if ($search) {
+					$query->where('proposal.title', 'like', '%' . $search . '%')
+					->orWhere('reputation.type', 'like', '%' . $search . '%');
+				}
+			})
+			->select([
+				'reputation.*',
+				'proposal.include_membership',
+				'proposal.title as proposal_title',
+				'users.first_name as op_first_name',
+				'users.last_name as op_last_name'
+			])
+			->orderBy($sort_key, $sort_direction)
+			->get();
+			return Excel::download(new MyReputationExport($items), 'my_reputation.csv');
+		}
 	}
 
 	public function checkMentor(Request $request)
 	{
 		$user = Auth::user();
-		$user = User::where('users.is_admin', 0)->where('users.id', '!=', $user->id)
-		->join('profile', 'users.id', '=', 'profile.user_id')
-		->where(function ($query) use ($request) {
-				$query->where('users.email', $request->name_mentor)
-				->orWhere('profile.forum_name',$request->name_mentor);
-		})->first();
-		if($user) {
-			return [
-				'success' => true,
-				'user' => $user,
-			];
-		} else {
-			return ['success' => false];
+		if ($user && $user->email_verified) {
+			$user = User::where('users.is_admin', 0)->where('users.id', '!=', $user->id)
+			->join('profile', 'users.id', '=', 'profile.user_id')
+			->where(function ($query) use ($request) {
+					$query->where('users.email', $request->name_mentor)
+					->orWhere('profile.forum_name',$request->name_mentor);
+			})->first();
+			if($user) {
+				return [
+					'success' => true,
+					'user' => $user,
+				];
+			} else {
+				return ['success' => false];
+			}
 		}
+		return ['success' => false];
 	}
 
 	public function settingDailyCSVReputation(Request $request)
@@ -3095,9 +3116,11 @@ class UserController extends Controller
 			];
 		}
 		$user = Auth::user();
-		$setting = $request->setting;
-		$user->notice_send_reputation = $setting;
-		$user->save();
+		if ($user && $user->email_verified) {
+			$setting = $request->setting;
+			$user->notice_send_reputation = $setting;
+			$user->save();
+		}
 		return [
 			'success' => true,
 		];
@@ -3113,29 +3136,35 @@ class UserController extends Controller
 	public function getMilestoneNotSubmit($proposalId)
 	{
 		$user = Auth::user();
-		$milestones = Milestone::where('milestone.proposal_id', $proposalId)
-			->doesntHave('votes')
-			->leftJoin('milestone_review', 'milestone.id', '=', 'milestone_review.milestone_id')
-			->where(function ($query) {
-				$query->where('milestone_review.status', 'denied')
-				->orWhere('milestone_review.status', null);
-			})
-			->select(['milestone.*'])
-			->orderBy('milestone.created_at', 'asc')
-			->get();
-		foreach ($milestones as $milestone) {
-			$milestone->milestone_posittion = Helper::getPositionMilestone($milestone);
+		if ($user && $user->email_verified) {
+			$milestones = Milestone::where('milestone.proposal_id', $proposalId)
+				->doesntHave('votes')
+				->leftJoin('milestone_review', 'milestone.id', '=', 'milestone_review.milestone_id')
+				->where(function ($query) {
+					$query->where('milestone_review.status', 'denied')
+					->orWhere('milestone_review.status', null);
+				})
+				->select(['milestone.*'])
+				->orderBy('milestone.created_at', 'asc')
+				->get();
+			foreach ($milestones as $milestone) {
+				$milestone->milestone_posittion = Helper::getPositionMilestone($milestone);
+			}
+			return [
+				'success' => true,
+				'milestones' => $milestones,
+			];
 		}
 		return [
 			'success' => true,
-			'milestones' => $milestones,
+			'milestones' => [],
 		];
 	}
 
 	public function submitDownVoteSurvey(Request $request, $id)
 	{
 		$user = Auth::user();
-		if ($user->hasRole('member')) {
+		if ($user && $user->hasRole('member') && $user->email_verified) {
 			$survey = Survey::where('id', $id)->where('status', 'active')->first();
 			if (!$survey) {
 				return [
@@ -3188,68 +3217,88 @@ class UserController extends Controller
 		}
 	}
 
+	// * Get Proposal Request Payment
 	public function getProposalRequestPayment(Request $request)
 	{
-        $user = Auth::user();
-		$propossal_request_payment_ids = Proposal::whereNotNull('proposal_request_payment')->pluck('proposal_request_payment');
-		$propossal_request_from_ids = Proposal::whereNotNull('proposal_request_from')->pluck('proposal_request_from');
-		$proposals = Proposal::where('status', '!=', 'completed')->where('type', 'grant')->where('user_id', $user->id)
-			->whereNotIn('id',$propossal_request_payment_ids->toArray())
-			->whereNotIn('id', $propossal_request_from_ids->toArray())
-			->get();
+  	$user = Auth::user();
+  	if ($user && $user->email_verified) {
+			$propossal_request_payment_ids = Proposal::whereNotNull('proposal_request_payment')->pluck('proposal_request_payment');
+			$propossal_request_from_ids = Proposal::whereNotNull('proposal_request_from')->pluck('proposal_request_from');
+			$proposals = Proposal::where('status', '!=', 'completed')->where('type', 'grant')->where('user_id', $user->id)
+				->whereNotIn('id',$propossal_request_payment_ids->toArray())
+				->whereNotIn('id', $propossal_request_from_ids->toArray())
+				->get();
+			return [
+				'success' => true,
+				'proposals' => $proposals,
+			];
+		}
 		return [
 			'success' => true,
-			'proposals' => $proposals,
+			'proposals' => [],
 		];
-
 	}
 
+	// * Check Show Unvoted Informal
 	public function checkShowUnvotedInformal(Request $request) {
 		$user = Auth::user();
-		$user->show_unvoted_informal = $request->check;
-		$user->save();
+
+		if ($user && $user->email_verified) {
+			$user->show_unvoted_informal = $request->check;
+			$user->save();
+		}
+
 		return ['success' => true];
 	}
 
+	// * Check Show Unvoted Formal
 	public function checkShowUnvotedFormal(Request $request) {
 		$user = Auth::user();
-		$user->show_unvoted_formal = $request->check;
-		$user->save();
+
+		if ($user && $user->email_verified) {
+			$user->show_unvoted_formal = $request->check;
+			$user->save();
+		}
+
 		return ['success' => true];
 	}
 
+	// * Get Shuftipro Status
 	public function getShuftiproStatus(Request $request)
 	{
 		$user = Auth::user();
-		$shuftiproTemp = ShuftiproTemp::where('user_id', $user->id)->first();
 
-		if ($shuftiproTemp->reference_id ?? false) {
-			$keys = [
-			'production' => [
-				'clientId' => config('services.shuftipro.client_id_prod'),
-				'clientSecret' => config('services.shuftipro.client_secret_prod'),
-			],
-			'test' => [
-				'clientId' => config('services.shuftipro.client_id_test'),
-				'clientSecret' => config('services.shuftipro.client_secret_test'),
-			]
-			];
+		if ($user && $user->email_verified) {
+			$shuftiproTemp = ShuftiproTemp::where('user_id', $user->id)->first();
 
-			$mode = 'production';
-
-			$url = 'https://api.shuftipro.com/status';
-			$client_id  = $keys[$mode]['clientId'];
-			$secret_key = $keys[$mode]['clientSecret'];
-
-			$response = Http::withBasicAuth($client_id, $secret_key)->post($url, [
-				'reference' => $shuftiproTemp->reference_id
-			]);
-
-			if ($response->successful()) {
-				return [
-					'success' => true,
-					'result' => $response->json(),
+			if ($shuftiproTemp->reference_id ?? false) {
+				$keys = [
+				'production' => [
+					'clientId' => config('services.shuftipro.client_id_prod'),
+					'clientSecret' => config('services.shuftipro.client_secret_prod'),
+				],
+				'test' => [
+					'clientId' => config('services.shuftipro.client_id_test'),
+					'clientSecret' => config('services.shuftipro.client_secret_test'),
+				]
 				];
+
+				$mode = 'production';
+
+				$url = 'https://api.shuftipro.com/status';
+				$client_id  = $keys[$mode]['clientId'];
+				$secret_key = $keys[$mode]['clientSecret'];
+
+				$response = Http::withBasicAuth($client_id, $secret_key)->post($url, [
+					'reference' => $shuftiproTemp->reference_id
+				]);
+
+				if ($response->successful()) {
+					return [
+						'success' => true,
+						'result' => $response->json(),
+					];
+				}
 			}
 		}
 
@@ -3261,7 +3310,7 @@ class UserController extends Controller
 	public function submitSurveyRfp(Request $request, $id)
 	{
 		$user = Auth::user();
-		if ($user->hasRole('member')) {
+		if ($user && $user->hasRole('member') && $user->email_verified) {
 			$survey = Survey::where('id', $id)->where('status', 'active')->where('type', 'rfp')->first();
 			if (!$survey) {
 				return [
@@ -3308,104 +3357,124 @@ class UserController extends Controller
 		}
 	}
 
+	// * Get Surveys
 	public function getSurveys(Request $request)
 	{
 		$user = Auth::user();
 
-		// Variables
-		$sort_key = $sort_direction = '';
-		$page_id = 0;
-		$data = $request->all();
-		if ($data && is_array($data)) extract($data);
+		if ($user && $user->email_verified) {
+			// Variables
+			$sort_key = $sort_direction = '';
+			$page_id = 0;
+			$data = $request->all();
+			if ($data && is_array($data)) extract($data);
 
-		if (!$sort_key) $sort_key = 'created_at';
-		if (!$sort_direction) $sort_direction = 'desc';
-		$page_id = (int) $page_id;
-		if ($page_id <= 0) $page_id = 1;
+			if (!$sort_key) $sort_key = 'created_at';
+			if (!$sort_direction) $sort_direction = 'desc';
+			$page_id = (int) $page_id;
+			if ($page_id <= 0) $page_id = 1;
 
-		$limit = $request->limit ?? 15;
-		$start = $limit * ($page_id - 1);
-		$status = $request->status == 'active' ? 'active' : 'completed';
-		$type = $request->type == 'grant' ? 'grant' : 'rfp';
-		$total_member = Helper::getTotalMembers();
-		// Records
-		$survey_ids_vote = SurveyResult::where('user_id', $user->id)->distinct('survey_id')->pluck('survey_id')->toArray();
-		$survey_ids_downvote = SurveyDownVoteResult::where('user_id', $user->id)->distinct('survey_id')->pluck('survey_id')->toArray();
-		$survey_ids_rfp = SurveyRfpResult::where('user_id', $user->id)->distinct('survey_id')->pluck('survey_id')->toArray();
-		$survey_ids = array_merge($survey_ids_vote, $survey_ids_downvote, $survey_ids_rfp);
-		$surveys = Survey::where('status', $status)
-		->where('type', $type)
-		->where(function ($query) use ($survey_ids, $status) {
-			if ($status == 'completed') {
-				$query->whereIn('id', $survey_ids);
+			$limit = $request->limit ?? 15;
+			$start = $limit * ($page_id - 1);
+			$status = $request->status == 'active' ? 'active' : 'completed';
+			$type = $request->type == 'grant' ? 'grant' : 'rfp';
+			$total_member = Helper::getTotalMembers();
+			// Records
+			$survey_ids_vote = SurveyResult::where('user_id', $user->id)->distinct('survey_id')->pluck('survey_id')->toArray();
+			$survey_ids_downvote = SurveyDownVoteResult::where('user_id', $user->id)->distinct('survey_id')->pluck('survey_id')->toArray();
+			$survey_ids_rfp = SurveyRfpResult::where('user_id', $user->id)->distinct('survey_id')->pluck('survey_id')->toArray();
+			$survey_ids = array_merge($survey_ids_vote, $survey_ids_downvote, $survey_ids_rfp);
+			$surveys = Survey::where('status', $status)
+			->where('type', $type)
+			->where(function ($query) use ($survey_ids, $status) {
+				if ($status == 'completed') {
+					$query->whereIn('id', $survey_ids);
+				}
+			})
+			->with(['surveyResults' => function ($q) use ($user) {
+				$q->where('user_id', $user->id)->with(['proposal'])
+					->orderBy('place_choice', 'asc');
+			}])
+			->with(['surveyDownvoteResults' => function ($q) use ($user) {
+				$q->where('user_id', $user->id)->with(['proposal'])
+					->orderBy('place_choice', 'asc');
+			}])
+			->with(['surveyRfpResults' => function ($q) use ($user) {
+				$q->where('user_id', $user->id)->with(['surveyRfpBid'])
+					->orderBy('place_choice', 'asc');
+			}])
+			->orderBy($sort_key, $sort_direction)
+			->offset($start)
+			->limit($limit)
+			->get();
+			$now = Carbon::now();
+			foreach ($surveys as $survey) {
+	            $survey->total_member = $total_member;
+	            if($status == 'active') {
+					$end_date = Carbon::createFromFormat("Y-m-d H:i:s", $survey->end_time, "UTC");
+					$survey->hours_left = $end_date->diffInHours($now);
+				}
 			}
-		})
-		->with(['surveyResults' => function ($q) use ($user) {
-			$q->where('user_id', $user->id)->with(['proposal'])
-				->orderBy('place_choice', 'asc');
-		}])
-		->with(['surveyDownvoteResults' => function ($q) use ($user) {
-			$q->where('user_id', $user->id)->with(['proposal'])
-				->orderBy('place_choice', 'asc');
-		}])
-		->with(['surveyRfpResults' => function ($q) use ($user) {
-			$q->where('user_id', $user->id)->with(['surveyRfpBid'])
-				->orderBy('place_choice', 'asc');
-		}])
-		->orderBy($sort_key, $sort_direction)
-		->offset($start)
-		->limit($limit)
-		->get();
-		$now = Carbon::now();
-		foreach ($surveys as $survey) {
-            $survey->total_member = $total_member;
-            if($status == 'active') {
-				$end_date = Carbon::createFromFormat("Y-m-d H:i:s", $survey->end_time, "UTC");
-				$survey->hours_left = $end_date->diffInHours($now);
-			}
+			return [
+				'success' => true,
+				'surveys' => $surveys,
+				'finished' => count($surveys) < $limit ? true : false
+			];
 		}
+
 		return [
 			'success' => true,
-			'surveys' => $surveys,
-			'finished' => count($surveys) < $limit ? true : false
+			'surveys' => [],
+			'finished' => false
 		];
 	}
 
+	// * Get Survey Detail
 	public function getSurveyDetail($id)
 	{
 		$user = Auth::user();
-		$survey = Survey::with(['surveyRanks' => function ($q) {
-				$q->orderBy('rank', 'desc');
-			}])
-			->with(['surveyRanks.proposal'])
-			->with(['surveyDownvoteRanks' => function ($q) {
-				$q->orderBy('rank', 'desc');
-			}])
-			->with(['surveyDownvoteRanks.proposal'])
-			->with(['surveyRfpRanks' => function ($q) {
-				$q->orderBy('rank', 'desc');
-			}])
-			->with(['surveyRfpRanks.surveyRfpBid', 'surveyRfpBids'])
 
-			->where('id', $id)->first();
+		if ($user && $user->email_verified) {
+			$survey = Survey::with(['surveyRanks' => function ($q) {
+					$q->orderBy('rank', 'desc');
+				}])
+				->with(['surveyRanks.proposal'])
+				->with(['surveyDownvoteRanks' => function ($q) {
+					$q->orderBy('rank', 'desc');
+				}])
+				->with(['surveyDownvoteRanks.proposal'])
+				->with(['surveyRfpRanks' => function ($q) {
+					$q->orderBy('rank', 'desc');
+				}])
+				->with(['surveyRfpRanks.surveyRfpBid', 'surveyRfpBids'])
 
-		if (!$survey) {
+				->where('id', $id)->first();
+
+			if (!$survey) {
+				return [
+					'success' => false,
+					'message' => 'Not found survey'
+				];
+			}
+
+			$survey_result = SurveyResult::where('survey_id', $survey->id)->where('user_id', $user->id)->count();
+			$survey_rfp_result = SurveyRfpResult::where('survey_id', $survey->id)->where('user_id', $user->id)->count();
+			$survey->is_submitted = ($survey_result > 0 || $survey_rfp_result > 0) ? true : false;
+			$time_left = null;
+			if ($survey->status == 'active') {
+				$time_left = Carbon::parse($survey->end_time)->diff(now())->format('%dd %hh:%mm');;
+			}
+			$survey->time_left = $time_left;
+
 			return [
-				'success' => false,
-				'message' => 'Not found survey'
+				'success' => true,
+				'survey' => $survey,
 			];
 		}
-		$survey_result = SurveyResult::where('survey_id', $survey->id)->where('user_id', $user->id)->count();
-		$survey_rfp_result = SurveyRfpResult::where('survey_id', $survey->id)->where('user_id', $user->id)->count();
-		$survey->is_submitted = ($survey_result > 0 || $survey_rfp_result > 0) ? true : false;
-		$time_left = null;
-		if ($survey->status == 'active') {
-			$time_left = Carbon::parse($survey->end_time)->diff(now())->format('%dd %hh:%mm');;
-		}
-		$survey->time_left = $time_left;
+
 		return [
-			'success' => true,
-			'survey' => $survey,
+			'success' => false,
+			'message' => 'Not found survey'
 		];
 	}
 }

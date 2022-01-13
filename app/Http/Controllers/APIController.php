@@ -96,7 +96,6 @@ class APIController extends Controller
     ];
   }
 
-
   public function resetPassword(Request $request)
   {
     // Validator
@@ -187,6 +186,7 @@ class APIController extends Controller
     }
 
     $filename = 'export_' . date('Y-m-d') . '_' . date('H:i:s') . '.csv';
+
     header('Content-Type: application/csv');
     header('Content-Disposition: attachment; filename="' . $filename . '";');
 
@@ -729,7 +729,10 @@ class APIController extends Controller
       $user->save();
       return ['success' => true];
     } else {
-      return ['success' => false, 'message' => 'Confirmation code is invalid'];
+      return [
+        'success' => false,
+        'message' => 'Confirmation code is invalid'
+      ];
     }
   }
 
