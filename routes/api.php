@@ -43,20 +43,8 @@ Route::post('/compliance-review/approve', 'AdminController@approveComplianceRevi
 Route::post('/compliance-review/deny', 'AdminController@denyComplianceReview');
 Route::post('/compliance/login', 'ComplianceController@login')->name('compliance-login');;
 
-Route::get('/admin/milestone/export-csv', 'AdminController@exportMilestone');
-Route::get('/admin/proposal/export-csv', 'SharedController@exportProposal');
-Route::get('/admin/dos-fee/export-csv', 'AdminController@exportCSVDosFee');
-Route::get('/admin/user/export-csv', 'AdminController@exportCSVUser');
-Route::get('/admin/user/{userId}/reputation/export-csv', 'AdminController@exportCSVReputationByUser');
-Route::get('/admin/survey-win/export-csv', 'AdminController@exportCSVtSurveyWin');
-Route::get('/admin/survey-downvote/export-csv', 'AdminController@exportCSVSurveyDownvote');
 Route::get('/survey-vote/{id}/export-csv', 'AdminController@exportCSVVoteSurvey');
-Route::get('/admin/user/{userId}/proposal-mentor/export-csv', 'AdminController@exportCSVMentorProposal');
-Route::get('/admin/active-grant/export-csv', 'AdminController@exxportCSVActiveGrants');
 Route::get('/survey-downvote/{id}/export-csv', 'AdminController@exportCSVDownvoteSurvey');
-Route::get('/shared/proposal/{proposalId}/vote/{voteId}/vote-result/export-csv', 'SharedController@exportCSVProposal');
-Route::get('/shared/proposal/{proposalId}/vote/{voteId}/vote-result/export-pdf', 'SharedController@generateVoteProposalDetail');
-Route::get('/admin/survey-rfp-vote/{id}/export-csv', 'AdminController@exportCSVVoteSurveyRfp');
 
 Route::group(['prefix' => 'va'], function () {
 	Route::get('/email/{email_address}', 'APIController@getVAmemberByEmail');
@@ -106,6 +94,9 @@ Route::group(['prefix' => 'shared', 'middleware' => ['auth:api']], function () {
 	Route::put('/account-info', 'SharedController@updateAccountInfo');
 
 	// GET
+	Route::get('/proposal/{proposalId}/vote/{voteId}/vote-result/export-csv', 'SharedController@exportCSVProposal');
+	Route::get('/proposal/{proposalId}/vote/{voteId}/vote-result/export-pdf', 'SharedController@generateVoteProposalDetail');
+
 	Route::get('/completed-votes', 'SharedController@getCompletedVotes');
 	Route::get('/active-informal-votes', 'SharedController@getActiveInformalVotes');
 	Route::get('/active-formal-votes', 'SharedController@getActiveFormalVotes');
@@ -215,11 +206,22 @@ Route::group(['prefix' => 'user', 'middleware' => ['auth:api']], function () {
 // Admin Functions
 Route::group(['prefix' => 'admin', 'middleware' => ['auth:api']], function () {
 	// GET
+	Route::get('/milestone/export-csv', 'AdminController@exportMilestone');
+	Route::get('/proposal/export-csv', 'SharedController@exportProposal');
+	Route::get('/dos-fee/export-csv', 'AdminController@exportCSVDosFee');
+	Route::get('/user/export-csv', 'AdminController@exportCSVUser');
+	Route::get('/user/{userId}/reputation/export-csv', 'AdminController@exportCSVReputationByUser');
+	Route::get('/survey-win/export-csv', 'AdminController@exportCSVtSurveyWin');
+	Route::get('/survey-downvote/export-csv', 'AdminController@exportCSVSurveyDownvote');
+	Route::get('/user/{userId}/proposal-mentor/export-csv', 'AdminController@exportCSVMentorProposal');
+	Route::get('/active-grant/export-csv', 'AdminController@exxportCSVActiveGrants');
+	Route::get('/survey-rfp-vote/{id}/export-csv', 'AdminController@exportCSVVoteSurveyRfp');
+
 	Route::get('/emailer-data', 'AdminController@getEmailerData');
 	Route::get('/pending-users', 'AdminController@getPendingUsers');
 	Route::get('/pre-register-users', 'AdminController@getPreRegisterUsers');
 	Route::get('/users', 'AdminController@getUsers');
-	Route::get('/user/{userId}', 'AdminController@getSingleUser');
+	Route::get('/user/{userId}', 'AdminController@getSingleUser')->where('userId', '[0-9]+');;
 	Route::get('/user/{userId}/proposals', 'AdminController@getProposalsByUser');
 	Route::get('/user/{userId}/votes', 'AdminController@getVotesByUser');
 	Route::get('/user/{userId}/reputation', 'AdminController@getReputationByUser');

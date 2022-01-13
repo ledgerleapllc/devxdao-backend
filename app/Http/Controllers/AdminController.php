@@ -5681,8 +5681,7 @@ class AdminController extends Controller
 		$year = $request->year ?? now()->year;
 		$reptutions = Reputation::join('users', 'users.id', '=', 'reputation.user_id')
 		->whereYear('reputation.created_at', $year)
-		->where('users.is_member', 1)
-		->select(['reputation.*','users.first_name', 'users.last_name', 'users.email', DB::raw('YEAR(reputation.created_at) year, MONTH(reputation.created_at) month')])
+		->select(['reputation.*','users.first_name', 'users.last_name', 'users.email', 'users.is_member', DB::raw('YEAR(reputation.created_at) year, MONTH(reputation.created_at) month')])
 		->orderBy('reputation.id', 'asc')->get();
 		$rep_collection = collect();
 		$rep_response = collect();
@@ -5692,6 +5691,7 @@ class AdminController extends Controller
 				'user_id' => $value->user_id,
 				'username' => $value->first_name . ' ' . $value->last_name,
 				'email' => $value->email,
+				'is_member' => $value->is_member,
 				'value' => $value->value,
 				'type' => $value->type,
 				'staked' => $value->staked,
@@ -5720,6 +5720,7 @@ class AdminController extends Controller
 				'user_id' => $user_rep[0]['user_id'],
 				'username' => $user_rep[0]['username'],
 				'email' => $user_rep[0]['email'],
+				'is_member' => $user_rep[0]['is_member'],
 				'rep_pending' => $user_rep->sum('pending'),
 				'rep_results' =>  $user_rep_result,
 			]);
@@ -5746,8 +5747,7 @@ class AdminController extends Controller
 		$year = $request->year ?? now()->year;
 		$reptutions = Reputation::join('users', 'users.id', '=', 'reputation.user_id')
 			->whereYear('reputation.created_at', $year)
-			->where('users.is_member', 1)
-			->select(['reputation.*', 'users.first_name', 'users.last_name', 'users.email', DB::raw('YEAR(reputation.created_at) year, MONTH(reputation.created_at) month')])
+			->select(['reputation.*', 'users.first_name', 'users.last_name', 'users.email','users.is_member', DB::raw('YEAR(reputation.created_at) year, MONTH(reputation.created_at) month')])
 			->orderBy('reputation.id', 'asc')->get();
 		$rep_collection = collect();
 		$rep_response = collect();
@@ -5756,6 +5756,7 @@ class AdminController extends Controller
 				'id' => $value->id,
 				'user_id' => $value->user_id,
 				'email' => $value->email,
+				'is_member' => $value->is_member,
 				'username' => $value->first_name . ' ' . $value->last_name,
 				'value' => $value->value,
 				'type' => $value->type,
@@ -5775,6 +5776,7 @@ class AdminController extends Controller
 				'user_id' => $user_rep[0]['user_id'],
 				'email' => $user_rep[0]['email'],
 				'username' => $user_rep[0]['username'],
+				'is_member' => $user_rep[0]['is_member'],
 				'total_rep' => $total > 0 ? $total : 0,
 			]);
 		}
@@ -5798,14 +5800,31 @@ class AdminController extends Controller
 			];
 		}
 
-		$onboardings = $this->adminReportOnboading($request);
-		$onboarding_results = $onboardings['onboarding_results'];
-		$reputations = $this->adminReportReputation($request);
-		$reputation_results =$reputations['rep_results'];
-		$total_reputations = $this->adminReportRepAvailable($request);
-		$total_reputation_results = $total_reputations['rep_results'];
+		$select = $request->select;
+		if($select == 'all') {
+			$result = Reputation::select(DB::raw('YEAR(created_at) as year'))->distinct()->get();
+			$years = $result->pluck('year');
+		} else {
+			$years = explode(',',$select);
+		}
+		$response = [];
+		foreach($years as $year) {
+			$request->year = $year;
+			$onboardings = $this->adminReportOnboading($request);
+			$onboarding_results = $onboardings['onboarding_results'];
+			$reputations = $this->adminReportReputation($request);
+			$reputation_results =$reputations['rep_results'];
+			$total_reputations = $this->adminReportRepAvailable($request);
+			$total_reputation_results = $total_reputations['rep_results'];
+			array_push($response, [
+				'year' => $year,
+				'onboarding_results' => $onboarding_results,
+				'reputation_results' => $reputation_results->toArray(),
+				'total_reputation_results' => $total_reputation_results->toArray(),
+			]);
+		}
 		$pdf = App::make('dompdf.wrapper');
-		$pdfFile = $pdf->loadView('pdf.admin_report', compact('onboarding_results', 'reputation_results', 'total_reputation_results'));
+		$pdfFile = $pdf->loadView('pdf.admin_report', compact('response'));
 		return $pdf->download("admin_report.pdf");
 		// return $pdf->stream();
 	}
