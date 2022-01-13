@@ -2674,7 +2674,7 @@ class UserController extends Controller
 	public function submitSurvey(Request $request, $id)
 	{
 		$user = Auth::user();
-		if ($user && $user->hasRole('member') $user->email_verified) {
+		if ($user && $user->hasRole('member') && $user->email_verified) {
 			$survey = Survey::where('id', $id)->where('status', 'active')->first();
 			if (!$survey) {
 				return [
