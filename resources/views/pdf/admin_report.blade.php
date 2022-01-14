@@ -101,6 +101,7 @@
                     <tr>
                         <th><strong> User </strong></th>
                         <th><strong> Total Rep </strong></th>
+                        <th><strong> Weight % </strong></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -108,6 +109,7 @@
                     <tr>
                         <td> {{ $item['is_member'] == 1 ?  $item['username'] : $item['username'] . " * " }} </td>
                         <td> {{ $item['total_rep'] }} </td>
+                        <td> {{ number_format($item['total_rep'] / $report['total_rep'] * 100, 3) }} % </td>
                     </tr>
                     @endforeach
                 </tbody>

@@ -5832,11 +5832,13 @@ class AdminController extends Controller
 			$reputation_results =$reputations['rep_results'];
 			$total_reputations = $this->adminReportRepAvailable($request);
 			$total_reputation_results = $total_reputations['rep_results'];
+			$total_rep = $total_reputations['total_rep'];
 			array_push($response, [
 				'year' => $year,
 				'onboarding_results' => $onboarding_results,
 				'reputation_results' => $reputation_results->toArray(),
 				'total_reputation_results' => $total_reputation_results->toArray(),
+				'total_rep' => $total_rep,
 			]);
 		}
 		$pdf = App::make('dompdf.wrapper');
