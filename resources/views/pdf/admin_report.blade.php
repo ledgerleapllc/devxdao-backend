@@ -87,7 +87,7 @@
                     <tr>
                         <td> {{ $item['is_member'] == 1 ?  $item['username'] : $item['username'] . " * " }} </td>
                         @foreach ($item['rep_results'] as $value)
-                        <td> {{ $value['total'] > 0 ? number_format($value['total'], 3) : 0}} rep </td>
+                        <td style="font-size: 10px;"> {{ $value['total'] > 0 ? number_format($value['total'], 5) : 0}} rep </td>
                         @endforeach
                     </tr>
                     @endforeach
