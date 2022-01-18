@@ -52,7 +52,7 @@ class TopicController extends Controller
     {
         $username = Auth::user()->profile->forum_name;
 
-        $topic = $discourse->topic($id, $username);
+        $topic = $discourse->topic((int)$id, $username);
 
         $topic['post_stream']['posts'] = $discourse->mergeWithFlags($topic['post_stream']['posts']);
         $topic['flags_count'] = TopicFlag::where('topic_id', $id)->count();
