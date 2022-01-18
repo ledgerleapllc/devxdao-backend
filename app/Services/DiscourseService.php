@@ -8,6 +8,7 @@ use App\User;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Query;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Psr\Http\Message\ResponseInterface;
 
@@ -226,17 +227,26 @@ class DiscourseService
         }
     }
 
-    public function mergeWithFlags(array $posts)
+    public function mergeWithFlagsAndReputation(array $posts)
     {
         $postIds = array_map(fn ($post) => $post['id'], $posts);
+        $postUsernames = array_unique(array_map(fn ($post) => $post['username'], $posts));
 
         $topicFlags = TopicFlag::query()
             ->select('id', 'topic_id', 'post_id', 'reason')
             ->whereIn('post_id', $postIds)
             ->get();
 
+        $users = User::query()
+            ->select('profile.forum_name', DB::raw('Sum(`reputation`.`value`) as reputation'))
+            ->join('profile', 'profile.user_id', '=', 'users.id')
+            ->join('reputation', 'reputation.user_id', '=', 'users.id')
+            ->whereIn('profile.forum_name', $postUsernames)
+            ->get();
+
         foreach ($posts as $key => $post) {
             $posts[$key]['flag'] = $topicFlags->firstWhere('post_id', $post['id']);
+            $posts[$key]['devxdao_user'] = $users->firstWhere('forum_name', $post['username']);
         }
 
         return $posts;

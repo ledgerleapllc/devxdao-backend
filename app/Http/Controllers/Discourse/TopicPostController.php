@@ -4,10 +4,8 @@ namespace App\Http\Controllers\Discourse;
 
 use App\Http\Controllers\Controller;
 use App\Services\DiscourseService;
-use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class TopicPostController extends Controller
 {
@@ -21,19 +19,7 @@ class TopicPostController extends Controller
             $username
         );
 
-        $posts = collect($discourse->mergeWithFlags($posts));
-
-        $users = User::query()
-            ->select('profile.forum_name', DB::raw('Sum(`reputation`.`value`) as reputation'))
-            ->join('profile', 'profile.user_id', '=', 'users.id')
-            ->join('reputation', 'reputation.user_id', '=', 'users.id')
-            ->whereIn('profile.forum_name', $posts->pluck('username'))
-            ->get();
-
-        $posts->transform(function ($post) use ($users) {
-            $post['devxdao_user'] = $users->firstWhere('forum_name', $post['username']);
-            return $post;
-        });
+        $posts = collect($discourse->mergeWithFlagsAndReputation($posts));
 
         return ['success' => true, 'data' => $posts];
     }
