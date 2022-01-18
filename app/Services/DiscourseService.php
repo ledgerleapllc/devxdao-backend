@@ -38,7 +38,7 @@ class DiscourseService
         return TopicRead::where('topic_id', $id)->count() / User::where('is_member', true)->count() * 100;
     }
 
-    public function updateTopic(int|string $id, array $data, string $username)
+    public function updateTopic($id, array $data, string $username)
     {
         return $this->try(function () use ($id, $data, $username) {
             $response = $this->client->put("/t/-/{$id}.json", $this->by($username, [
@@ -60,7 +60,7 @@ class DiscourseService
         });
     }
 
-    public function updatePost(int|string $id, array $data, string $username)
+    public function updatePost($id, array $data, string $username)
     {
         return $this->try(function () use ($id, $data, $username) {
             return $this->json(
@@ -90,7 +90,7 @@ class DiscourseService
         return $this->json($this->client->get('/posts.json', $this->by($username)));
     }
 
-    public function postsByTopicId(int|string $id, string $postIds, string $username)
+    public function postsByTopicId($id, string $postIds, string $username)
     {
         $response = $this->client->get("/t/{$id}/posts.json", $this->by($username, [
             'query' => Query::build(['post_ids[]' => explode(',', $postIds)]),
@@ -99,7 +99,7 @@ class DiscourseService
         return $this->json($response)['post_stream']['posts'];
     }
 
-    public function like(int|string $id, string $username)
+    public function like($id, string $username)
     {
         return $this->try(function () use ($id, $username) {
             $response = $this->client->post('/post_actions.json', $this->by($username, [
@@ -114,7 +114,7 @@ class DiscourseService
         });
     }
 
-    public function unlike(int|string $id, string $username)
+    public function unlike($id, string $username)
     {
         return $this->try(function () use ($id, $username) {
             $response = $this->client->delete("/post_actions/{$id}.json", $this->by($username, [
@@ -127,7 +127,7 @@ class DiscourseService
         });
     }
 
-    public function post(int|string $id, string $username)
+    public function post($id, string $username)
     {
         return $this->try(function () use ($id, $username) {
             $response = $this->client->get("/posts/{$id}.json", $this->by($username));
@@ -136,7 +136,7 @@ class DiscourseService
         });
     }
 
-    public function isLikedTo(int|string $id, string $username)
+    public function isLikedTo($id, string $username)
     {
         $post = $post = $this->post($id, $username);
 
@@ -149,7 +149,7 @@ class DiscourseService
         return $action['acted'] ?? false;
     }
 
-    public function topic(int|string $id, string $username)
+    public function topic($id, string $username)
     {
         return $this->try(function () use ($id, $username) {
             $response = $this->client->get("/t/{$id}.json", $this->by($username));
