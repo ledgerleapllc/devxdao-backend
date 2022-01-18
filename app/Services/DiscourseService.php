@@ -8,6 +8,7 @@ use App\User;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Query;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Psr\Http\Message\ResponseInterface;
 
@@ -37,7 +38,7 @@ class DiscourseService
         return TopicRead::where('topic_id', $id)->count() / User::where('is_member', true)->count() * 100;
     }
 
-    public function updateTopic(int $id, array $data, string $username)
+    public function updateTopic($id, array $data, string $username)
     {
         return $this->try(function () use ($id, $data, $username) {
             $response = $this->client->put("/t/-/{$id}.json", $this->by($username, [
@@ -59,7 +60,7 @@ class DiscourseService
         });
     }
 
-    public function updatePost(int $id, array $data, string $username)
+    public function updatePost($id, array $data, string $username)
     {
         return $this->try(function () use ($id, $data, $username) {
             return $this->json(
@@ -89,7 +90,7 @@ class DiscourseService
         return $this->json($this->client->get('/posts.json', $this->by($username)));
     }
 
-    public function postsByTopicId(int $id, string $postIds, string $username)
+    public function postsByTopicId($id, string $postIds, string $username)
     {
         $response = $this->client->get("/t/{$id}/posts.json", $this->by($username, [
             'query' => Query::build(['post_ids[]' => explode(',', $postIds)]),
@@ -98,7 +99,7 @@ class DiscourseService
         return $this->json($response)['post_stream']['posts'];
     }
 
-    public function like(int $id, string $username)
+    public function like($id, string $username)
     {
         return $this->try(function () use ($id, $username) {
             $response = $this->client->post('/post_actions.json', $this->by($username, [
@@ -113,7 +114,7 @@ class DiscourseService
         });
     }
 
-    public function unlike(int $id, string $username)
+    public function unlike($id, string $username)
     {
         return $this->try(function () use ($id, $username) {
             $response = $this->client->delete("/post_actions/{$id}.json", $this->by($username, [
@@ -126,7 +127,7 @@ class DiscourseService
         });
     }
 
-    public function post(int $id, string $username)
+    public function post($id, string $username)
     {
         return $this->try(function () use ($id, $username) {
             $response = $this->client->get("/posts/{$id}.json", $this->by($username));
@@ -135,7 +136,7 @@ class DiscourseService
         });
     }
 
-    public function isLikedTo(int $id, string $username)
+    public function isLikedTo($id, string $username)
     {
         $post = $post = $this->post($id, $username);
 
@@ -148,7 +149,7 @@ class DiscourseService
         return $action['acted'] ?? false;
     }
 
-    public function topic(int $id, string $username)
+    public function topic($id, string $username)
     {
         return $this->try(function () use ($id, $username) {
             $response = $this->client->get("/t/{$id}.json", $this->by($username));
@@ -226,17 +227,26 @@ class DiscourseService
         }
     }
 
-    public function mergeWithFlags(array $posts)
+    public function mergeWithFlagsAndReputation(array $posts)
     {
         $postIds = array_map(fn ($post) => $post['id'], $posts);
+        $postUsernames = array_unique(array_map(fn ($post) => $post['username'], $posts));
 
         $topicFlags = TopicFlag::query()
             ->select('id', 'topic_id', 'post_id', 'reason')
             ->whereIn('post_id', $postIds)
             ->get();
 
+        $users = User::query()
+            ->select('profile.forum_name', DB::raw('Sum(`reputation`.`value`) as reputation'))
+            ->join('profile', 'profile.user_id', '=', 'users.id')
+            ->join('reputation', 'reputation.user_id', '=', 'users.id')
+            ->whereIn('profile.forum_name', $postUsernames)
+            ->get();
+
         foreach ($posts as $key => $post) {
             $posts[$key]['flag'] = $topicFlags->firstWhere('post_id', $post['id']);
+            $posts[$key]['devxdao_user'] = $users->firstWhere('forum_name', $post['username']);
         }
 
         return $posts;

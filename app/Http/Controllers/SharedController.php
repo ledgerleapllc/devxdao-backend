@@ -1564,7 +1564,7 @@ class SharedController extends Controller
 					$topic = $discourse->createPost([
 						'title' => $proposal->title,
 						'raw' => $proposal->short_description,
-					], $user->profile->forum_name);
+					], 'system');
 
 					if ($topic) {
 						$proposal->discourse_topic_id = $topic['topic_id'];
