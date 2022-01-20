@@ -417,7 +417,8 @@ class UserController extends Controller
 														->where(function ($query) use ($search) {
 															if ($search) {
 																$query->where('proposal.title', 'like', '%' . $search . '%')
-																			->orWhere('proposal.member_reason', 'like', '%' . $search . '%');
+																			->orWhere('proposal.member_reason', 'like', '%' . $search . '%')
+																			->orWhere('proposal.id', 'like', '%' . $search . '%');
 															}
 														})
 														->orderBy($sort_key, $sort_direction)

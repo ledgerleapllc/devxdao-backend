@@ -5720,15 +5720,18 @@ class AdminController extends Controller
 		$grouped = $rep_collection->groupBy('user_id');
 		foreach ($grouped as $user_rep) {
 			$user_rep_result = array();
+			$total_all_staked = $user_rep->where('type', 'Staked')->sum('staked');
+			$total_all_minted = $user_rep->whereIn('type', ['Gained', 'Minted', 'Stake Lost', 'Lost'])->sum('value');
+			$total_all = $total_all_staked + $total_all_minted ;
 			for ($i = 1; $i <= 12; $i++) {
 				$user_rep_filter = $user_rep->where('month', $i);
 				$total_stake = $user_rep_filter->where('type', 'Staked')->sum('staked');
 				$total_minted = $user_rep_filter->whereIn('type', ['Gained', 'Minted', 'Stake Lost', 'Lost'])->sum('value');
-				$total = $total_minted -  $total_stake;
+				$total = $total_minted + $total_stake;
 				$key_month = date('M', mktime(0, 0, 0, $i, 10));
 				array_push($user_rep_result, [
 					'i' => $i,
-					'total' => $total > 0 ? $total : 0,
+					'total' => $total,
 					'month' => $key_month,
 				]);
 			}
@@ -5738,6 +5741,7 @@ class AdminController extends Controller
 				'email' => $user_rep[0]['email'],
 				'is_member' => $user_rep[0]['is_member'],
 				'rep_pending' => $user_rep->sum('pending'),
+				'total_rep' => $total_all,
 				'rep_results' =>  $user_rep_result,
 			]);
 		}
@@ -5787,13 +5791,13 @@ class AdminController extends Controller
 		foreach ($grouped as $user_rep) {
 			$total_staked = $user_rep->where('type', 'Staked')->sum('staked');
 			$total_minted = $user_rep->whereIn('type', ['Gained', 'Minted', 'Stake Lost', 'Lost'])->sum('value');
-			$total = abs($total_staked) + $total_minted ;
+			$total = $total_staked + $total_minted ;
 			$rep_response->push([
 				'user_id' => $user_rep[0]['user_id'],
 				'email' => $user_rep[0]['email'],
 				'username' => $user_rep[0]['username'],
 				'is_member' => $user_rep[0]['is_member'],
-				'total_rep' => $total > 0 ? $total : 0,
+				'total_rep' => $total,
 			]);
 		}
 		$total_rep = $rep_response->sum('total_rep');

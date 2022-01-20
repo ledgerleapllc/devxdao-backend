@@ -1861,7 +1861,8 @@ class SharedController extends Controller
 				->where(function ($query) use ($search) {
 					if ($search) {
 						$query->where('proposal.title', 'like', '%' . $search . '%')
-							->orWhere('proposal.member_reason', 'like', '%' . $search . '%');
+							->orWhere('proposal.member_reason', 'like', '%' . $search . '%')
+							->orWhere('proposal.id', 'like', '%' . $search . '%');
 					}
 				})
 				->where('proposal.status', 'completed')
@@ -2095,6 +2096,7 @@ class SharedController extends Controller
 					if ($search) {
 						$query->where('proposal.title', 'like', '%' . $search . '%')
 							->orWhere('proposal.member_reason', 'like', '%' . $search . '%')
+							->orWhere('proposal.id', 'like', '%' . $search . '%')
 							->orWhere('proposal.status', 'like', '%' . $search . '%');
 					}
 				})

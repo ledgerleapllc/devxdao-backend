@@ -68,6 +68,7 @@
                 <thead>
                     <tr>
                         <th><strong> User </strong></th>
+                        <th><strong> Total </strong></th>
                         <th><strong> Jan </strong></th>
                         <th><strong> Feb </strong></th>
                         <th><strong> Mar </strong></th>
@@ -86,8 +87,9 @@
                     @foreach ($report['reputation_results'] as $item)
                     <tr>
                         <td> {{ $item['is_member'] == 1 ?  $item['username'] : $item['username'] . " * " }} </td>
+                        <td style="font-size: 8px;"> {{ $item['total_rep'] != 0 ? number_format($item['total_rep'], 3) : 0}} rep </td>
                         @foreach ($item['rep_results'] as $value)
-                        <td style="font-size: 10px;"> {{ $value['total'] > 0 ? number_format($value['total'], 5) : 0}} rep </td>
+                        <td style="font-size: 8px;"> {{ $value['total'] != 0 ? number_format($value['total'], 3) : 0}}rep </td>
                         @endforeach
                     </tr>
                     @endforeach
