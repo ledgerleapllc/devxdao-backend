@@ -13,7 +13,7 @@ class TopicController extends Controller
 {
     public function index(Request $request, DiscourseService $discourse)
     {
-        $username = Auth::user()->profile->forum_name;
+        $username = $discourse->getUsername(Auth::user());
         $page = (int) $request->input('page', 0);
 
         return ['success' => true, 'data' => $discourse->topics($username, $page)];
@@ -24,7 +24,7 @@ class TopicController extends Controller
         $response = $discourse->createPost([
             'title' => $request->title,
             'raw' => $request->raw,
-        ], Auth::user()->profile->forum_name);
+        ], $discourse->getUsername(Auth::user()));
 
         if (isset($response['failed'])) {
             return $response;
@@ -38,7 +38,7 @@ class TopicController extends Controller
         $response = $discourse->updateTopic(
             $id,
             ['title' => $request->title],
-            Auth::user()->profile->forum_name
+            $discourse->getUsername(Auth::user())
         );
 
         if (isset($response['failed'])) {
@@ -50,7 +50,7 @@ class TopicController extends Controller
 
     public function show(DiscourseService $discourse, $id)
     {
-        $username = Auth::user()->profile->forum_name;
+        $username = $discourse->getUsername(Auth::user());
 
         $topic = $discourse->topic($id, $username);
 
@@ -70,7 +70,7 @@ class TopicController extends Controller
             return ['failed' => true, 'message' => 'You are not allowed to flag topics'];
         }
 
-        $username = $user->profile->forum_name;
+        $username = $discourse->getUsername($user);
 
         $post = $discourse->createPost([
             'raw' => $request->reason,
@@ -101,7 +101,7 @@ class TopicController extends Controller
             return ['failed' => true, 'message' => 'You are not allowed to mark topics as read'];
         }
 
-        $topic = $discourse->topic($id, $user->profile->forum_name);
+        $topic = $discourse->topic($id, $discourse->getUsername($user));
 
         if ($topic['failed'] ?? false) {
             return $topic;

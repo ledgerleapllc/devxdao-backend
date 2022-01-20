@@ -11,7 +11,7 @@ class PostController extends Controller
 {
     public function react(DiscourseService $discourse, $post)
     {
-        $username = Auth::user()->profile->forum_name;
+        $username = $discourse->getUsername(Auth::user());
 
         return $discourse->isLikedTo($post, $username)
             ? $discourse->unlike($post, $username)
@@ -20,12 +20,12 @@ class PostController extends Controller
 
     public function show(DiscourseService $discourse, $post)
     {
-        return $discourse->post($post, Auth::user()->profile->forum_name);
+        return $discourse->post($post, $discourse->getUsername(Auth::user()));
     }
 
     public function destroy(DiscourseService $discourse, $post)
     {
-        return $discourse->deletePost($post, Auth::user()->profile->forum_name);
+        return $discourse->deletePost($post, $discourse->getUsername(Auth::user()));
     }
 
     public function update(Request $request, DiscourseService $discourse, $post)
@@ -33,7 +33,7 @@ class PostController extends Controller
         return $discourse->updatePost(
             $post,
             ['post' => ['raw' => $request->raw]],
-            Auth::user()->profile->forum_name
+            $discourse->getUsername(Auth::user())
         );
     }
 }

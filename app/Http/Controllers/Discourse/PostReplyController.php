@@ -10,7 +10,7 @@ class PostReplyController extends Controller
 {
     public function index(DiscourseService $discourse, $post)
     {
-        $username = Auth::user()->profile->forum_name;
+        $username = $discourse->getUsername(Auth::user());
         $replies = $discourse->postReplies($post, $username);
 
         if (isset($replies['failed'])) {
