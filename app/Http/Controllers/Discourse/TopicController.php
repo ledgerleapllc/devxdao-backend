@@ -35,6 +35,7 @@ class TopicController extends Controller
 
     public function update(Request $request, DiscourseService $discourse, string $id)
     {
+        $id = (int)$id;
         $response = $discourse->updateTopic(
             $id,
             ['title' => $request->title],
@@ -50,9 +51,10 @@ class TopicController extends Controller
 
     public function show(DiscourseService $discourse, $id)
     {
+        $id = (int)$id;
         $username = Auth::user()->profile->forum_name;
 
-        $topic = $discourse->topic((int)$id, $username);
+        $topic = $discourse->topic($id, $username);
 
         $topic['post_stream']['posts'] = $discourse->mergeWithFlagsAndReputation($topic['post_stream']['posts']);
         $topic['flags_count'] = TopicFlag::where('topic_id', $id)->count();
@@ -64,6 +66,7 @@ class TopicController extends Controller
 
     public function flag(Request $request, DiscourseService $discourse, $id)
     {
+        $id = (int)$id;
         $user = Auth::user();
 
         if (!$user->hasRole(['admin', 'super-admin', 'member'])) {
@@ -95,6 +98,7 @@ class TopicController extends Controller
 
     public function markAsRead(DiscourseService $discourse, $id)
     {
+        $id = (int)$id;
         $user = Auth::user();
 
         if (!$user->hasRole('member')) {
