@@ -186,7 +186,7 @@ class DiscourseService
             $response = $this->client->post('/users.json', [
                 'form_params' => [
                     'name' => $user->name,
-                    'username' => $user->profile->forum_name,
+                    'username' => Str::slug($user->profile->forum_name, '.'),
                     'email' => $user->email,
                     'password' => Str::random(32),
                     'active' => true,
