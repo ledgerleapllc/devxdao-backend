@@ -186,7 +186,7 @@ class DiscourseService
             $response = $this->client->post('/users.json', [
                 'form_params' => [
                     'name' => $user->name,
-                    'username' => $user->profile->forum_name,
+                    'username' => $this->getUsername($user),
                     'email' => $user->email,
                     'password' => Str::random(32),
                     'active' => true,
@@ -230,7 +230,7 @@ class DiscourseService
     public function mergeWithFlagsAndReputation(array $posts)
     {
         $postIds = array_map(fn ($post) => $post['id'], $posts);
-        $postUsernames = array_unique(array_map(fn ($post) => $post['username'], $posts));
+        $discourseUserIds = array_unique(array_map(fn ($post) => $post['user_id'], $posts));
 
         $topicFlags = TopicFlag::query()
             ->select('id', 'topic_id', 'post_id', 'reason')
@@ -238,18 +238,22 @@ class DiscourseService
             ->get();
 
         $users = User::query()
-            ->select('profile.forum_name', DB::raw('Sum(`reputation`.`value`) as reputation'))
-            ->join('profile', 'profile.user_id', '=', 'users.id')
+            ->select('users.discourse_user_id', DB::raw('Sum(`reputation`.`value`) as reputation'))
             ->join('reputation', 'reputation.user_id', '=', 'users.id')
-            ->whereIn('profile.forum_name', $postUsernames)
+            ->whereIn('users.discourse_user_id', $discourseUserIds)
             ->get();
 
         foreach ($posts as $key => $post) {
             $posts[$key]['flag'] = $topicFlags->firstWhere('post_id', $post['id']);
-            $posts[$key]['devxdao_user'] = $users->firstWhere('forum_name', $post['username']);
+            $posts[$key]['devxdao_user'] = $users->firstWhere('discourse_user_id', $post['user_id']);
         }
 
         return $posts;
+    }
+
+    public function getUsername(User $user)
+    {
+        return $user->profile->forum_name;
     }
 
     private function json(ResponseInterface $response)

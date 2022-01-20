@@ -332,9 +332,9 @@ class APIController extends Controller
         ]);
       }
 
-      if (is_null($user->discourse_user_id)) {
-        try {
-          $findDiscourseUser = $discourse->user($user->profile->forum_name);
+      try {
+        if (is_null($user->discourse_user_id)) {
+          $findDiscourseUser = $discourse->user($discourse->getUsername($user));
 
           if (is_null($findDiscourseUser)) {
             $registerToDiscord = $discourse->register($user);
@@ -348,14 +348,16 @@ class APIController extends Controller
                 $discourse->grantAdmin($discourseUserId);
               }
 
-              User::where('id', $user->id)->update(['discourse_user_id' => $discourseUserId]);
+              User::where('id', $user->id)->update([
+                'discourse_user_id' => $discourseUserId
+              ]);
             } else {
               info('Error when registering to discourse', [$registerToDiscord]);
             }
           }
-        } catch (Exception $e) {
-          info('Error when registering to discourse', [$e->getMessage()]);
         }
+      } catch (Exception $e) {
+        info('Error when registering to discourse', [$e->getMessage()]);
       }
 
       return [

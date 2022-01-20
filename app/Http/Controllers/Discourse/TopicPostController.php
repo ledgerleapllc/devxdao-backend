@@ -11,12 +11,10 @@ class TopicPostController extends Controller
 {
     public function index(Request $request, DiscourseService $discourse, $topic)
     {
-        $username = Auth::user()->profile->forum_name;
-
         $posts = $discourse->postsByTopicId(
             $topic,
             $request->input('post_ids'),
-            $username
+            $discourse->getUsername(Auth::user())
         );
 
         $posts = collect($discourse->mergeWithFlagsAndReputation($posts));
@@ -35,6 +33,6 @@ class TopicPostController extends Controller
             $data['reply_to_post_number'] = $request->reply_to_post_number;
         }
 
-        return $discourse->createPost($data, Auth::user()->profile->forum_name);
+        return $discourse->createPost($data, $discourse->getUsername(Auth::user()));
     }
 }
