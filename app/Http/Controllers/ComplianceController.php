@@ -426,7 +426,8 @@ class ComplianceController extends Controller
             })
             ->where(function ($query) use ($search) {
                 if ($search) {
-                    $query->where('proposal.title', 'like', '%' . $search . '%');
+                    $query->where('proposal.title', 'like', '%' . $search . '%')
+                    ->orWhere('proposal.id', 'like', '%' . $search . '%');
                 }
             })
             ->select([
@@ -691,7 +692,8 @@ class ComplianceController extends Controller
             ->leftJoin('shuftipro', 'shuftipro.user_id', '=', 'onboarding.user_id')
             ->where(function ($query) use ($search) {
                 if ($search) {
-                    $query->where('proposal.title', 'like', '%' . $search . '%');
+                    $query->where('proposal.title', 'like', '%' . $search . '%')
+                    ->orWhere('proposal.id', 'like', '%' . $search . '%');
                 }
             });
         if ($status == 'need-review') {

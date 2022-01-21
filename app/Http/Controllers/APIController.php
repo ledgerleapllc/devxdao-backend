@@ -447,13 +447,14 @@ class APIController extends Controller
       'password' => 'required|min:7',
       'first_name' => 'required',
       'last_name' => 'required',
-      'forum_name' => 'required'
+      'forum_name' => 'required|regex:/^([A-Za-z0-9-_.]+)$/'
     ]);
 
     if ($validator->fails()) {
       return [
         'success' => false,
-        'message' => 'Provide all the necessary information'
+        'message' => 'Provide all the necessary information',
+        'error' => $validator->errors()
       ];
     }
 

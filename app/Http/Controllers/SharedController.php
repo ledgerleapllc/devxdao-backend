@@ -478,7 +478,17 @@ class SharedController extends Controller
 	public function updateProfile(Request $request)
 	{
 		$user = Auth::user();
+		// Validator
+		$validator = Validator::make($request->all(), [
+			'forum_name' => 'required|regex:/^([A-Za-z0-9-_.]+)$/'
+		]);
 
+		if ($validator->fails()) {
+			return [
+				'success' => false,
+				'message' => 'forum_name invalid format',
+			];
+		}
 		if ($user) {
 			$forum_name = $request->get('forum_name');
 
@@ -1802,7 +1812,8 @@ class SharedController extends Controller
 				->has('user')
 				->whereHas('proposal', function ($query) use ($search, $hide_completed) {
 					if ($search) {
-						$query->where('proposal.title', 'like', '%' . $search . '%');
+						$query->where('proposal.title', 'like', '%' . $search . '%')
+							->orWhere('proposal.id', 'like', '%' . $search . '%');
 					}
 					if ($hide_completed) {
 						$query->where('final_grant.status', '!=', 'completed');
@@ -1885,6 +1896,7 @@ class SharedController extends Controller
 				->where(function ($query) use ($search) {
 					if ($search) {
 						$query->where('proposal.title', 'like', '%' . $search . '%')
+							->orWhere('proposal.id', 'like', '%' . $search . '%')
 							->orWhere('proposal.member_reason', 'like', '%' . $search . '%');
 					}
 				})
@@ -2122,6 +2134,7 @@ class SharedController extends Controller
 				->where(function ($query) use ($search) {
 					if ($search) {
 						$query->where('proposal.title', 'like', '%' . $search . '%')
+							->orWhere('proposal.id', 'like', '%' . $search . '%')
 							->orWhere('proposal.member_reason', 'like', '%' . $search . '%')
 							->orWhere('proposal.status', 'like', '%' . $search . '%');
 					}
@@ -2171,6 +2184,7 @@ class SharedController extends Controller
 				->where(function ($query) use ($search) {
 					if ($search) {
 						$query->where('proposal.title', 'like', '%' . $search . '%')
+							->orWhere('proposal.id', 'like', '%' . $search . '%')
 							->orWhere('proposal.member_reason', 'like', '%' . $search . '%');
 					}
 				})
@@ -2232,6 +2246,7 @@ class SharedController extends Controller
 				->where(function ($query) use ($search, $is_winner, $ignore_previous_winner, $ignore_previous_loser) {
 					if ($search) {
 						$query->where('proposal.title', 'like', '%' . $search . '%')
+							->orWhere('proposal.id', 'like', '%' . $search . '%')
 							->orWhere('proposal.member_reason', 'like', '%' . $search . '%');
 					}
 					if ($is_winner) {
@@ -2287,6 +2302,7 @@ class SharedController extends Controller
 				->where(function ($query) use ($search) {
 					if ($search) {
 						$query->where('proposal.title', 'like', '%' . $search . '%')
+							->orWhere('proposal.id', 'like', '%' . $search . '%')
 							->orWhere('proposal.member_reason', 'like', '%' . $search . '%');
 					}
 				})

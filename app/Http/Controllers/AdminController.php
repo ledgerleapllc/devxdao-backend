@@ -485,7 +485,8 @@ class AdminController extends Controller
 				->where('vote.formal_vote_id', 0)
 				->where(function ($query) use ($search) {
 					if ($search) {
-						$query->where('proposal.title', 'like', '%' . $search . '%');
+						$query->where('proposal.title', 'like', '%' . $search . '%')
+						->orWhere('proposal.id', 'like', '%' . $search . '%');;
 					}
 				})
 				->select([
@@ -555,7 +556,8 @@ class AdminController extends Controller
 				->where('onboarding.status', 'pending')
 				->where(function ($query) use ($search, $hide_denined) {
 					if ($search) {
-						$query->where('proposal.title', 'like', '%' . $search . '%');
+						$query->where('proposal.title', 'like', '%' . $search . '%')
+						->orWhere('proposal.id', 'like', '%' . $search . '%');
 					}
 					if($hide_denined) {
 						$query->where('shuftipro.status', '!=', 'denied')
