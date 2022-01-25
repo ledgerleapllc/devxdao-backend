@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Discourse;
 
 use App\Http\Controllers\Controller;
+use App\Proposal;
 use App\Services\DiscourseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -33,6 +34,15 @@ class TopicPostController extends Controller
             $data['reply_to_post_number'] = $request->reply_to_post_number;
         }
 
-        return $discourse->createPost($data, $discourse->getUsername(Auth::user()));
+        $response = $discourse->createPost($data, $discourse->getUsername(Auth::user()));
+
+        $proposal = Proposal::where('discourse_topic_id', $topic)->first();
+
+        if ($proposal) {
+            $proposal->topic_posts_count = $response['post_number'];
+            $proposal->save();
+        }
+
+        return $response;
     }
 }
