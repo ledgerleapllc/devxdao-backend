@@ -33,7 +33,7 @@ class DiscourseService
         ]);
     }
 
-    public function topicVARate($id)
+    public function attestationRate($id)
     {
         return TopicRead::where('topic_id', $id)->count() / User::where('is_member', true)->count() * 100;
     }
