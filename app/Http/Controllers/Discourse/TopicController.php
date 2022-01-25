@@ -54,22 +54,30 @@ class TopicController extends Controller
     public function show(DiscourseService $discourse, $id)
     {
         $id = (int)$id;
-        $username = $discourse->getUsername(Auth::user());
+        $topic = $discourse->topic($id, $discourse->getUsername(Auth::user()));
 
-        $proposal = Proposal::select('id', 'status', 'dos_paid')
+        $proposal = Proposal::select('id', 'status', 'dos_paid', 'topic_posts_count')
             ->where('discourse_topic_id', $id)
             ->first();
 
-        $topic = $discourse->topic($id, $username);
+        $proposalStatus = $proposal ? Helper::getStatusProposal($proposal) : null;
 
         $topic['post_stream']['posts'] = $discourse->mergeWithFlagsAndReputation($topic['post_stream']['posts']);
         $topic['flags_count'] = TopicFlag::where('topic_id', $id)->count();
         $topic['attestation'] = [
             'related_to_proposal' => !is_null($proposal),
-            'proposal_in_discussion' => $proposal && Helper::getStatusProposal($proposal) === 'In Discussion',
+            'proposal_in_discussion' => $proposalStatus === 'In Discussion',
             'is_attestated' => TopicRead::where('topic_id', $id)->where('user_id', Auth::id())->exists(),
             'attestation_rate' => $discourse->attestationRate($id),
         ];
+
+        if ($proposal) {
+            $topic['proposal'] = [
+                'id' => $proposal->id,
+                'status' => $proposalStatus,
+                'topic_posts_count' => $proposal->topic_posts_count,
+            ];
+        }
 
         return ['success' => true, 'data' => $topic];
     }
