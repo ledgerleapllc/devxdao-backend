@@ -166,6 +166,19 @@ class DiscourseService
             ]))
         );
 
+        $proposals = DB::table('proposal')
+            ->select('id', 'discourse_topic_id')
+            ->whereIn(
+                'discourse_topic_id',
+                array_map(fn ($topic) => $topic['id'], $response['topic_list']['topics']),
+            )
+            ->get();
+
+        foreach ($response['topic_list']['topics'] as $key => $topic) {
+            $response['topic_list']['topics'][$key]['proposal_id'] =
+                $proposals->firstWhere('discourse_topic_id', $topic['id'])->id ?? null;
+        }
+
         return $response['topic_list'];
     }
 
