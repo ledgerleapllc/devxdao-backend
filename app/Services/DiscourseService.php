@@ -253,7 +253,7 @@ class DiscourseService
 
     public function getUsername(User $user)
     {
-        return Str::slug($user->profile->forum_name);
+        return $user->profile->forum_name;
     }
 
     private function json(ResponseInterface $response)
