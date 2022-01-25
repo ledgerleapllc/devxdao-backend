@@ -3198,4 +3198,91 @@ class SharedController extends Controller
 		$pdfFile = $pdf->loadView('pdf.vote_detail', compact('proposal'));
 		return $pdf->download("vote_results_$voteId.pdf");
 	}
+
+	// *
+	public function getAllMilestone(Request $request)
+	{
+		// Variables
+		$email = $request->email;
+		$proposalId = $request->proposalId;
+		$hidePaid = $request->hidePaid;
+		$startDate = $request->startDate;
+		$endDate = $request->endDate;
+		$hideCompletedGrants  = $request->hideCompletedGrants;
+		$search = $request->search;
+		$sort_key = $sort_direction = '';
+		$page_id = 0;
+		$data = $request->all();
+		if ($data && is_array($data)) extract($data);
+
+		if (!$sort_key) $sort_key = 'milestone.id';
+		if (!$sort_direction) $sort_direction = 'desc';
+		$page_id = (int) $page_id;
+		if ($page_id <= 0) $page_id = 1;
+
+		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$start = $limit * ($page_id - 1);
+		$totalPaid = Helper::queryGetMilestone($email, $proposalId, $hideCompletedGrants, $startDate, $endDate, $search)->where('milestone.paid', '=', 1)->sum('milestone.grant');
+		$query = Helper::queryGetMilestone($email, $proposalId, $hideCompletedGrants, $startDate, $endDate, $search);
+		if (Str::contains($request->path(), 'public')) {
+			$query->has('votes');
+		};
+		if ($hidePaid == 1) {
+			$query->where('milestone.paid', '=', 0);
+			$totalPaid = 0;
+		}
+		$totalGrant = $query->sum('milestone.grant');
+		$milestones = $query->select([
+			'milestone.*',
+			'proposal.title as proposal_title',
+			'users.id as user_id',
+			'users.email',
+			DB::raw("(CASE WHEN milestone.submitted_time IS NULL THEN 'Not Submitted'
+				ELSE milestone_review.status END) AS milestone_review_status")
+		])
+			->orderBy($sort_key, $sort_direction)
+			->offset($start)
+			->limit($limit)
+			->get();
+		return [
+			'success' => true,
+			'milestones' => $milestones,
+			'totalGrant' => $totalGrant,
+			'totalPaid' => $totalPaid,
+			'totalUnpaid' => $totalGrant - $totalPaid,
+			'finished' => count($milestones) < $limit ? true : false
+		];
+	}
+
+	public function getMilestoneDetail($milestoneId)
+	{
+		$milestone = Milestone::with(['milestones', 'milestoneCheckList'])
+			->join('proposal', 'milestone.proposal_id', '=', 'proposal.id')
+			->join('users', 'proposal.user_id', '=', 'users.id')
+			->leftJoin('milestone_review', 'milestone.id', '=', 'milestone_review.milestone_id')
+			->leftJoin('ops_users as u1', 'u1.id', '=', 'milestone_review.assigner_id')
+			->select([
+				'milestone.*',
+				'proposal.title as proposal_title',
+				'proposal.status as proposal_status',
+				'users.id as user_id',
+				'users.email',
+				'milestone_review.reviewed_at',
+				'milestone_review.assigner_id',
+				'milestone_review.assigned_at',
+				'milestone_review.status as milestone_review_status',
+				'u1.email as admin_reviewer_email',
+			])->where('milestone.id', $milestoneId)->first();
+		if ($milestone) {
+			$milestone->support_file_url = $milestone->support_file ? asset($milestone->support_file) : null;
+			return [
+				'success' => true,
+				'milestone' => $milestone
+			];
+		}
+		return [
+			'success' => false,
+			'message' => 'This milestone does not exist'
+		];
+	}
 }

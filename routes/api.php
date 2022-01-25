@@ -21,8 +21,8 @@ Route::get('/shared/all-proposals-2', 'SharedController@getAllProposals2');
 Route::get('/shared/all-proposals-2/{proposalId}', 'SharedController@getDeatilProposal2');
 Route::get('/shared/public/proposals/{proposalId}/changes', 'SharedController@getPublicProposalChanges');
 Route::get('/shared/public/global-settings', 'SharedController@getGlobalSettings');
-Route::get('/shared/public/all-milestones', 'AdminController@getAllMilestone');
-Route::get('/shared/public/all-milestones/{milestoneId}', 'AdminController@getMilestoneDetail');
+Route::get('/shared/public/all-milestones', 'SharedController@getAllMilestone');
+Route::get('/shared/public/all-milestones/{milestoneId}', 'SharedController@getMilestoneDetail');
 
 // Webhook
 Route::post('/hellosign', 'SharedController@hellosignHook');

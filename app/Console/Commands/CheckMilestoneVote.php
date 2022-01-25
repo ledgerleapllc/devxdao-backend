@@ -103,7 +103,9 @@ class CheckMilestoneVote extends Command
         $start = Carbon::createFromFormat("Y-m-d H:i:s", $vote->created_at, "UTC");
         $start->addMinutes($mins);
         $today = Carbon::now('UTC');
-        $voteInfomal = Vote::where('proposal_id', $vote->proposal_id)->where('type', 'informal')
+        $voteInfomal = Vote::where('proposal_id', $vote->proposal_id)
+            ->where('milestone_id', $vote->milestone_id)
+            ->where('type', 'informal')
             ->where('content_type', 'milestone')->first(); 
         $totalMembers =  $voteInfomal->result_count ?? 0;
         $minMembers = $totalMembers  * $quorumRate / 100;

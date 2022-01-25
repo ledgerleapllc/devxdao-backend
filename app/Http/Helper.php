@@ -1005,6 +1005,7 @@ class Helper
     }
     if ($vote->type == 'formal' && $vote->content_type == 'milestone') {
       $result = Vote::where('proposal_id', $proposalId)->where('type', 'informal')
+        ->where('milestone_id', $vote->milestone_id)
         ->where('content_type', 'milestone')->orderBy('created_at', 'desc')->first();
       return $result->result_count ?? self::getTotalMembers();
     }
@@ -1016,6 +1017,16 @@ class Helper
     if ($vote->type == 'formal' && $vote->content_type == 'simple') {
       $result = Vote::where('proposal_id', $proposalId)->where('type', 'informal')
         ->where('content_type', 'simple')->orderBy('created_at', 'desc')->first();
+      return $result->result_count ?? self::getTotalMembers();
+    }
+    if ($vote->type == 'formal' && $vote->content_type == 'admin-grant') {
+      $result = Vote::where('proposal_id', $proposalId)->where('type', 'informal')
+        ->where('content_type', 'admin-grant')->orderBy('created_at', 'desc')->first();
+      return $result->result_count ?? self::getTotalMembers();
+    }
+    if ($vote->type == 'formal' && $vote->content_type == 'advance-payment') {
+      $result = Vote::where('proposal_id', $proposalId)->where('type', 'informal')
+        ->where('content_type', 'advance-payment')->orderBy('created_at', 'desc')->first();
       return $result->result_count ?? self::getTotalMembers();
     }
     return self::getTotalMembers();
