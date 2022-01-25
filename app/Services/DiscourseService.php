@@ -264,7 +264,7 @@ class DiscourseService
         }
     }
 
-    public function mergeWithFlagsAndReputation(array $posts)
+    public function mergeWithDxD(array $posts)
     {
         $postIds = array_map(fn ($post) => $post['id'], $posts);
         $discourseUserIds = array_unique(array_map(fn ($post) => $post['user_id'], $posts));

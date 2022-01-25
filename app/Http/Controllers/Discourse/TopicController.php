@@ -62,7 +62,7 @@ class TopicController extends Controller
 
         $proposalStatus = $proposal ? Helper::getStatusProposal($proposal) : null;
 
-        $topic['post_stream']['posts'] = $discourse->mergeWithFlagsAndReputation($topic['post_stream']['posts']);
+        $topic['post_stream']['posts'] = $discourse->mergeWithDxD($topic['post_stream']['posts']);
         $topic['flags_count'] = TopicFlag::where('topic_id', $id)->count();
         $topic['attestation'] = [
             'related_to_proposal' => !is_null($proposal),
