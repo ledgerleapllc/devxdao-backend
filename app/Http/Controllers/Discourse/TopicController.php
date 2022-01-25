@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Discourse;
 
 use App\Http\Controllers\Controller;
+use App\Http\Helper;
+use App\Proposal;
 use App\Services\DiscourseService;
 use App\TopicRead;
 use App\TopicFlag;
@@ -52,14 +54,30 @@ class TopicController extends Controller
     public function show(DiscourseService $discourse, $id)
     {
         $id = (int)$id;
-        $username = $discourse->getUsername(Auth::user());
+        $topic = $discourse->topic($id, $discourse->getUsername(Auth::user()));
 
-        $topic = $discourse->topic($id, $username);
+        $proposal = Proposal::select('id', 'status', 'dos_paid', 'topic_posts_count')
+            ->where('discourse_topic_id', $id)
+            ->first();
 
-        $topic['post_stream']['posts'] = $discourse->mergeWithFlagsAndReputation($topic['post_stream']['posts']);
+        $proposalStatus = $proposal ? Helper::getStatusProposal($proposal) : null;
+
+        $topic['post_stream']['posts'] = $discourse->mergeWithDxD($topic['post_stream']['posts']);
         $topic['flags_count'] = TopicFlag::where('topic_id', $id)->count();
-        $topic['ready_to_vote'] = TopicRead::where('topic_id', $id)->where('user_id', Auth::id())->exists();
-        $topic['ready_va_rate'] = $discourse->topicVARate($id);
+        $topic['attestation'] = [
+            'related_to_proposal' => !is_null($proposal),
+            'proposal_in_discussion' => $proposalStatus === 'In Discussion',
+            'is_attestated' => TopicRead::where('topic_id', $id)->where('user_id', Auth::id())->exists(),
+            'attestation_rate' => $discourse->attestationRate($id),
+        ];
+
+        if ($proposal) {
+            $topic['proposal'] = [
+                'id' => $proposal->id,
+                'status' => $proposalStatus,
+                'topic_posts_count' => $proposal->topic_posts_count,
+            ];
+        }
 
         return ['success' => true, 'data' => $topic];
     }
@@ -93,6 +111,8 @@ class TopicController extends Controller
         $flag->user()->associate($user);
         $flag->save();
 
+        TopicRead::where('topic_id', $id)->delete();
+
         return ['success' => true];
     }
 
@@ -111,6 +131,14 @@ class TopicController extends Controller
             return $topic;
         }
 
+        $proposal = Proposal::select('id', 'status', 'dos_paid')
+            ->where('discourse_topic_id', $id)
+            ->first();
+
+        if (!$proposal || Helper::getStatusProposal($proposal) !== 'In Discussion') {
+            return ['failed' => true, 'message' => 'You can only mark topics as read if they are in discussion'];
+        }
+
         $checkedBefore = TopicRead::query()
             ->where('topic_id', $id)
             ->where('user_id', $user->id)
@@ -125,7 +153,7 @@ class TopicController extends Controller
         $check->save();
 
         return ['success' => true, 'data' => [
-            'ready_va_rate' => $discourse->topicVARate($id),
+            'attestation_rate' => $discourse->attestationRate($id),
         ]];
     }
 }

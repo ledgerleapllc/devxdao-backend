@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Discourse;
 
 use App\Http\Controllers\Controller;
+use App\Proposal;
 use App\Services\DiscourseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,7 +26,16 @@ class PostController extends Controller
 
     public function destroy(DiscourseService $discourse, $post)
     {
-        return $discourse->deletePost($post, $discourse->getUsername(Auth::user()));
+        $response = $discourse->deletePost($post, $discourse->getUsername(Auth::user()));
+
+        $proposal = Proposal::where('discourse_topic_id', $response['topic_id'])->first();
+
+        if ($proposal) {
+            $proposal->topic_posts_count = $response['post_number'];
+            $proposal->save();
+        }
+
+        return $response;
     }
 
     public function update(Request $request, DiscourseService $discourse, $post)
