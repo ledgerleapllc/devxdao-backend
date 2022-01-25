@@ -58,6 +58,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use PDF;
+use Log;
 
 class SharedController extends Controller
 {
@@ -3168,16 +3169,21 @@ class SharedController extends Controller
 	{
 		$user = Auth::user();
 
-		if ($user && $user->hasRole('admin')) {
+		$proposal = $this->getInfoVoteProposal($proposalId, $voteId);
+
+		if($user && $user->hasRole('admin')) {
 			//
 		} else {
-			return [
-				'success' => false,
-				'message' => 'Not authorized'
-			];
+			$status = $proposal->vote->status ?? null;
+
+			if($status != 'completed') {
+				return [
+					'success' => false,
+					'message' => 'Not authorized'
+				];
+			}
 		}
 
-		$proposal = $this->getInfoVoteProposal($proposalId, $voteId);
 		return Excel::download(new VoteResultExport($proposal), "proposal_" . $proposalId . "_vote_results_.xlsx");
 	}
 
@@ -3185,16 +3191,21 @@ class SharedController extends Controller
 	{
 		$user = Auth::user();
 
-		if ($user && $user->hasRole('admin')) {
+		$proposal = $this->getInfoVoteProposal($proposalId, $voteId);
+
+		if($user && $user->hasRole('admin')) {
 			//
 		} else {
-			return [
-				'success' => false,
-				'message' => 'Not authorized'
-			];
+			$status = $proposal->vote->status ?? null;
+
+			if($status != 'completed') {
+				return [
+					'success' => false,
+					'message' => 'Not authorized'
+				];
+			}
 		}
 
-		$proposal = $this->getInfoVoteProposal($proposalId, $voteId);
 		$pdf = App::make('dompdf.wrapper');
 		$pdfFile = $pdf->loadView('pdf.vote_detail', compact('proposal'));
 		return $pdf->download("vote_results_$voteId.pdf");
