@@ -1574,6 +1574,7 @@ class SharedController extends Controller
 					$topic = $discourse->createPost([
 						'title' => $proposal->title,
 						'raw' => $proposal->short_description,
+						'created_at' => $proposal->created_at->toDateTimeString(),
 					], 'system');
 
 					if ($topic) {
@@ -2987,7 +2988,7 @@ class SharedController extends Controller
 
 		$user = Auth::user();
 
-		if($user && $user->hasRole('admin')) {
+		if ($user && $user->hasRole('admin')) {
 			//
 		} else {
 			return [
@@ -3167,7 +3168,7 @@ class SharedController extends Controller
 	{
 		$user = Auth::user();
 
-		if($user && $user->hasRole('admin')) {
+		if ($user && $user->hasRole('admin')) {
 			//
 		} else {
 			return [
@@ -3184,7 +3185,7 @@ class SharedController extends Controller
 	{
 		$user = Auth::user();
 
-		if($user && $user->hasRole('admin')) {
+		if ($user && $user->hasRole('admin')) {
 			//
 		} else {
 			return [

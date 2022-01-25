@@ -2,12 +2,14 @@
 
 namespace App\Services;
 
+use App\Http\Helper;
 use App\TopicFlag;
 use App\TopicRead;
 use App\User;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Query;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Psr\Http\Message\ResponseInterface;
@@ -33,7 +35,7 @@ class DiscourseService
         ]);
     }
 
-    public function topicVARate($id)
+    public function attestationRate($id)
     {
         return TopicRead::where('topic_id', $id)->count() / User::where('is_member', true)->count() * 100;
     }
@@ -166,6 +168,41 @@ class DiscourseService
             ]))
         );
 
+        $topicIds = array_map(fn ($topic) => $topic['id'], $response['topic_list']['topics']);
+
+        $proposals = DB::table('proposal')
+            ->select('id', 'discourse_topic_id', 'status', 'dos_paid')
+            ->whereIn('discourse_topic_id', $topicIds)
+            ->get();
+
+        $attestationRates = DB::table('topic_reads')
+            ->select('topic_id', DB::raw('count(*) as count'))
+            ->whereIn('topic_id', $topicIds)
+            ->groupBy('topic_id')
+            ->get();
+
+        $attestationUsers = DB::table('topic_reads')
+            ->select('user_id')
+            ->whereIn('topic_id', $topicIds)
+            ->get();
+
+        $VACount = User::where('is_member', true)->count();
+
+        foreach ($response['topic_list']['topics'] as $key => $topic) {
+            $proposal = $proposals->firstWhere('discourse_topic_id', $topic['id']);
+
+            if (is_null($proposal)) {
+                continue;
+            }
+
+            $response['topic_list']['topics'][$key]['proposal'] = [
+                'id' => $proposal->id,
+                'attestation_rate' => $attestationRates->firstWhere('topic_id', $topic['id'])->count / $VACount * 100,
+                'status' => Helper::getStatusProposal($proposal),
+                'is_attestated' => $attestationUsers->contains('user_id', Auth::id()),
+            ];
+        }
+
         return $response['topic_list'];
     }
 
@@ -227,7 +264,7 @@ class DiscourseService
         }
     }
 
-    public function mergeWithFlagsAndReputation(array $posts)
+    public function mergeWithDxD(array $posts)
     {
         $postIds = array_map(fn ($post) => $post['id'], $posts);
         $discourseUserIds = array_unique(array_map(fn ($post) => $post['user_id'], $posts));
@@ -253,7 +290,7 @@ class DiscourseService
 
     public function getUsername(User $user)
     {
-        return Str::slug($user->profile->forum_name);
+        return $user->profile->forum_name;
     }
 
     private function json(ResponseInterface $response)
