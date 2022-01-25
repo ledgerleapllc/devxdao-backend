@@ -58,7 +58,7 @@ class TopicController extends Controller
 
         $topic['post_stream']['posts'] = $discourse->mergeWithFlagsAndReputation($topic['post_stream']['posts']);
         $topic['flags_count'] = TopicFlag::where('topic_id', $id)->count();
-        $topic['ready_to_vote'] = TopicRead::where('topic_id', $id)->where('user_id', Auth::id())->exists();
+        $topic['ready_to_vote'] = !TopicRead::where('topic_id', $id)->where('user_id', Auth::id())->exists();
         $topic['ready_va_rate'] = $discourse->topicVARate($id);
 
         return ['success' => true, 'data' => $topic];
