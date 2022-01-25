@@ -76,8 +76,8 @@ class MyReputationExport implements FromCollection, WithHeadings, WithMapping, W
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $event->sheet->setCellValue('D' . ($event->sheet->getHighestRow() + 1), '=SUM(D2:D' . $event->sheet->getHighestRow() . ')');
-                $event->sheet->setCellValue('E' . ($event->sheet->getHighestRow()), '=SUM(E2:E' . $event->sheet->getHighestRow() - 1 . ')');
-                $event->sheet->setCellValue('F' . ($event->sheet->getHighestRow()), '=SUM(F2:F' . $event->sheet->getHighestRow() - 1 . ')');
+                $event->sheet->setCellValue('E' . ($event->sheet->getHighestRow()), '=SUM(E2:E' . ($event->sheet->getHighestRow() - 1) . ')');
+                $event->sheet->setCellValue('F' . ($event->sheet->getHighestRow()), '=SUM(F2:F' . ($event->sheet->getHighestRow() - 1) . ')');
                 $event->sheet->setCellValue('A' . ($event->sheet->getHighestRow()), 'Total');
             }
         ];
