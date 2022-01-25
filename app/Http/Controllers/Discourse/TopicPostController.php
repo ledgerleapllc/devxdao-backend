@@ -36,6 +36,10 @@ class TopicPostController extends Controller
 
         $response = $discourse->createPost($data, $discourse->getUsername(Auth::user()));
 
+        if (isset($response['failed'])) {
+            return $response;
+        }
+
         $proposal = Proposal::where('discourse_topic_id', $topic)->first();
 
         if ($proposal) {
