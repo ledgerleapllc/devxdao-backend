@@ -93,6 +93,8 @@ class TopicController extends Controller
         $flag->user()->associate($user);
         $flag->save();
 
+        TopicRead::where('topic_id', $id)->delete();
+
         return ['success' => true];
     }
 
