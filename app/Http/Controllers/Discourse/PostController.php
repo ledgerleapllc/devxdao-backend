@@ -5,20 +5,13 @@ namespace App\Http\Controllers\Discourse;
 use App\Http\Controllers\Controller;
 use App\Proposal;
 use App\Services\DiscourseService;
+use App\Services\TopicPostReactionService;
+use App\TopicPostReaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class PostController extends Controller
 {
-    public function react(DiscourseService $discourse, $post)
-    {
-        $username = $discourse->getUsername(Auth::user());
-
-        return $discourse->isLikedTo($post, $username)
-            ? $discourse->unlike($post, $username)
-            : $discourse->like($post, $username);
-    }
-
     public function show(DiscourseService $discourse, $post)
     {
         return $discourse->post($post, $discourse->getUsername(Auth::user()));
@@ -45,5 +38,36 @@ class PostController extends Controller
             ['post' => ['raw' => $request->raw]],
             Auth::user()->profile->forum_name
         );
+    }
+
+    public function toggleLike(DiscourseService $discourse, $post)
+    {
+        $username = $discourse->getUsername(Auth::user());
+
+        return $discourse->isLikedTo($post, $username)
+            ? $discourse->unlike($post, $username)
+            : $discourse->like($post, $username);
+    }
+
+    public function upVote(TopicPostReactionService $reaction, $post)
+    {
+        $reaction->react(Auth::user(), $post, TopicPostReaction::UP_VOTE);
+
+        return [
+            'success' => true,
+            'data' => $reaction->format($post),
+            'message' => 'Upvoted'
+        ];
+    }
+
+    public function downVote(TopicPostReactionService $reaction, $post)
+    {
+        $reaction->react(Auth::user(), $post, TopicPostReaction::DOWN_VOTE);
+
+        return [
+            'success' => true,
+            'data' => $reaction->format($post),
+            'message' => 'Downvoted'
+        ];
     }
 }

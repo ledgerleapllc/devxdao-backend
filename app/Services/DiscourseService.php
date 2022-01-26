@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Http\Helper;
 use App\TopicFlag;
+use App\TopicPostReaction;
 use App\TopicRead;
 use App\User;
 use GuzzleHttp\Client;
@@ -264,7 +265,7 @@ class DiscourseService
         }
     }
 
-    public function mergeWithDxD(array $posts)
+    public function mergePostsWithDxD(array $posts)
     {
         $postIds = array_map(fn ($post) => $post['id'], $posts);
         $discourseUserIds = array_unique(array_map(fn ($post) => $post['user_id'], $posts));
@@ -280,9 +281,15 @@ class DiscourseService
             ->whereIn('users.discourse_user_id', $discourseUserIds)
             ->get();
 
+        $reactions = TopicPostReaction::query()
+            ->select('post_id', 'user_id', 'type')
+            ->whereIn('post_id', $postIds)
+            ->get();
+
         foreach ($posts as $key => $post) {
             $posts[$key]['flag'] = $topicFlags->firstWhere('post_id', $post['id']);
             $posts[$key]['devxdao_user'] = $users->firstWhere('discourse_user_id', $post['user_id']);
+            $posts[$key]['reactions'] = resolve(TopicPostReactionService::class)->format($post['id'], $reactions);
         }
 
         return $posts;

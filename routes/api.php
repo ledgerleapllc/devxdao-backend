@@ -189,7 +189,9 @@ Route::group(['prefix' => 'user', 'middleware' => ['auth:api']], function () {
 	// Discourse
 	Route::group(['prefix' => 'discourse', 'namespace' => 'Discourse'], function () {
 		Route::get('posts/{post}/replies', 'PostReplyController@index');
-		Route::put('posts/{post}/react', 'PostController@react');
+		Route::put('posts/{post}/toggle-like', 'PostController@toggleLike');
+		Route::put('posts/{post}/up-vote', 'PostController@upVote');
+		Route::put('posts/{post}/down-vote', 'PostController@downVote');
 		Route::post('topics/{topic}/flag', 'TopicController@flag');
 		Route::put('topics/{topic}/readed', 'TopicController@markAsRead');
 		Route::apiResource('topics', 'TopicController');
