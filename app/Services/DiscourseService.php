@@ -182,7 +182,7 @@ class DiscourseService
             ->get();
 
         $attestationUsers = DB::table('topic_reads')
-            ->select('user_id')
+            ->select('topic_id', 'user_id')
             ->whereIn('topic_id', $topicIds)
             ->get();
 
@@ -199,7 +199,7 @@ class DiscourseService
                 'id' => $proposal->id,
                 'attestation_rate' => $attestationRates->firstWhere('topic_id', $topic['id'])->count / $VACount * 100,
                 'status' => Helper::getStatusProposal($proposal),
-                'is_attestated' => $attestationUsers->contains('user_id', Auth::id()),
+                'is_attestated' => $attestationUsers->where('user_id', Auth::id())->where('topic_id', $topic['id'])->isNotEmpty(),
             ];
         }
 
