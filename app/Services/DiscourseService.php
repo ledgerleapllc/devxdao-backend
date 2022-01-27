@@ -90,21 +90,27 @@ class DiscourseService
 
     public function postReplies(string $id, string $username)
     {
-        return $this->json($this->client->get("/posts/{$id}/replies.json", $this->by($username)));
+        return $this->try(function () use ($id, $username) {
+            return $this->json($this->client->get("/posts/{$id}/replies.json", $this->by($username)));
+        });
     }
 
     public function posts(string $username)
     {
-        return $this->json($this->client->get('/posts.json', $this->by($username)));
+        return $this->try(function () use ($username) {
+            return $this->json($this->client->get('/posts.json', $this->by($username)));
+        });
     }
 
     public function postsByTopicId($id, string $postIds, string $username)
     {
-        $response = $this->client->get("/t/{$id}/posts.json", $this->by($username, [
-            'query' => Query::build(['post_ids[]' => explode(',', $postIds)]),
-        ]));
+        return $this->try(function () use ($id, $postIds, $username) {
+            $response = $this->client->get("/t/{$id}/posts.json", $this->by($username, [
+                'query' => Query::build(['post_ids[]' => explode(',', $postIds)]),
+            ]));
 
-        return $this->json($response)['post_stream']['posts'];
+            return $this->json($response)['post_stream']['posts'];
+        });
     }
 
     public function like($id, string $username)
@@ -146,15 +152,17 @@ class DiscourseService
 
     public function isLikedTo($id, string $username)
     {
-        $post = $post = $this->post($id, $username);
+        return $this->try(function () use ($id, $username) {
+            $post = $post = $this->post($id, $username);
 
-        $action = head(array_filter($post['actions_summary'] ?? [], fn ($action) => $action['id'] === 2));
+            $action = head(array_filter($post['actions_summary'] ?? [], fn ($action) => $action['id'] === 2));
 
-        if ($action === false) {
-            return false;
-        }
+            if ($action === false) {
+                return false;
+            }
 
-        return $action['acted'] ?? false;
+            return $action['acted'] ?? false;
+        });
     }
 
     public function topic($id, string $username)
@@ -168,61 +176,65 @@ class DiscourseService
 
     public function topics(string $username, int $page = 0)
     {
-        $response = $this->json(
-            $this->client->get('/latest.json', $this->by($username, [
-                'query' => ['page' => $page],
-            ]))
-        );
+        return $this->try(function () use ($username, $page) {
+            $response = $this->json(
+                $this->client->get('/latest.json', $this->by($username, [
+                    'query' => ['page' => $page],
+                ]))
+            );
 
-        $topicIds = array_map(fn ($topic) => $topic['id'], $response['topic_list']['topics']);
+            $topicIds = array_map(fn ($topic) => $topic['id'], $response['topic_list']['topics']);
 
-        $proposals = DB::table('proposal')
-            ->select('id', 'discourse_topic_id', 'status', 'dos_paid')
-            ->whereIn('discourse_topic_id', $topicIds)
-            ->get();
+            $proposals = DB::table('proposal')
+                ->select('id', 'discourse_topic_id', 'status', 'dos_paid')
+                ->whereIn('discourse_topic_id', $topicIds)
+                ->get();
 
-        $attestationRates = DB::table('topic_reads')
-            ->select('topic_id', DB::raw('count(*) as count'))
-            ->whereIn('topic_id', $topicIds)
-            ->groupBy('topic_id')
-            ->get();
+            $attestationRates = DB::table('topic_reads')
+                ->select('topic_id', DB::raw('count(*) as count'))
+                ->whereIn('topic_id', $topicIds)
+                ->groupBy('topic_id')
+                ->get();
 
-        $attestationUsers = DB::table('topic_reads')
-            ->select('topic_id', 'user_id')
-            ->whereIn('topic_id', $topicIds)
-            ->get();
+            $attestationUsers = DB::table('topic_reads')
+                ->select('topic_id', 'user_id')
+                ->whereIn('topic_id', $topicIds)
+                ->get();
 
-        $VACount = User::where('is_member', true)->count();
+            $VACount = User::where('is_member', true)->count();
 
-        foreach ($response['topic_list']['topics'] as $key => $topic) {
-            $proposal = $proposals->firstWhere('discourse_topic_id', $topic['id']);
+            foreach ($response['topic_list']['topics'] as $key => $topic) {
+                $proposal = $proposals->firstWhere('discourse_topic_id', $topic['id']);
 
-            if (is_null($proposal)) {
-                continue;
+                if (is_null($proposal)) {
+                    continue;
+                }
+
+                $count = $attestationRates->firstWhere('topic_id', $topic['id'])->count ?? 0;
+
+                $response['topic_list']['topics'][$key]['proposal'] = [
+                    'id' => $proposal->id,
+                    'attestation_rate' => $count / $VACount * 100,
+                    'status' => Helper::getStatusProposal($proposal),
+                    'is_attestated' => $attestationUsers->where('user_id', Auth::id())->where('topic_id', $topic['id'])->isNotEmpty(),
+                ];
             }
 
-            $count = $attestationRates->firstWhere('topic_id', $topic['id'])->count ?? 0;
-
-            $response['topic_list']['topics'][$key]['proposal'] = [
-                'id' => $proposal->id,
-                'attestation_rate' => $count / $VACount * 100,
-                'status' => Helper::getStatusProposal($proposal),
-                'is_attestated' => $attestationUsers->where('user_id', Auth::id())->where('topic_id', $topic['id'])->isNotEmpty(),
-            ];
-        }
-
-        return $response['topic_list'];
+            return $response['topic_list'];
+        });
     }
 
     public function search($term, string $username)
     {
-        $response = $this->client->get('/search.json', $this->by($username, [
-            'query' => [
-                'q' => $term,
-            ],
-        ]));
+        return $this->try(function () use ($term, $username) {
+            $response = $this->client->get('/search.json', $this->by($username, [
+                'query' => [
+                    'q' => $term,
+                ],
+            ]));
 
-        return $this->json($response);
+            return $this->json($response);
+        });
     }
 
     public function register(User $user)
