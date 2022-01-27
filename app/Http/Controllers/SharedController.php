@@ -1574,7 +1574,7 @@ class SharedController extends Controller
 				if (is_null($proposal->discourse_topic_id)) {
 					$topic = $discourse->createPost([
 						'title' => $proposal->title,
-						'raw' => $proposal->short_description,
+						'raw' => $proposal->short_description || $proposal->title,
 						'created_at' => $proposal->created_at->toDateTimeString(),
 					], 'system');
 
@@ -3171,12 +3171,12 @@ class SharedController extends Controller
 
 		$proposal = $this->getInfoVoteProposal($proposalId, $voteId);
 
-		if($user && $user->hasRole('admin')) {
+		if ($user && $user->hasRole('admin')) {
 			//
 		} else {
 			$status = $proposal->vote->status ?? null;
 
-			if($status != 'completed') {
+			if ($status != 'completed') {
 				return [
 					'success' => false,
 					'message' => 'Not authorized'
@@ -3193,12 +3193,12 @@ class SharedController extends Controller
 
 		$proposal = $this->getInfoVoteProposal($proposalId, $voteId);
 
-		if($user && $user->hasRole('admin')) {
+		if ($user && $user->hasRole('admin')) {
 			//
 		} else {
 			$status = $proposal->vote->status ?? null;
 
-			if($status != 'completed') {
+			if ($status != 'completed') {
 				return [
 					'success' => false,
 					'message' => 'Not authorized'

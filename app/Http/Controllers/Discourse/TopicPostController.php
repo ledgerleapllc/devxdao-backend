@@ -18,7 +18,7 @@ class TopicPostController extends Controller
             $discourse->getUsername(Auth::user())
         );
 
-        $posts = $discourse->mergeWithDxD($posts);
+        $posts = $discourse->mergePostsWithDxD($posts);
 
         return ['success' => true, 'data' => $posts];
     }
