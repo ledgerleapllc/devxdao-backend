@@ -494,6 +494,16 @@ class APIController extends Controller
       ];
     }
 
+    if(
+      strlen($forum_name) < 2 ||
+      strlen($forum_name) > 25
+    ) {
+      return [
+        'success' => false,
+        'message' => 'Forum names must be at minimum 2 chacters, and maximum 25 characters.'
+      ];
+    }
+
     $profile = Profile::where('forum_name', $forum_name)->first();
     if ($profile) {
       return [
