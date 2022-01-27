@@ -195,9 +195,11 @@ class DiscourseService
                 continue;
             }
 
+            $count = $attestationRates->firstWhere('topic_id', $topic['id'])->count ?? 0;
+
             $response['topic_list']['topics'][$key]['proposal'] = [
                 'id' => $proposal->id,
-                'attestation_rate' => $attestationRates->firstWhere('topic_id', $topic['id'])->count / $VACount * 100,
+                'attestation_rate' => $count / $VACount * 100,
                 'status' => Helper::getStatusProposal($proposal),
                 'is_attestated' => $attestationUsers->contains('user_id', Auth::id()),
             ];
@@ -290,7 +292,7 @@ class DiscourseService
 
     public function getUsername(User $user)
     {
-        return $user->profile->forum_name;
+        return Str::slug($user->profile->forum_name);
     }
 
     private function json(ResponseInterface $response)
