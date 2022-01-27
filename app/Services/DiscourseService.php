@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Http\Helper;
 use App\TopicFlag;
+use App\TopicPostReaction;
 use App\TopicRead;
 use App\User;
+use ErrorException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Query;
@@ -37,7 +39,11 @@ class DiscourseService
 
     public function attestationRate($id)
     {
-        return TopicRead::where('topic_id', $id)->count() / User::where('is_member', true)->count() * 100;
+        try {
+            return TopicRead::where('topic_id', $id)->count() / User::where('is_member', true)->count() * 100;
+        } catch (ErrorException $e) {
+            return 0;
+        }
     }
 
     public function updateTopic($id, array $data, string $username)
@@ -182,7 +188,7 @@ class DiscourseService
             ->get();
 
         $attestationUsers = DB::table('topic_reads')
-            ->select('user_id')
+            ->select('topic_id', 'user_id')
             ->whereIn('topic_id', $topicIds)
             ->get();
 
@@ -201,7 +207,7 @@ class DiscourseService
                 'id' => $proposal->id,
                 'attestation_rate' => $count / $VACount * 100,
                 'status' => Helper::getStatusProposal($proposal),
-                'is_attestated' => $attestationUsers->contains('user_id', Auth::id()),
+                'is_attestated' => $attestationUsers->where('user_id', Auth::id())->where('topic_id', $topic['id'])->isNotEmpty(),
             ];
         }
 
@@ -266,7 +272,7 @@ class DiscourseService
         }
     }
 
-    public function mergeWithDxD(array $posts)
+    public function mergePostsWithDxD(array $posts)
     {
         $postIds = array_map(fn ($post) => $post['id'], $posts);
         $discourseUserIds = array_unique(array_map(fn ($post) => $post['user_id'], $posts));
@@ -282,9 +288,15 @@ class DiscourseService
             ->whereIn('users.discourse_user_id', $discourseUserIds)
             ->get();
 
+        $reactions = TopicPostReaction::query()
+            ->select('post_id', 'user_id', 'type')
+            ->whereIn('post_id', $postIds)
+            ->get();
+
         foreach ($posts as $key => $post) {
             $posts[$key]['flag'] = $topicFlags->firstWhere('post_id', $post['id']);
             $posts[$key]['devxdao_user'] = $users->firstWhere('discourse_user_id', $post['user_id']);
+            $posts[$key]['reactions'] = resolve(TopicPostReactionService::class)->format($post['id'], $reactions);
         }
 
         return $posts;
@@ -292,6 +304,7 @@ class DiscourseService
 
     public function getUsername(User $user)
     {
+        return $user->profile->forum_name;
         return Str::slug($user->profile->forum_name);
     }
 
