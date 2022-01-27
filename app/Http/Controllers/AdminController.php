@@ -5725,6 +5725,16 @@ class AdminController extends Controller
 			$total_all_staked = $user_rep->where('type', 'Staked')->sum('staked');
 			$total_all_minted = $user_rep->whereIn('type', ['Gained', 'Minted', 'Stake Lost', 'Lost'])->sum('value');
 			$total_all = $total_all_staked + $total_all_minted ;
+
+			$total_minted_all_years = Reputation::where(function ($query) {
+                $query->where('type', 'Gained')
+                    ->orWhere('type', 'Minted')
+                    ->orWhere('type', 'Stake Lost')
+                    ->orWhere('type', 'Lost');
+            })->where('user_id',  $user_rep[0]['user_id'])->sum('value');
+            $total_staked_all_years = Reputation::where('type', 'Staked')->where('user_id',  $user_rep[0]['user_id'])->sum('staked');
+            $total_rep_all_years = $total_minted_all_years + $total_staked_all_years;
+
 			for ($i = 1; $i <= 12; $i++) {
 				$user_rep_filter = $user_rep->where('month', $i);
 				$total_stake = $user_rep_filter->where('type', 'Staked')->sum('staked');
@@ -5744,6 +5754,7 @@ class AdminController extends Controller
 				'is_member' => $user_rep[0]['is_member'],
 				'rep_pending' => $user_rep->sum('pending'),
 				'total_rep' => $total_all,
+				'total_rep_all_years' => $total_rep_all_years,
 				'rep_results' =>  $user_rep_result,
 			]);
 		}
