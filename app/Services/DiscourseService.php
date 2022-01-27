@@ -317,7 +317,7 @@ class DiscourseService
     public function getUsername(User $user)
     {
         // return Str::slug($user->profile->forum_name);
-        $updated_forum_name = str_replace(' ', '_', $user);
+        $updated_forum_name = str_replace(' ', '_', $user->profile->forum_name);
         return preg_replace("/([^A-Za-z0-9\-\_.])/", '', $updated_forum_name);
     }
 
