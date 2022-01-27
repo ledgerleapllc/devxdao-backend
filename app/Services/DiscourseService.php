@@ -304,7 +304,6 @@ class DiscourseService
 
     public function getUsername(User $user)
     {
-        return $user->profile->forum_name;
         return Str::slug($user->profile->forum_name);
     }
 
@@ -330,6 +329,12 @@ class DiscourseService
             if (app()->environment('local')) {
                 info($e);
             }
+
+            info('Error on Discourse API', [
+                'username' => $this->getUsername(Auth::user()),
+                'message' => $e->getMessage(),
+                'response' => $e->getResponse(),
+            ]);
 
             $errors = $this->json($e->getResponse())['errors'] ?? ['Please try again.'];
 
