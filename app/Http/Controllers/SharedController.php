@@ -1574,7 +1574,7 @@ class SharedController extends Controller
 				if (is_null($proposal->discourse_topic_id)) {
 					$topic = $discourse->createPost([
 						'title' => $proposal->title,
-						'raw' => $proposal->short_description || $proposal->title,
+						'raw' => $proposal->short_description ?: $proposal->title,
 						'created_at' => $proposal->created_at->toDateTimeString(),
 					], 'system');
 
