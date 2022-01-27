@@ -7,6 +7,7 @@ use App\TopicFlag;
 use App\TopicPostReaction;
 use App\TopicRead;
 use App\User;
+use ErrorException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Query;
@@ -38,7 +39,11 @@ class DiscourseService
 
     public function attestationRate($id)
     {
-        return TopicRead::where('topic_id', $id)->count() / User::where('is_member', true)->count() * 100;
+        try {
+            return TopicRead::where('topic_id', $id)->count() / User::where('is_member', true)->count() * 100;
+        } catch (ErrorException $e) {
+            return 0;
+        }
     }
 
     public function updateTopic($id, array $data, string $username)
@@ -299,6 +304,7 @@ class DiscourseService
 
     public function getUsername(User $user)
     {
+        return $user->profile->forum_name;
         return Str::slug($user->profile->forum_name);
     }
 
