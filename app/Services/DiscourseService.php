@@ -224,12 +224,48 @@ class DiscourseService
         });
     }
 
+    public function messages(string $username, string $folder = '', int $page = 0)
+    {
+        return $this->try(function () use ($username, $folder, $page) {
+            $folder = $folder ? "-{$folder}" : '';
+
+            $response = $this->json(
+                $this->client->get(
+                    "/topics/private-messages{$folder}/{$username}",
+                    $this->by($username, [
+                        'query' => ['page' => $page],
+                    ])
+                )
+            );
+
+            return $response['topic_list'];
+        });
+    }
+
     public function search($term, string $username)
     {
         return $this->try(function () use ($term, $username) {
             $response = $this->client->get('/search.json', $this->by($username, [
                 'query' => [
                     'q' => $term,
+                ],
+            ]));
+
+            return $this->json($response);
+        });
+    }
+
+    public function searchUsers($term, string $username)
+    {
+        return $this->try(function () use ($term, $username) {
+            $response = $this->client->get('/u/search/users.json', $this->by($username, [
+                'query' => [
+                    'term' => $term,
+                    'include_groups' => false,
+                    'include_mentionable_groups' => false,
+                    'include_messageable_groups' => true,
+                    'topic_allowed_users' => false,
+                    'limit' => 6,
                 ],
             ]));
 
@@ -319,14 +355,14 @@ class DiscourseService
         $class_name = explode('\\', get_class($user));
         $class_name = $class_name[sizeof($class_name) - 1];
 
-        if($class_name == 'User') {
+        if ($class_name == 'User') {
             $updated_forum_name = str_replace(' ', '-', $user->profile->forum_name);
             $updated_forum_name = preg_replace("/([^A-Za-z0-9\-\_.])/", '', $updated_forum_name);
             $updated_forum_name = str_replace('--', '-', $updated_forum_name);
             return strtolower($updated_forum_name);
-        } elseif($class_name == 'ComplianceUser') {
+        } elseif ($class_name == 'ComplianceUser') {
             return 'compliance-user';
-        } elseif($class_name == 'OpsUser') {
+        } elseif ($class_name == 'OpsUser') {
             return 'project-management-user';
         } else {
             return 'unknown-user';
