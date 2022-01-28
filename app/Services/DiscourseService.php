@@ -242,6 +242,30 @@ class DiscourseService
         });
     }
 
+    public function notifications(string $username, $recent = false)
+    {
+        return $this->try(function () use ($username, $recent) {
+            return $this->json(
+                $this->client->get('/notifications.json', $this->by($username, [
+                    'query' => $recent ? ['recent' => true] : [],
+                ]))
+            );
+        });
+    }
+
+    public function markAsReadNotification($id, string $username)
+    {
+        return $this->try(function () use ($id, $username) {
+            return $this->json(
+                $this->client->put('/notifications/mark-read.json', $this->by($username, [
+                    'form_params' => [
+                        'id' => $id,
+                    ]
+                ]))
+            );
+        });
+    }
+
     public function search($term, string $username)
     {
         return $this->try(function () use ($term, $username) {
