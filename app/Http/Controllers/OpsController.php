@@ -170,7 +170,7 @@ class OpsController extends Controller
         $page_id = (int) $page_id;
         if ($page_id <= 0) $page_id = 1;
 
-        $limit = $request->limit ?? 15;
+        $limit = $request->limit ?? config('define.default.limit');
         $start = $limit * ($page_id - 1);
 
         // Records
@@ -221,7 +221,7 @@ class OpsController extends Controller
         $page_id = (int) $page_id;
         if ($page_id <= 0) $page_id = 1;
 
-        $limit = $request->limit ?? 15;
+        $limit = $request->limit ?? config('define.default.limit');
         $start = $limit * ($page_id - 1);
 
         // Records
@@ -312,7 +312,7 @@ class OpsController extends Controller
         $page_id = (int) $page_id;
         if ($page_id <= 0) $page_id = 1;
 
-        $limit = isset($data['limit']) ? $data['limit'] : 10;
+        $limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
         $start = $limit * ($page_id - 1);
 
         $milestones = MilestoneReview::where('milestone_review.status', 'pending')
@@ -367,7 +367,7 @@ class OpsController extends Controller
         $page_id = (int) $page_id;
         if ($page_id <= 0) $page_id = 1;
 
-        $limit = $request->limit ?? 15;
+        $limit = $request->limit ?? config('define.default.limit');
         $start = $limit * ($page_id - 1);
 
         // Records
@@ -509,7 +509,7 @@ class OpsController extends Controller
         $page_id = (int) $page_id;
         if ($page_id <= 0) $page_id = 1;
 
-        $limit = isset($data['limit']) ? $data['limit'] : 10;
+        $limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
         $start = $limit * ($page_id - 1);
         $status = $request->status == 'completed' ? 'approved' : 'active';
 
@@ -572,7 +572,7 @@ class OpsController extends Controller
         $page_id = (int) $page_id;
         if ($page_id <= 0) $page_id = 1;
 
-        $limit = isset($data['limit']) ? $data['limit'] : 10;
+        $limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
         $start = $limit * ($page_id - 1);
         $status = $request->status == 'completed' ? 'approved' : 'active';
 
@@ -877,7 +877,7 @@ class OpsController extends Controller
         $page_id = (int) $page_id;
         if ($page_id <= 0) $page_id = 1;
 
-        $limit = $request->limit ?? 15;
+        $limit = $request->limit ?? config('define.default.limit');
         $start = $limit * ($page_id - 1);
 
         // Records

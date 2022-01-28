@@ -471,7 +471,7 @@ class AdminController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		// We need to get successfully completed informal votes
@@ -526,7 +526,7 @@ class AdminController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		// Records
@@ -1716,7 +1716,7 @@ class AdminController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		// Records
@@ -1758,7 +1758,7 @@ class AdminController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		// Records
@@ -1823,7 +1823,7 @@ class AdminController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = 30;
+		$limit = config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		// Records
@@ -2352,7 +2352,7 @@ class AdminController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		$vote = Vote::where('id', $id)->first();
@@ -2503,7 +2503,7 @@ class AdminController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		$milestoneReviews = MilestoneReview::with(['milestones'])
@@ -2778,7 +2778,7 @@ class AdminController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 		$totalPaid = Helper::queryGetMilestone($email, $proposalId, $hideCompletedGrants, $startDate, $endDate, $search)->where('milestone.paid', '=', 1)->sum('milestone.grant');
 		$query = Helper::queryGetMilestone($email, $proposalId, $hideCompletedGrants, $startDate, $endDate, $search);
@@ -2916,7 +2916,7 @@ class AdminController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		$milestoneLogs = MilestoneLog::where('milestone_log.milestone_id', $milestoneId)
@@ -2995,7 +2995,7 @@ class AdminController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = $request->limit ?? 15;
+		$limit = $request->limit ?? config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		// Records
@@ -3228,7 +3228,7 @@ class AdminController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = $request->limit ?? 15;
+		$limit = $request->limit ?? config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		// Records
@@ -3411,7 +3411,7 @@ class AdminController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = $request->limit ?? 15;
+		$limit = $request->limit ?? config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		// Records
@@ -3586,7 +3586,7 @@ class AdminController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = 30;
+		$limit = config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		// Records
@@ -3786,7 +3786,7 @@ class AdminController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = $request->limit ?? 15;
+		$limit = $request->limit ?? config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 		$status = $request->status == 'active' ? 'active' : 'completed';
 		$total_member = Helper::getTotalMembers();
@@ -3884,7 +3884,7 @@ class AdminController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		// Record
@@ -3951,7 +3951,7 @@ class AdminController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = 30;
+		$limit = config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		// Records
@@ -4001,7 +4001,7 @@ class AdminController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = 30;
+		$limit = config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		// Records
@@ -4055,7 +4055,7 @@ class AdminController extends Controller
 		$page_id = (int) $page_id;
 		$limit = (int) $limit;
 		if ($page_id <= 0) $page_id = 1;
-		if ($limit <= 0) $limit = 10;
+		if ($limit <= 0) $limit = config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 		// Records
 		$users_vote = SurveyResult::where('survey_result.survey_id', $id)->distinct('user_id')->pluck('user_id')->toArray();
@@ -4096,7 +4096,7 @@ class AdminController extends Controller
 		if (!$sort_direction) $sort_direction = 'desc';
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
-		if ($limit <= 0) $limit = 10;
+		if ($limit <= 0) $limit = config('define.default.limit');
 
 		$start = $limit * ($page_id - 1);
 		$users_vote = SurveyResult::where('survey_result.survey_id', $id)->distinct('user_id')->pluck('user_id')->toArray();
@@ -4354,7 +4354,7 @@ class AdminController extends Controller
 		if (!$sort_direction) $sort_direction = 'desc';
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
-		$limit = isset($data['limit']) ? $data['limit'] : 20;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 		$start_date = $request->start_date;
 		$end_date = $request->end_date;
@@ -4600,7 +4600,7 @@ class AdminController extends Controller
 		if (!$sort_direction) $sort_direction = 'desc';
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		// Records
@@ -4833,7 +4833,7 @@ class AdminController extends Controller
 		if (!$sort_direction) $sort_direction = 'desc';
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
-		$limit = isset($data['limit']) ? $data['limit'] : 20;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 		$start_date = $request->start_date;
 		$end_date = $request->end_date;
@@ -4967,7 +4967,7 @@ class AdminController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		// Record
@@ -5198,7 +5198,7 @@ class AdminController extends Controller
 			$page_id = (int) $page_id;
 			if ($page_id <= 0) $page_id = 1;
 
-			$limit = isset($data['limit']) ? $data['limit'] : 10;
+			$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 			$start = $limit * ($page_id - 1);
 
 			$voteResults = VoteResult::with(['user', 'user.profile'])
@@ -5321,7 +5321,7 @@ class AdminController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = $request->limit ?? 15;
+		$limit = $request->limit ?? config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 		$status = $request->status == 'active' ? 'active' : 'completed';
 		$total_member = Helper::getTotalMembers();
@@ -5373,7 +5373,7 @@ class AdminController extends Controller
 		$page_id = (int) $page_id;
 		$limit = (int) $limit;
 		if ($page_id <= 0) $page_id = 1;
-		if ($limit <= 0) $limit = 10;
+		if ($limit <= 0) $limit = config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 		// Records
 		$user_ids = SurveyRfpResult::where('survey_rfp_result.survey_id', $id)->distinct('user_id')->pluck('user_id')->toArray();
@@ -5461,7 +5461,7 @@ class AdminController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		// Record
@@ -5584,7 +5584,7 @@ class AdminController extends Controller
 		if (!$sort_direction) $sort_direction = 'desc';
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
-		if ($limit <= 0) $limit = 10;
+		if ($limit <= 0) $limit = config('define.default.limit');
 
 		$start = $limit * ($page_id - 1);
 		$user_ids = SurveyRfpResult::where('survey_id', $id)->distinct('user_id')->pluck('user_id')->toArray();

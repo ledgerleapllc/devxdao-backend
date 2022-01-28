@@ -1769,7 +1769,7 @@ class SharedController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 		$hide_completed = $request->hide_completed;
 
@@ -1864,7 +1864,7 @@ class SharedController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		if ($user && $user->hasRole('admin')) {
@@ -1941,7 +1941,7 @@ class SharedController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		// Proposals
@@ -1996,7 +1996,7 @@ class SharedController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		if ($user && $user->hasRole('admin')) {
@@ -2097,7 +2097,7 @@ class SharedController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		// Records
@@ -2176,7 +2176,7 @@ class SharedController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		// Records
@@ -2233,7 +2233,7 @@ class SharedController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 		$is_winner = $request->is_winner;
 
@@ -2293,7 +2293,7 @@ class SharedController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		// Record
@@ -2438,7 +2438,7 @@ class SharedController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = isset($data['limit']) ? $data['limit'] : 20;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 
 		// Records
@@ -2555,7 +2555,7 @@ class SharedController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 		$show_unvoted = $request->show_unvoted;
 		$total_unvoted = 0;
@@ -2807,7 +2807,7 @@ class SharedController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 		$show_unvoted = $request->show_unvoted;
 		$total_unvoted = 0;
@@ -3232,7 +3232,7 @@ class SharedController extends Controller
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
 
-		$limit = isset($data['limit']) ? $data['limit'] : 10;
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 		$totalPaid = Helper::queryGetMilestone($email, $proposalId, $hideCompletedGrants, $startDate, $endDate, $search)->where('milestone.paid', '=', 1)->sum('milestone.grant');
 		$query = Helper::queryGetMilestone($email, $proposalId, $hideCompletedGrants, $startDate, $endDate, $search);
