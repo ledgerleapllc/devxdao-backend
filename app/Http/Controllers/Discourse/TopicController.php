@@ -56,6 +56,10 @@ class TopicController extends Controller
         $id = (int)$id;
         $topic = $discourse->topic($id, $discourse->getUsername(Auth::user()));
 
+        if (isset($topic['failed'])) {
+            return $topic;
+        }
+
         $proposal = Proposal::select('id', 'status', 'dos_paid', 'topic_posts_count')
             ->where('discourse_topic_id', $id)
             ->first();
