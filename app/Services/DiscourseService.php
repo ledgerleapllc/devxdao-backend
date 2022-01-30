@@ -183,42 +183,7 @@ class DiscourseService
                 ]))
             );
 
-            $topicIds = array_map(fn ($topic) => $topic['id'], $response['topic_list']['topics']);
-
-            $proposals = DB::table('proposal')
-                ->select('id', 'discourse_topic_id', 'status', 'dos_paid')
-                ->whereIn('discourse_topic_id', $topicIds)
-                ->get();
-
-            $attestationRates = DB::table('topic_reads')
-                ->select('topic_id', DB::raw('count(*) as count'))
-                ->whereIn('topic_id', $topicIds)
-                ->groupBy('topic_id')
-                ->get();
-
-            $attestationUsers = DB::table('topic_reads')
-                ->select('topic_id', 'user_id')
-                ->whereIn('topic_id', $topicIds)
-                ->get();
-
-            $VACount = User::where('is_member', true)->count();
-
-            foreach ($response['topic_list']['topics'] as $key => $topic) {
-                $proposal = $proposals->firstWhere('discourse_topic_id', $topic['id']);
-
-                if (is_null($proposal)) {
-                    continue;
-                }
-
-                $count = $attestationRates->firstWhere('topic_id', $topic['id'])->count ?? 0;
-
-                $response['topic_list']['topics'][$key]['proposal'] = [
-                    'id' => $proposal->id,
-                    'attestation_rate' => $count / $VACount * 100,
-                    'status' => Helper::getStatusProposal($proposal),
-                    'is_attestated' => $attestationUsers->where('user_id', Auth::id())->where('topic_id', $topic['id'])->isNotEmpty(),
-                ];
-            }
+            $response['topic_list']['topics'] = $this->mergeTopicsWithDxD($response['topic_list']['topics']);
 
             return $response['topic_list'];
         });
@@ -266,16 +231,21 @@ class DiscourseService
         });
     }
 
-    public function search($term, string $username)
+    public function search($term, $page, string $username)
     {
-        return $this->try(function () use ($term, $username) {
-            $response = $this->client->get('/search.json', $this->by($username, [
-                'query' => [
-                    'q' => $term,
-                ],
-            ]));
+        return $this->try(function () use ($term, $username, $page) {
+            $response = $this->json(
+                $this->client->get('/search.json', $this->by($username, [
+                    'query' => [
+                        'q' => $term,
+                        'page' => $page,
+                    ],
+                ]))
+            );
 
-            return $this->json($response);
+            $response['topics'] = $this->mergeTopicsWithDxD($response['topics']);
+
+            return $response;
         });
     }
 
@@ -377,6 +347,48 @@ class DiscourseService
 
             return $registered;
         });
+    }
+
+    public function mergeTopicsWithDxD(array $topics)
+    {
+        $topicIds = array_map(fn ($topic) => $topic['id'], $topics);
+
+        $proposals = DB::table('proposal')
+            ->select('id', 'discourse_topic_id', 'status', 'dos_paid')
+            ->whereIn('discourse_topic_id', $topicIds)
+            ->get();
+
+        $attestationRates = DB::table('topic_reads')
+            ->select('topic_id', DB::raw('count(*) as count'))
+            ->whereIn('topic_id', $topicIds)
+            ->groupBy('topic_id')
+            ->get();
+
+        $attestationUsers = DB::table('topic_reads')
+            ->select('topic_id', 'user_id')
+            ->whereIn('topic_id', $topicIds)
+            ->get();
+
+        $VACount = User::where('is_member', true)->count();
+
+        foreach ($topics as $key => $topic) {
+            $proposal = $proposals->firstWhere('discourse_topic_id', $topic['id']);
+
+            if (is_null($proposal)) {
+                continue;
+            }
+
+            $count = $attestationRates->firstWhere('topic_id', $topic['id'])->count ?? 0;
+
+            $topics[$key]['proposal'] = [
+                'id' => $proposal->id,
+                'attestation_rate' => $count / $VACount * 100,
+                'status' => Helper::getStatusProposal($proposal),
+                'is_attestated' => $attestationUsers->where('user_id', Auth::id())->where('topic_id', $topic['id'])->isNotEmpty(),
+            ];
+        }
+
+        return $topics;
     }
 
     public function mergePostsWithDxD(array $posts)

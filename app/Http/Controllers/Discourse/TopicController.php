@@ -18,7 +18,23 @@ class TopicController extends Controller
         $username = $discourse->getUsername(Auth::user());
         $page = (int) $request->input('page', 0);
 
-        return ['success' => true, 'data' => $discourse->topics($username, $page)];
+        if (filled($request->term)) {
+            $search = $discourse->search($request->term, $page + 1, $username);
+
+            if (isset($search['failed'])) {
+                return $search;
+            }
+
+            $data = ['topics' => $search['topics']];
+        } else {
+            $data = $discourse->topics($username, $page);
+
+            if (isset($data['failed'])) {
+                return $data;
+            }
+        }
+
+        return ['success' => true, 'data' => $data];
     }
 
     public function store(Request $request, DiscourseService $discourse)
