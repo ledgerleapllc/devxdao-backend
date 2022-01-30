@@ -176,7 +176,7 @@ class APIController extends Controller
   {
     $user = Auth::user();
 
-    if($user && $user->hasRole('admin')) {
+    if ($user && $user->hasRole('admin')) {
       //
     } else {
       return [
@@ -332,33 +332,7 @@ class APIController extends Controller
         ]);
       }
 
-      try {
-        if (is_null($user->discourse_user_id)) {
-          $findDiscourseUser = $discourse->user($discourse->getUsername($user));
-
-          if (is_null($findDiscourseUser)) {
-            $registerToDiscord = $discourse->register($user);
-
-            if (isset($registerToDiscord['user_id'])) {
-              $discourseUserId = $registerToDiscord['user_id'];
-
-              if ($user->hasRole('admin')) {
-                $discourse->grantModeration($discourseUserId);
-              } elseif ($user->hasRole('super-admin')) {
-                $discourse->grantAdmin($discourseUserId);
-              }
-
-              User::where('id', $user->id)->update([
-                'discourse_user_id' => $discourseUserId
-              ]);
-            } else {
-              info('Error when registering to discourse', [$registerToDiscord]);
-            }
-          }
-        }
-      } catch (Exception $e) {
-        info('Error when registering to discourse', [$e->getMessage()]);
-      }
+      $discourse->createUserIfDoesntExists($user);
 
       return [
         'success' => true,
@@ -494,7 +468,7 @@ class APIController extends Controller
       ];
     }
 
-    if(
+    if (
       strlen($forum_name) < 2 ||
       strlen($forum_name) > 25
     ) {

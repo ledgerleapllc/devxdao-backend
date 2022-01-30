@@ -1572,11 +1572,13 @@ class SharedController extends Controller
 			try {
 				// Create Discourse Topic if Not Exists
 				if (is_null($proposal->discourse_topic_id)) {
+					$discourse->createUserIfDoesntExists($proposal->user);
+
 					$topic = $discourse->createPost([
 						'title' => $proposal->title,
 						'raw' => $proposal->short_description ?: $proposal->title,
 						'created_at' => $proposal->created_at->toDateTimeString(),
-					], 'system');
+					], $discourse->getUsername($proposal->user));
 
 					if ($topic) {
 						$proposal->discourse_topic_id = $topic['topic_id'];

@@ -344,6 +344,41 @@ class DiscourseService
         }
     }
 
+    public function createUserIfDoesntExists(User $user)
+    {
+        return $this->try(function () use ($user) {
+            if ($user->discourse_user_id) {
+                return;
+            }
+
+            $finded = $this->user($this->getUsername($user));
+
+            if (!is_null($finded)) {
+                return;
+            }
+
+            $registered = $this->register($user);
+
+            if (!isset($registered['user_id'])) {
+                info('Error when registering to discourse', [$registered]);
+
+                return;
+            }
+
+            if ($user->hasRole('admin')) {
+                $this->grantModeration($registered['user_id']);
+            } elseif ($user->hasRole('super-admin')) {
+                $this->grantAdmin($registered['user_id']);
+            }
+
+            User::where('id', $user->id)->update([
+                'discourse_user_id' => $registered['user_id'],
+            ]);
+
+            return $registered;
+        });
+    }
+
     public function mergePostsWithDxD(array $posts)
     {
         $postIds = array_map(fn ($post) => $post['id'], $posts);
