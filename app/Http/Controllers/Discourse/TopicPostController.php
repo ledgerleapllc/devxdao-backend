@@ -47,6 +47,8 @@ class TopicPostController extends Controller
             $proposal->save();
         }
 
-        return $response;
+        $posts = $discourse->mergePostsWithDxD([$response]);
+
+        return head($posts);
     }
 }

@@ -404,6 +404,7 @@ class DiscourseService
             $posts[$key]['flag'] = $topicFlags->firstWhere('post_id', $post['id']);
             $posts[$key]['devxdao_user'] = $users->firstWhere('discourse_user_id', $post['user_id']);
             $posts[$key]['reactions'] = resolve(TopicPostReactionService::class)->format($post['id'], $reactions);
+            $posts[$key]['cooked'] = $this->formatPostCooked($post['cooked']);
         }
 
         return $posts;
@@ -461,5 +462,16 @@ class DiscourseService
 
             return ['failed' => true, 'message' => head($errors)];
         }
+    }
+
+    private function formatPostCooked($cooked)
+    {
+        $cooked = preg_replace(
+            '/<a class="mention" href="(.*?)">@(.*?)<\/a>/si',
+            '<span class="mention">@$2</span>',
+            $cooked,
+        );
+
+        return $cooked;
     }
 }

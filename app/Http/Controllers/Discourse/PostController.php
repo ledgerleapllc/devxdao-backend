@@ -33,11 +33,19 @@ class PostController extends Controller
 
     public function update(Request $request, DiscourseService $discourse, $post)
     {
-        return $discourse->updatePost(
+        $response = $discourse->updatePost(
             $post,
             ['post' => ['raw' => $request->raw]],
             Auth::user()->profile->forum_name
         );
+
+        if (isset($response['failed'])) {
+            return $response;
+        }
+
+        $posts = $discourse->mergePostsWithDxD([$response['post']]);
+
+        return ['post' => head($posts)];
     }
 
     public function toggleLike(DiscourseService $discourse, $post)

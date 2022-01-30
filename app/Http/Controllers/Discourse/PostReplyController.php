@@ -10,12 +10,13 @@ class PostReplyController extends Controller
 {
     public function index(DiscourseService $discourse, $post)
     {
-        $username = $discourse->getUsername(Auth::user());
-        $replies = $discourse->postReplies($post, $username);
+        $replies = $discourse->postReplies($post, $discourse->getUsername(Auth::user()));
 
         if (isset($replies['failed'])) {
             return ['success' => false];
         }
+
+        $replies = $discourse->mergePostsWithDxD($replies);
 
         return ['success' => true, 'data' => $replies];
     }
