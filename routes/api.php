@@ -197,6 +197,10 @@ Route::group(['prefix' => 'user', 'middleware' => ['auth:api']], function () {
 		Route::apiResource('topics', 'TopicController');
 		Route::apiResource('posts', 'PostController')->only(['show', 'update', 'destroy']);
 		Route::apiResource('topics.posts', 'TopicPostController')->only(['index', 'store']);
+		Route::apiResource('messages', 'MessageController')->only(['index', 'store']);
+		Route::get('users', 'UserController@index');
+		Route::get('notifications', 'NotificationController@index');
+		Route::put('notifications/{notification}/read', 'NotificationController@markAsRead');
 	});
 });
 
