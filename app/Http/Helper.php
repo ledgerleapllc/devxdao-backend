@@ -1832,4 +1832,11 @@ class Helper
       Helper::createRepHistory($reputation->user_id, abs($reputation->staked), $user->profile->rep, 'Gained', 'Proposal Vote Result', $reputation->proposal_id,  $reputation->vote_id, 'ReturnRepForUsersCommand');
     }
   }
+
+  public static function checkPathCompliance() {
+    if (Str::contains(request()->path(), 'compliance')) {
+			return true;
+		};
+    return false;
+  }
 }
