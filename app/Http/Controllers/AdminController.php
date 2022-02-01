@@ -2123,7 +2123,7 @@ class AdminController extends Controller
 	{
 		$user = Auth::user();
 
-		if($user && $user->hasRole('admin')) {
+		if($user && $user->hasRole('admin') || Helper::checkPathCompliance()) {
 			//
 		} else {
 			return [
@@ -2205,7 +2205,7 @@ class AdminController extends Controller
 	{
 		$user = Auth::user();
 
-		if($user && $user->hasRole('admin')) {
+		if($user && $user->hasRole('admin') || Helper::checkPathCompliance()) {
 			//
 		} else {
 			return [
@@ -2308,7 +2308,7 @@ class AdminController extends Controller
 	public function getUrlFileHellosignGrant($grantId)
 	{
 		$admin = Auth::user();
-		if ($admin && $admin->hasRole('admin')) {
+		if ($admin && $admin->hasRole('admin') || Helper::checkPathCompliance()) {
 			$finalGrant = FinalGrant::where('id', $grantId)->first();
 			if (!$finalGrant) {
 				return ['success' => false];
@@ -2336,7 +2336,7 @@ class AdminController extends Controller
 	{
 		$user = Auth::user();
 
-		if($user && $user->hasRole('admin')) {
+		if($user && $user->hasRole('admin') || Helper::checkPathCompliance()) {
 			//
 		} else {
 			return [
@@ -2375,7 +2375,7 @@ class AdminController extends Controller
 	{
 		$user = Auth::user();
 
-		if($user && $user->hasRole('admin')) {
+		if($user && $user->hasRole('admin') || Helper::checkPathCompliance()) {
 			//
 		} else {
 			return [
@@ -2412,7 +2412,7 @@ class AdminController extends Controller
 	{
 		$user = Auth::user();
 
-		if($user && $user->hasRole('admin')) {
+		if($user && $user->hasRole('admin') || Helper::checkPathCompliance()) {
 			//
 		} else {
 			return [
@@ -2705,7 +2705,7 @@ class AdminController extends Controller
 	{
 		$user = Auth::user();
 
-		if($user && $user->hasRole('admin')) {
+		if($user && $user->hasRole('admin') || Helper::checkPathCompliance()) {
 			//
 		} else {
 			return [
@@ -2727,7 +2727,7 @@ class AdminController extends Controller
 	{
 		$user = Auth::user();
 
-		if($user && $user->hasRole('admin')) {
+		if($user && $user->hasRole('admin') || Helper::checkPathCompliance()) {
 			//
 		} else {
 			return [
@@ -2751,7 +2751,7 @@ class AdminController extends Controller
 	{
 		$user = Auth::user();
 
-		if($user && $user->hasRole('admin')) {
+		if($user && $user->hasRole('admin') || Helper::checkPathCompliance()) {
 			//
 		} else {
 			return [
@@ -3389,7 +3389,7 @@ class AdminController extends Controller
 	{
 		$user = Auth::user();
 
-		if($user && $user->hasRole('admin')) {
+		if($user && $user->hasRole('admin') || Helper::checkPathCompliance()) {
 			//
 		} else {
 			return [
@@ -5135,7 +5135,7 @@ class AdminController extends Controller
 	{
 		$user = Auth::user();
 
-		if($user && $user->hasRole('admin')) {
+		if($user && $user->hasRole('admin') || Helper::checkPathCompliance()) {
 			//
 		} else {
 			return [
@@ -5174,7 +5174,7 @@ class AdminController extends Controller
 	{
 		$user = Auth::user();
 
-		if($user && $user->hasRole('admin')) {
+		if($user && $user->hasRole('admin') || Helper::checkPathCompliance()) {
 			//
 		} else {
 			return [
