@@ -78,7 +78,7 @@ class TopicController extends Controller
             return $topic;
         }
 
-        $proposal = Proposal::select('id', 'status', 'dos_paid', 'topic_posts_count')
+        $proposal = Proposal::select('id', 'user_id', 'status', 'dos_paid', 'topic_posts_count')
             ->where('discourse_topic_id', $id)
             ->first();
 
@@ -96,6 +96,7 @@ class TopicController extends Controller
         if ($proposal) {
             $topic['proposal'] = [
                 'id' => $proposal->id,
+                'user_id' => $proposal->user_id,
                 'status' => $proposalStatus,
                 'topic_posts_count' => $proposal->topic_posts_count,
             ];
