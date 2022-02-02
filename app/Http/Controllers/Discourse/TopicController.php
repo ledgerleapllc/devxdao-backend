@@ -15,11 +15,12 @@ class TopicController extends Controller
 {
     public function index(Request $request, DiscourseService $discourse)
     {
+        $tag = config('services.discourse.tag');
         $username = $discourse->getUsername(Auth::user());
         $page = (int) $request->input('page', 0);
 
         if (filled($request->term)) {
-            $search = $discourse->search($request->term, $page + 1, $username);
+            $search = $discourse->search("#{$tag} {$request->term}", $page + 1, $username);
 
             if (isset($search['failed'])) {
                 return $search;
@@ -27,7 +28,7 @@ class TopicController extends Controller
 
             $data = ['topics' => $search['topics']];
         } else {
-            $data = $discourse->topics($username, $page);
+            $data = $discourse->topics($username, $page, $tag);
 
             if (isset($data['failed'])) {
                 return $data;
@@ -42,6 +43,7 @@ class TopicController extends Controller
         $response = $discourse->createPost([
             'title' => $request->title,
             'raw' => $request->raw,
+            'tags' => config('services.discourse.tag'),
         ], $discourse->getUsername(Auth::user()));
 
         if (isset($response['failed'])) {
@@ -76,7 +78,7 @@ class TopicController extends Controller
             return $topic;
         }
 
-        $proposal = Proposal::select('id', 'status', 'dos_paid', 'topic_posts_count')
+        $proposal = Proposal::select('id', 'user_id', 'status', 'dos_paid', 'topic_posts_count')
             ->where('discourse_topic_id', $id)
             ->first();
 
@@ -94,6 +96,7 @@ class TopicController extends Controller
         if ($proposal) {
             $topic['proposal'] = [
                 'id' => $proposal->id,
+                'user_id' => $proposal->user_id,
                 'status' => $proposalStatus,
                 'topic_posts_count' => $proposal->topic_posts_count,
             ];
