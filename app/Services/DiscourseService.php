@@ -174,13 +174,14 @@ class DiscourseService
         });
     }
 
-    public function topics(string $username, int $page = 0)
+    public function topics(string $username, int $page = 0, string $tag = null)
     {
-        return $this->try(function () use ($username, $page) {
+        return $this->try(function () use ($username, $page, $tag) {
             $response = $this->json(
-                $this->client->get('/latest.json', $this->by($username, [
-                    'query' => ['page' => $page],
-                ]))
+                $this->client->get(
+                    $tag ? "/tag/{$tag}/l/latest.json" : "/latest.json",
+                    $this->by($username, ['query' => ['page' => $page]])
+                )
             );
 
             $response['topic_list']['topics'] = $this->mergeTopicsWithDxD($response['topic_list']['topics']);

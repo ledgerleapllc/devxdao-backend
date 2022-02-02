@@ -15,11 +15,12 @@ class TopicController extends Controller
 {
     public function index(Request $request, DiscourseService $discourse)
     {
+        $tag = config('services.discourse.tag');
         $username = $discourse->getUsername(Auth::user());
         $page = (int) $request->input('page', 0);
 
         if (filled($request->term)) {
-            $search = $discourse->search($request->term, $page + 1, $username);
+            $search = $discourse->search("#{$tag} {$request->term}", $page + 1, $username);
 
             if (isset($search['failed'])) {
                 return $search;
@@ -27,7 +28,7 @@ class TopicController extends Controller
 
             $data = ['topics' => $search['topics']];
         } else {
-            $data = $discourse->topics($username, $page);
+            $data = $discourse->topics($username, $page, $tag);
 
             if (isset($data['failed'])) {
                 return $data;
@@ -42,6 +43,7 @@ class TopicController extends Controller
         $response = $discourse->createPost([
             'title' => $request->title,
             'raw' => $request->raw,
+            'tags' => config('services.discourse.tag'),
         ], $discourse->getUsername(Auth::user()));
 
         if (isset($response['failed'])) {
