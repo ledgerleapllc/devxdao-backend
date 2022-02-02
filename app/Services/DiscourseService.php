@@ -442,7 +442,7 @@ class DiscourseService
                 return 'unknown-user';
             }
         } else {
-            return null;
+            return 'unknown-user';
         }
     }
 
