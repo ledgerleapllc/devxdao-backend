@@ -425,18 +425,22 @@ class DiscourseService
 
     public function getUsername($user)
     {
-        $class_name = explode('\\', get_class($user));
-        $class_name = $class_name[sizeof($class_name) - 1];
+        if (gettype($user) == 'object') {
+            $class_name = explode('\\', get_class($user));
+            $class_name = $class_name[sizeof($class_name) - 1];
 
-        if ($class_name == 'User') {
-            $updated_forum_name = str_replace(' ', '-', $user->profile->forum_name);
-            $updated_forum_name = preg_replace("/([^A-Za-z0-9\-\_.])/", '', $updated_forum_name);
-            $updated_forum_name = str_replace('--', '-', $updated_forum_name);
-            return strtolower($updated_forum_name);
-        } elseif ($class_name == 'ComplianceUser') {
-            return 'compliance-user';
-        } elseif ($class_name == 'OpsUser') {
-            return 'project-management-user';
+            if ($class_name == 'User') {
+                $updated_forum_name = str_replace(' ', '-', $user->profile->forum_name);
+                $updated_forum_name = preg_replace("/([^A-Za-z0-9\-\_.])/", '', $updated_forum_name);
+                $updated_forum_name = str_replace('--', '-', $updated_forum_name);
+                return strtolower($updated_forum_name);
+            } elseif ($class_name == 'ComplianceUser') {
+                return 'compliance-user';
+            } elseif ($class_name == 'OpsUser') {
+                return 'project-management-user';
+            } else {
+                return 'unknown-user';
+            }
         } else {
             return 'unknown-user';
         }
