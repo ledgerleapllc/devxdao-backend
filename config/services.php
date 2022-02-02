@@ -73,5 +73,6 @@ return [
         'url' => env('DISCOURSE_URL'),
         'api_key' => env('DISCOURSE_API_KEY'),
         'admin_username' => env('DISCOURSE_ADMIN_USERNAME'),
+        'tag' => 'created-by-user',
     ],
 ];
