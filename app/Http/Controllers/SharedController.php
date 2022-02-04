@@ -2949,17 +2949,27 @@ class SharedController extends Controller
 			->has('user')
 			->has('user.profile')
 			->first();
+
 		if (!$proposal) {
 			return [
 				'success' => false,
 				'message' => 'Proposal Not found'
 			];
 		}
+
 		$proposal->makeVisible('user');
 		$proposal->user->makeVisible(['profile']);
+
 		foreach ($proposal->citations as $citation) {
 			$citation->repProposal->makeVisible('user');
 			$citation->repProposal->user->makeVisible('profile');
+		}
+
+		foreach ($proposal->members as $mem) {
+			$mem->makeHidden('address');
+			$mem->makeHidden('city');
+			$mem->makeHidden('zip');
+			$mem->makeHidden('country');
 		}
 
 		return [
@@ -2979,6 +2989,15 @@ class SharedController extends Controller
 			->where('proposal_id', $proposalId)
 			->orderBy('created_at', 'desc')
 			->get();
+
+		foreach($changes as $change) {
+			$change->user->makeHidden('last_login_at');
+			$change->user->profile->makeHidden('twoFA');
+			$change->user->profile->makeHidden('twoFA_time');
+			$change->user->profile->makeHidden('twoFA_login');
+			$change->user->profile->makeHidden('twoFA_login_time');
+			$change->user->profile->makeHidden('twoFA_login_active');
+		}
 
 		return [
 			'success' => true,
