@@ -111,6 +111,7 @@ Route::group(['prefix' => 'shared', 'middleware' => ['auth:api']], function () {
 	Route::get('/completed-proposals', 'SharedController@getCompletedProposals');
 	Route::get('/grants', 'SharedController@getGrants');
 	Route::get('/proposal/{proposalId}/trackings', 'SharedController@getTrackingProposal');
+	Route::get('/completed-votes-export', 'SharedController@exportVoteCompleted');
 });
 
 // User Functions

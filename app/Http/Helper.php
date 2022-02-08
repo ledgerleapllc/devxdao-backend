@@ -1839,4 +1839,76 @@ class Helper
 		};
     return false;
   }
+
+  // Send grant Hellosign Request 1
+  public static function reGenUrlFileHellosignGrant($user, $proposal)
+  {
+    $client = new \HelloSign\Client(config('services.hellosign.api_key'));
+    $profile = Profile::where('user_id', $user->id)->first();
+    $request = new \HelloSign\TemplateSignatureRequest;
+    // $request->enableTestMode();
+    $finalGrant = FinalGrant::where('proposal_id', $proposal->id)->first();
+    $request->setTemplateId('a77ecd6d708736d6ae0e2d8d35e5e54938c83436');
+    $subject = "Grant $proposal->id - Sign to activate DEVxDAO grant!";
+    $request->setSubject($subject);
+    if ($proposal->pdf) {
+      $urlFile = public_path() . $proposal->pdf;
+      if (file_exists($urlFile)) {
+        $request->addFile($urlFile);
+      }
+    }
+    $request->setCustomFieldValue('FullName', $user->first_name . ' ' . $user->last_name);
+
+    $shuftipro = Shuftipro::where('user_id', $user->id)->first();
+
+    $initialA = substr($user->first_name, 0, 1);
+    $initialB = substr($user->last_name, 0, 1);
+    $fullName = implode(' ', array_filter([$initialA, $initialB]));
+    $fullAddress = implode(' ', array_filter([$profile->address, $profile->address2, $profile->city, $profile->zip]));
+    $shuftiproData = json_decode($shuftipro->data);
+    $shuftiproFullName = $shuftiproAddress = $shuftiproCountry = '';
+    if (isset($shuftipro->address_result) && $shuftipro->address_result) {
+      $shuftiproFullName = $shuftiproData->address_document->name->full_name ?? '';
+      $shuftiproAddress = $shuftiproData->address_document->full_address ?? '';
+      $shuftiproCountry = $shuftiproData->address_document->country ?? '';
+    } else {
+      $shuftiproAddress = $shuftiproData->profile_address ?? '';
+      $shuftiproCountry = $shuftiproData->country_company ?? '';
+    }
+
+    $request->setCustomFieldValue('Initial', $shuftiproFullName ? $shuftiproFullName : $fullName);
+    $request->setCustomFieldValue('ProjectTitle', $proposal->title);
+    $request->setCustomFieldValue('ProjectDescription', $proposal->short_description);
+    $request->setCustomFieldValue('ProposalId', $proposal->id);
+    $request->setCustomFieldValue('TotalGrant', number_format($proposal->total_grant, 2));
+    $request->setCustomFieldValue('Address', $shuftiproAddress ? $shuftiproAddress : $fullAddress);
+    $request->setCustomFieldValue('Entity', $proposal->name_entity);
+    $request->setCustomFieldValue('From', $shuftiproCountry ? $shuftiproCountry : $proposal->entity_country);
+    if ($shuftipro) {
+      $request->setCustomFieldValue('ShuftiId', $shuftipro->reference_id);
+    }
+    $request->setClientId(config('services.hellosign.client_id'));
+    $request->setSigner(
+      'OP',
+      'micky@ledgerleap.com',
+      'Admin'
+    );
+    $response = $client->sendTemplateSignatureRequest($request);
+    // Log when request to Hellosign
+    $signature_request_id = $response->getId();
+    $proposal->signature_grant_request_id = $signature_request_id;
+    $proposal->save();
+    Helper::createGrantLogging([
+      'proposal_id' => $proposal->id,
+      'final_grant_id' => $finalGrant->id,
+      'user_id' => null,
+      'email' => null,
+      'role' => 'system',
+      'type' => 'sent_doc',
+    ]);
+    $client = new \HelloSign\Client(config('services.hellosign.api_key'));
+    $respone = $client->getFiles($signature_request_id, null, \HelloSign\SignatureRequest::FILE_TYPE_PDF);
+    $respone = $respone->toArray();
+    return $respone['file_url'] ?? '';
+  }
 }
