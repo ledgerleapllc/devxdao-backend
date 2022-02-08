@@ -2319,10 +2319,18 @@ class AdminController extends Controller
 			if (!$proposal || !$proposal->signature_grant_request_id) {
 				return ['success' => false];
 			}
+			$user = User::find($proposal->user_id);
 			$signature_grant_request_id = $proposal->signature_grant_request_id;
 			$client = new \HelloSign\Client(config('services.hellosign.api_key'));
 			$respone = $client->getFiles($signature_grant_request_id, null, \HelloSign\SignatureRequest::FILE_TYPE_PDF);
 			$respone = $respone->toArray();
+			if(!isset($respone['file_url'])) {
+				$file_url = Helper::reGenUrlFileHellosignGrant($user, $proposal);
+				return [
+					'success' => true,
+					'file_url' => $file_url,
+				];
+			}
 			return [
 				'success' => true,
 				'file_url' => $respone['file_url'] ?? '',
