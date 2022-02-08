@@ -36,7 +36,9 @@ use App\Reputation;
 use App\EmailerTriggerAdmin;
 use App\EmailerTriggerUser;
 use App\EmailerAdmin;
+use App\Exports\AdminVoteCompletedExport;
 use App\Exports\ProposalExport;
+use App\Exports\UserVoteCompletedExport;
 use App\FinalGrant;
 use App\GrantTracking;
 use App\Signature;
@@ -3317,5 +3319,45 @@ class SharedController extends Controller
 			'success' => false,
 			'message' => 'This milestone does not exist'
 		];
+	}
+
+	public function exportVoteCompleted(Request $request)
+	{
+		$user = Auth::user();
+		$sort_key = $sort_direction = $search = '';
+		$data = $request->all();
+		if ($data && is_array($data)) extract($data);
+		if (!$sort_key) $sort_key = 'vote.updated_at';
+		if (!$sort_direction) $sort_direction = 'desc';
+		
+		$votes = Vote::join('proposal', 'proposal.id', '=', 'vote.proposal_id')
+		->join('users', 'users.id', '=', 'proposal.user_id')
+		->leftJoin('milestone', 'vote.milestone_id', '=', 'milestone.id')
+		->where('vote.status', 'completed')
+		->where(function ($query) use ($search) {
+			if ($search) {
+				$query->where('proposal.title', 'like', '%' . $search . '%')
+					->orWhere('proposal.member_reason', 'like', '%' . $search . '%')
+					->orWhere('vote.type', 'like', '%' . $search . '%')
+					->orWhere('proposal.id', 'like', '%' . $search . '%');
+			}
+		})
+			->select([
+				'proposal.id as proposalId',
+				'proposal.type as proposalType',
+				'proposal.title',
+				'proposal.include_membership',
+				'users.first_name',
+				'users.last_name',
+				'users.id as user_id',
+				'vote.*',
+				DB::raw('(CASE WHEN vote.content_type = \'grant\' OR proposal.type = \'admin-grant\' OR proposal.type = \'advance-payment\' THEN proposal.total_grant WHEN vote.content_type = \'milestone\' THEN milestone.grant ELSE null END) AS euros')
+			])
+			->orderBy($sort_key, $sort_direction)
+			->get();
+		if ($user->hasRole('admin')) {
+			return Excel::download(new AdminVoteCompletedExport($votes),  "user_vote_completed.csv");
+		}
+		return;
 	}
 }
