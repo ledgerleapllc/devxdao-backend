@@ -1,12 +1,13 @@
+
 <?php
 
 use App\ComplianceUser;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Log\Logger as Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\Log;
 
 
 class CreateDataComplianceUser extends Migration
