@@ -79,6 +79,61 @@ use Spatie\Permission\Models\Permission;
 
 class AdminController extends Controller
 {
+	// Update Shufti reference number manually by an admin
+	public function updateShuftiRefNumber(Request $request)
+	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			$refid = (string)($request->reference_id ?? '');
+			$user_id = (int)($request->user_id ?? 0);
+			$refid = preg_replace('/[^a-zA-Z0-9_.]/', '', $refid);
+
+			if($user_id == 0) {
+				return [
+					'success' => false,
+					'message' => 'Missing or invalid user_id in your request'
+				];
+			}
+
+			// take refid and search kyckangaroo for a matching invite_id
+			$url = config('services.kyc_kangaroo.url').'/api/lookup-inviteid-by-refid';
+
+			$response = Http::withHeaders([
+				'Authorization' => 'Token '.config('services.kyc_kangaroo.token')
+			])->get($url, [
+				'reference_id' => $refid,
+			]);
+
+			$json = $response->json();
+			$invite_id_search = (int)($json->invite_id ?? 0);
+			$updated_at = Carbon::now();
+
+			if($invite_id_search > 1) {
+				DB::update("
+					UPDATE shuftipro_temp
+					SET invite_id = $invite_id_search,
+					status = 'booked',
+					reference_id = '$refid',
+					updated_at = '$updated_at'
+					WHERE user_id = $user_id
+				");
+
+				return [
+					'success' => true,
+					'message' => 'The request has been booked. Please allow up to 5 minutes to see changes.'
+				];
+			}
+
+			return [
+				'success' => false, 
+				'message' => 'Cannot find that reference_id in the KYC database'
+			];
+		}
+
+		return ['success' => false];
+	}
+
 	// Update Emailer Trigger Member
 	public function updateEmailerTriggerMember($recordId, Request $request)
 	{
