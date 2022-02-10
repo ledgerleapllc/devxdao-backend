@@ -3360,4 +3360,42 @@ class SharedController extends Controller
 		}
 		return;
 	}
+
+	// Activate Grant
+	public function uploadManualGrant(Request $request)
+	{
+		$auth = Helper::authorizeExternalAPI();
+		if (!$auth) {
+		  return [
+			'success' => false,
+			'message' => 'Unauthorized'
+		  ];
+		}
+		$validator = Validator::make($request->all(), [
+			'proposalId' => 'required',
+			'file' => 'file',
+		]);
+		if ($validator->fails()) {
+			return [
+				'success' => false,
+				'message' => 'Provide all the necessary information'
+			];
+		}
+		$proposalId = $request->proposalId;
+		$finalGrant = FinalGrant::where('proposal_id', $proposalId)->first();
+		if (!$finalGrant) {
+			return [
+				'success' => false,
+				'message' => 'Invalid grant'
+			];
+		}
+
+		$file = $request->file('file');
+		$path = $file->store('final-grant');
+		$url = Storage::url($path);
+		$finalGrant->manual_file_upload = $url;
+		$finalGrant->save();
+		SignatureGrant::where('proposal_id', $proposalId)->update(['signed' => 1]);
+		return ['success' => true];
+	}
 }

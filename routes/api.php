@@ -54,6 +54,8 @@ Route::group(['prefix' => 'rfp'], function () {
 	Route::get('/survey/{id}', 'APIController@getSurveyDetail');
 });
 
+Route::post('/grant/upload', 'SharedController@uploadManualGrant');
+
 Route::group(['middleware' => ['auth:api']], function () {
 	// GET
 	Route::get('/me', 'APIController@getMe');

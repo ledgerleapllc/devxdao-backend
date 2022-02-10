@@ -2314,6 +2314,13 @@ class AdminController extends Controller
 				return ['success' => false];
 			}
 
+			if($finalGrant->manual_file_upload) {
+				return [
+					'success' => true,
+					'file_url' => url($finalGrant->manual_file_upload),
+				];
+			}
+
 			$proposal = Proposal::where('id', $finalGrant->proposal_id)->first();
 
 			if (!$proposal || !$proposal->signature_grant_request_id) {
