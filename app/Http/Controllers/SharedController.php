@@ -49,6 +49,7 @@ use App\Mail\AdminAlert;
 use App\Mail\UserAlert;
 use App\MilestoneReview;
 use App\Services\DiscourseService;
+use App\Services\ProposalService;
 use App\ShuftiproTemp;
 use App\SignatureGrant;
 use App\Survey;
@@ -2219,7 +2220,7 @@ class SharedController extends Controller
 	}
 
 	// Get Active Discussions
-	public function getActiveDiscussions(Request $request)
+	public function getActiveDiscussions(Request $request, ProposalService $proposalService)
 	{
 		$user = Auth::user();
 		$proposals = [];
@@ -2271,6 +2272,9 @@ class SharedController extends Controller
 				->offset($start)
 				->limit($limit)
 				->get();
+
+			$proposals = $proposalService->withAttestation($proposals);
+			$proposals = $proposalService->withStatusLabel($proposals);
 		}
 
 		return [
@@ -2281,7 +2285,7 @@ class SharedController extends Controller
 	}
 
 	// Get Completed Discussions
-	public function getCompletedDiscussions(Request $request)
+	public function getCompletedDiscussions(Request $request, ProposalService $proposalService)
 	{
 		$user = Auth::user();
 		$proposals = [];
@@ -2316,6 +2320,9 @@ class SharedController extends Controller
 				->offset($start)
 				->limit($limit)
 				->get();
+
+			$proposals = $proposalService->withAttestation($proposals);
+			$proposals = $proposalService->withStatusLabel($proposals);
 		}
 
 		return [
@@ -2992,7 +2999,7 @@ class SharedController extends Controller
 			->orderBy('created_at', 'desc')
 			->get();
 
-		foreach($changes as $change) {
+		foreach ($changes as $change) {
 			$change->user->makeHidden('last_login_at');
 			$change->user->profile->makeHidden('twoFA');
 			$change->user->profile->makeHidden('twoFA_time');
@@ -3329,19 +3336,19 @@ class SharedController extends Controller
 		if ($data && is_array($data)) extract($data);
 		if (!$sort_key) $sort_key = 'vote.updated_at';
 		if (!$sort_direction) $sort_direction = 'desc';
-		
+
 		$votes = Vote::join('proposal', 'proposal.id', '=', 'vote.proposal_id')
-		->join('users', 'users.id', '=', 'proposal.user_id')
-		->leftJoin('milestone', 'vote.milestone_id', '=', 'milestone.id')
-		->where('vote.status', 'completed')
-		->where(function ($query) use ($search) {
-			if ($search) {
-				$query->where('proposal.title', 'like', '%' . $search . '%')
-					->orWhere('proposal.member_reason', 'like', '%' . $search . '%')
-					->orWhere('vote.type', 'like', '%' . $search . '%')
-					->orWhere('proposal.id', 'like', '%' . $search . '%');
-			}
-		})
+			->join('users', 'users.id', '=', 'proposal.user_id')
+			->leftJoin('milestone', 'vote.milestone_id', '=', 'milestone.id')
+			->where('vote.status', 'completed')
+			->where(function ($query) use ($search) {
+				if ($search) {
+					$query->where('proposal.title', 'like', '%' . $search . '%')
+						->orWhere('proposal.member_reason', 'like', '%' . $search . '%')
+						->orWhere('vote.type', 'like', '%' . $search . '%')
+						->orWhere('proposal.id', 'like', '%' . $search . '%');
+				}
+			})
 			->select([
 				'proposal.id as proposalId',
 				'proposal.type as proposalType',
@@ -3359,5 +3366,43 @@ class SharedController extends Controller
 			return Excel::download(new AdminVoteCompletedExport($votes),  "user_vote_completed.csv");
 		}
 		return;
+	}
+
+	// Activate Grant
+	public function uploadManualGrant(Request $request)
+	{
+		$auth = Helper::authorizeExternalAPI();
+		if (!$auth) {
+			return [
+				'success' => false,
+				'message' => 'Unauthorized'
+			];
+		}
+		$validator = Validator::make($request->all(), [
+			'proposalId' => 'required',
+			'file' => 'file',
+		]);
+		if ($validator->fails()) {
+			return [
+				'success' => false,
+				'message' => 'Provide all the necessary information'
+			];
+		}
+		$proposalId = $request->proposalId;
+		$finalGrant = FinalGrant::where('proposal_id', $proposalId)->first();
+		if (!$finalGrant) {
+			return [
+				'success' => false,
+				'message' => 'Invalid grant'
+			];
+		}
+
+		$file = $request->file('file');
+		$path = $file->store('final-grant');
+		$url = Storage::url($path);
+		$finalGrant->manual_file_upload = $url;
+		$finalGrant->save();
+		SignatureGrant::where('proposal_id', $proposalId)->update(['signed' => 1]);
+		return ['success' => true];
 	}
 }
