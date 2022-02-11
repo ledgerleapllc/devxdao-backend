@@ -289,6 +289,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth:api']], function () {
 	Route::post('/survey/approve-downvote', 'AdminController@approveDowvote');
 	Route::post('/verify/master-password', 'AdminController@verifyMasterPassword');
 	Route::post('/survey-rfp/{id}/send-reminder', 'AdminController@sendReminderSurveyRfp');
+	Route::post('/update-shufti-reference-number', 'AdminController@updateShuftiRefNumber');
 
 	// DELETE
 	Route::delete('/emailer-admin/{adminId}', 'AdminController@deleteEmailerAdmin');
