@@ -15,6 +15,8 @@ use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class MyReputationExport implements FromCollection, WithHeadings, WithMapping, WithCustomCsvSettings, WithColumnFormatting, ShouldAutoSize, WithEvents
 {
+    public $query;
+
     public function __construct($query)
     {
         $this->query = $query;
@@ -73,11 +75,15 @@ class MyReputationExport implements FromCollection, WithHeadings, WithMapping, W
 
     public function registerEvents(): array
     {
+        $data = $this->query;
+        $total_staked = $data->count() > 0 ? $data[0]->total_staked : 0;
+        $total_minted =  $data->count() > 0 ? $data[0]->total_minted : 0;;
+        $total_pending = $data->count() > 0 ? $data[0]->total_pending : 0;;
         return [
-            AfterSheet::class => function (AfterSheet $event) {
-                $event->sheet->setCellValue('D' . ($event->sheet->getHighestRow() + 1), '=SUM(D2:D' . $event->sheet->getHighestRow() . ')');
-                $event->sheet->setCellValue('E' . ($event->sheet->getHighestRow()), '=SUM(E2:E' . ($event->sheet->getHighestRow() - 1) . ')');
-                $event->sheet->setCellValue('F' . ($event->sheet->getHighestRow()), '=SUM(F2:F' . ($event->sheet->getHighestRow() - 1) . ')');
+            AfterSheet::class => function (AfterSheet $event)  use ($total_staked, $total_minted, $total_pending) {
+                $event->sheet->setCellValue('D' . ($event->sheet->getHighestRow() + 1), $total_minted);
+                $event->sheet->setCellValue('E' . ($event->sheet->getHighestRow()), $total_staked);
+                $event->sheet->setCellValue('F' . ($event->sheet->getHighestRow()), $total_pending);
                 $event->sheet->setCellValue('A' . ($event->sheet->getHighestRow()), 'Total');
             }
         ];
