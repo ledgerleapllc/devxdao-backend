@@ -2633,6 +2633,7 @@ class SharedController extends Controller
 						'proposal.type as proposalType',
 						'proposal.title',
 						'proposal.include_membership',
+						'proposal.discourse_topic_id',
 						'users.first_name',
 						'users.last_name',
 						'users.id as user_id',
@@ -2728,6 +2729,7 @@ class SharedController extends Controller
 						'proposal.type as proposalType',
 						'proposal.title',
 						'proposal.include_membership',
+						'proposal.discourse_topic_id',
 						'users.first_name',
 						'users.last_name',
 						'users.id as user_id',
@@ -2747,7 +2749,7 @@ class SharedController extends Controller
 					->limit($limit)
 					->get();
 			}
-
+			$totalVAs = Helper::getTotalMembers();
 			if ($votes) {
 				foreach ($votes as $vote) {
 					$informalVote = Vote::where('proposal_id', $vote->proposal_id)
@@ -2768,6 +2770,8 @@ class SharedController extends Controller
 						}
 						$vote->informal_result_users = $ids;
 					}
+					$count = DB::table('topic_reads')->where('topic_id', $vote->discourse_topic_id)->count();
+					$vote->rate = $count / $totalVAs * 100;
 				}
 			}
 		}
@@ -2850,6 +2854,7 @@ class SharedController extends Controller
 						'proposal.title',
 						'proposal.include_membership',
 						'proposal.total_grant',
+						'proposal.discourse_topic_id',
 						'users.first_name',
 						'users.last_name',
 						'users.id as user_id',
@@ -2909,6 +2914,7 @@ class SharedController extends Controller
 						'proposal.title',
 						'proposal.include_membership',
 						'proposal.total_grant',
+						'proposal.discourse_topic_id',
 						'users.first_name',
 						'users.last_name',
 						'users.id as user_id',
@@ -2925,6 +2931,11 @@ class SharedController extends Controller
 					->limit($limit)
 					->get();
 			}
+		}
+		$totalVAs = Helper::getTotalMembers();
+		foreach($votes as $vote) {
+			$count = DB::table('topic_reads')->where('topic_id', $vote->discourse_topic_id)->count();
+			$vote->rate = $count / $totalVAs * 100;
 		}
 
 		return [
