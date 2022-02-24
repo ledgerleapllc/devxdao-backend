@@ -3,6 +3,7 @@
 <style>
     * {
         font-size: 12px;
+        font-family: 'examplefont', sans-serif;
     }
     .tbl {background-color:#000; width: 100%;}
     .tbl td,th,caption{background-color:#fff}
