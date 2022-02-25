@@ -3225,7 +3225,7 @@ class SharedController extends Controller
 			}
 		}
 
-		return Excel::download(new VoteResultExport($proposal), "proposal_" . $proposalId . "_vote_results_.xlsx");
+		return Excel::download(new VoteResultExport($proposal), "proposal_" . $proposalId . "_vote_results_.csv", null, ['Content-Type' => 'text/csv']);
 	}
 
 	public function generateVoteProposalDetail($proposalId, $voteId)
