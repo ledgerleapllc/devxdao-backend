@@ -62,7 +62,6 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use PDF;
 use Log;
-use LaravelPdf;
 
 class SharedController extends Controller
 {
@@ -3248,7 +3247,8 @@ class SharedController extends Controller
 			}
 		}
 
-		$pdf = LaravelPdf::loadView('pdf.vote_detail', compact('proposal'));
+		$pdf = App::make('dompdf.wrapper');
+		$pdfFile = $pdf->loadView('pdf.vote_detail', compact('proposal'));
 		return $pdf->download("vote_results_$voteId.pdf");
 	}
 
