@@ -39,6 +39,8 @@ use App\EmailerTriggerUser;
 use App\EmailerTriggerMember;
 use App\EmailerAdmin;
 use App\Exports\ActiveGrantExport;
+use App\Exports\AllVARepExport;
+use App\Exports\AllVoteExport;
 use App\Exports\DosFeeExport;
 use App\Exports\MilestoneExport;
 use App\Exports\MyReputationExport;
@@ -5933,5 +5935,74 @@ class AdminController extends Controller
 		$pdfFile = $pdf->loadView('pdf.admin_report', compact('response'));
 		return $pdf->download("admin_report.pdf");
 		// return $pdf->stream();
+	}
+
+	public function exportCsvAllVARep(Request $request)
+	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
+		$users =  User::join('profile', 'users.id', '=', 'profile.user_id')
+		->where('is_member', 1)
+		->select(['users.id', 'profile.forum_name'])
+		->get();
+		foreach ($users as $user) {
+			$total_staked = Reputation::where('user_id', $user->id)
+				->where('type', 'Staked')
+				->sum('staked');
+			$total_staked = round(abs($total_staked));
+			$total_available =  Reputation::where('user_id', $user->id)->whereIn('type', ['Gained', 'Minted', 'Stake Lost', 'Lost'])->sum('value');
+			$total = $total_staked + $total_available;
+			$minted_pending = Reputation::where('user_id', $user->id)->sum('pending');
+			$user->total_staked = $total_staked;
+			$user->total_available = $total_available;
+			$user->total = $total;
+			$user->minted_pending = $minted_pending;
+		}
+		return Excel::download(new AllVARepExport($users), 'all_rep.csv');
+	}
+
+	public function exportCsvAllVote(Request $request)
+	{
+		$user = Auth::user();
+
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+
+		$users =  User::join('profile', 'users.id', '=', 'profile.user_id')
+		->where('is_member', 1)
+		->select(['users.id', 'profile.forum_name'])
+		->get();
+		$votes = Vote::select(['id', 'proposal_id', 'type', 'content_type','for_value', 'against_value'])->get();
+		foreach($votes as $vote) {
+			$vote_results = VoteResult::where('vote_id', $vote->id)->select(['user_id', 'type', 'value'])->get();
+			$responseVotes = [];
+			foreach($users as $user) {
+				$result = $vote_results->firstWhere('user_id', $user->id);
+				$response = [
+					'user_id' => $user->id,
+					'forum_name' => $user->forum_name,
+					'value' => $result ? (float)$result->value : null,
+					'type' => $result ? $result->type : null,
+				];
+				array_push($responseVotes, $response);
+			}
+			$vote->responseVotes = $responseVotes;
+		}
+		return Excel::download(new AllVoteExport($votes, $users), 'all_vote.csv');
 	}
 }
