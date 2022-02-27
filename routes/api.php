@@ -265,6 +265,8 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth:api']], function () {
 	Route::get('/report-reputation', 'AdminController@adminReportReputation');
 	Route::get('/report-total-rep', 'AdminController@adminReportRepAvailable');
 	Route::get('/export-report', 'AdminController@exportPdfAdminReport');
+	Route::get('/export-all-rep', 'AdminController@exportCsvAllVARep');
+	Route::get('/export-all-vote', 'AdminController@exportCsvAllVote');
 
 	// POST
 	Route::post('/formal-voting', 'AdminController@startFormalVoting');
