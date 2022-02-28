@@ -329,7 +329,7 @@ class Helper
                 $reputationMintedFormal->delete();
               } else {
                 $reputationMintedFormal->pending =  $reputationMintedFormal->pending - $extraMintedFormalVote;
-                $reputationFormal->save();
+                $reputationMintedFormal->save();
               }
               $voter->profile->rep_pending = (float) $voter->profile->rep_pending - $extraMintedFormalVote;
               if ((float) $voter->profile->rep_pending < 0) {
@@ -509,7 +509,7 @@ class Helper
               $reputationMintedFormalOp->delete();
             } else {
               $reputationMintedFormalOp->pending =  $reputationMintedFormalOp->pending - $extraMintedFormalVoteOp;
-              $reputationFormal->save();
+              $reputationMintedFormalOp->save();
             }
             $op->profile->rep_pending = (float) $op->profile->rep_pending - $extraMintedFormalVoteOp;
             if ((float) $op->profile->rep_pending < 0) {
