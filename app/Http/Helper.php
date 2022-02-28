@@ -306,7 +306,7 @@ class Helper
               ->where('vote_id', $voteFormal->id)
               ->first();
             if ($reputationFormal && $reputationFormal) {
-              $extraFormalVote = $voteResultFormal->for_value * $milestone_extra;
+              $extraFormalVote = $voteResultFormal->value * $milestone_extra;
               $stakeValueFormal = $reputationFormal->staked + $extraFormalVote;
               if ($isCompletedProposal) {
                 $reputationFormal->delete();
