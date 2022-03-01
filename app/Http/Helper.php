@@ -282,7 +282,7 @@ class Helper
           $reputation->proposal_id = $vote->proposal_id;
           $reputation->vote_id = $vote->id;
           $reputation->value = $value;
-          $reputation->event = "Proposal Vote Result";
+          $reputation->event = $vote->content_type == "milestone" ?  "Proposal $proposal->id Milestone $milestonePosition Vote Result" : "Proposal $proposal->id Vote Result";
           $reputation->type = "Gained";
           $reputation->save();
           Helper::createRepHistory($item->user_id, $rep,  $voter->profile->rep, 'Gained', 'Proposal Vote Result', $proposal->id, $vote->id, 'runWinnerFlow');
@@ -352,7 +352,7 @@ class Helper
           $reputation->proposal_id = $vote->proposal_id;
           $reputation->vote_id = $vote->id;
           $reputation->value = $extra;
-          $reputation->event = "Proposal Vote Result";
+          $reputation->event = "Proposal $proposal->id Gained Vote result";
           $reputation->type = "Gained";
           $reputation->save();
         }
@@ -368,7 +368,7 @@ class Helper
           $reputation->proposal_id = $vote->proposal_id;
           $reputation->vote_id = $vote->id;
           $reputation->pending = $extra_minted;
-          $reputation->event = "Proposal Vote Result";
+          $reputation->event = "Proposal $proposal->id Minted Pending Vote";
           $reputation->type = "Minted Pending";
           $reputation->save();
         }
@@ -396,7 +396,7 @@ class Helper
             $reputationNew->vote_id = $vote->id;
             $reputationNew->value = $value;
             $reputationNew->type = "Stake Lost";
-            $reputationNew->event = "Proposal Vote Result";
+            $reputationNew->event = "Proposal $proposal->id Vote Result";
             $reputationNew->save();
           }
 
@@ -481,7 +481,7 @@ class Helper
           $reputation->proposal_id = $vote->proposal_id;
           $reputation->vote_id = $vote->id;
           $reputation->value = $proposal->rep;
-          $reputation->event = "Proposal Vote Result - OP";
+          $reputation->event = "Proposal $proposal->id Vote Result - OP";
           $reputation->type = "Gained";
           $reputation->save();  
         }
@@ -540,7 +540,7 @@ class Helper
         $reputation->proposal_id = $vote->proposal_id;
         $reputation->vote_id = $vote->id;
         $reputation->value = $op_extra;
-        $reputation->event = "Proposal Vote Result - OP";
+        $reputation->event = "Proposal $proposal->id Gained Vote Result - OP";
         $reputation->type = "Gained";
         $reputation->save();
       }
@@ -566,7 +566,7 @@ class Helper
           $reputation->proposal_id = $vote->proposal_id;
           $reputation->vote_id = $vote->id;
           $reputation->pending = $op_minted_pending;
-          $reputation->event = "Proposal Vote Result - OP";
+          $reputation->event = "Proposal $proposal->id Minted Pending Vote - OP";
           $reputation->type = "Minted Pending";
           $reputation->save();
         }
