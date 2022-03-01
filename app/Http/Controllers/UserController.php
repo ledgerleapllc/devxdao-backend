@@ -1420,12 +1420,18 @@ class UserController extends Controller
 
 		    // Create Reputation Track
 		    if ($value != 0) {
+				$event = "Proposal $proposal->id Vote";
+				if($vote->milestone_id) {
+					$milestone = Milestone::find($vote->milestone_id);
+					$milestonePosition = Helper::getPositionMilestone($milestone);
+					$event = "Proposal $proposal->id Milestone $milestonePosition Vote";
+				}
 			    $reputation = new Reputation;
 			    $reputation->user_id = $user->id;
 			    $reputation->proposal_id = $proposalId;
 			    $reputation->vote_id = $vote->id;
 			  	$reputation->staked = -$value;
-			    $reputation->event = "Proposal Vote";
+			    $reputation->event = $event;;
 			    $reputation->type = "Staked";
 			    $reputation->save();
 			  }
