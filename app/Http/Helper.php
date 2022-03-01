@@ -245,11 +245,13 @@ class Helper
 
     // get percent gtant milestone
     $milestone_extra = 1;
+    $milestonePosition = 1;
     $milestone = Milestone::find($vote->milestone_id);
     $voteFormal = Vote::where('type', 'formal')->where('content_type', 'grant')->where('proposal_id', $proposal->id)->first();
     if ($proposal->type == "grant" && $vote->content_type == "milestone" && $vote->milestone_id) {
       if ($milestone) {
         $milestone_extra = (float) $milestone->grant / $proposal->total_grant;
+        $milestonePosition = Helper::getPositionMilestone($milestone);
       }
     }
 
@@ -275,6 +277,14 @@ class Helper
         } else {
           // $voter->profile->rep = (float) $voter->profile->rep + $rep;
           Helper::updateRepProfile($voter->id, $rep);
+          $reputation = new Reputation;
+          $reputation->user_id = $voter->id;
+          $reputation->proposal_id = $vote->proposal_id;
+          $reputation->vote_id = $vote->id;
+          $reputation->value = $value;
+          $reputation->event = "Proposal Vote Result";
+          $reputation->type = "Gained";
+          $reputation->save();
           Helper::createRepHistory($item->user_id, $rep,  $voter->profile->rep, 'Gained', 'Proposal Vote Result', $proposal->id, $vote->id, 'runWinnerFlow');
         }
         if (
@@ -282,21 +292,11 @@ class Helper
           $vote->content_type != "milestone"
         ) {
           $voter->profile->rep_pending = (float) $voter->profile->rep_pending + $extra_minted;
+          $voter->profile->save();
         }
-        $voter->profile->save();
 
         // Stake Returned
         if ($value != 0) {
-          if ($vote->content_type == "grant" && $vote->type == "formal") {
-          } else {
-            Reputation::where('user_id', $voter->id)
-              ->where('proposal_id', $vote->proposal_id)
-              ->where('type', 'Staked')
-              //->where('event', 'Proposal Vote')
-              ->where('vote_id', $vote->id)
-              ->delete();
-          }
-
           if ($proposal->type == "grant" && $vote->content_type == "milestone" && $voteFormal) {
             // return rep formal vote
             $voteResultFormal = VoteResult::where('user_id', $voter->id)->where('vote_id', $voteFormal->id)->first();
@@ -306,19 +306,18 @@ class Helper
               ->where('vote_id', $voteFormal->id)
               ->first();
             if ($reputationFormal && $reputationFormal) {
-              $extraFormalVote = $voteResultFormal->value * $milestone_extra;
-              $stakeValueFormal = $reputationFormal->staked + $extraFormalVote;
-              if ($isCompletedProposal) {
-                $reputationFormal->delete();
-              } else {
-                $reputationFormal->staked = $stakeValueFormal;
-                $reputationFormal->save();
-                Helper::createRepHistory($item->user_id, $extraFormalVote,  $voter->profile->rep, 'Return', 'Proposal Vote Result Stake Return Formal Vote', $proposal->id, $vote->id, 'runWinnerFlow');
-              }
-              Helper::updateRepProfile($voter->id, $extraFormalVote);
-              Helper::createRepHistory($item->user_id, $extraFormalVote,  $voter->profile->rep, 'Gained', 'Proposal Vote Result Return  Value Formal Vote', $proposal->id, $vote->id, 'runWinnerFlow');
+                $extraFormalVote = $voteResultFormal->value * $milestone_extra;
+                Helper::updateRepProfile($voter->id, $extraFormalVote);
+                $reputation = new Reputation;
+                $reputation->user_id = $voter->id;
+                $reputation->proposal_id = $vote->proposal_id;
+                $reputation->vote_id = $vote->id;
+                $reputation->value = $extraFormalVote;
+                $reputation->event = "Return Proposal $proposal->id milestone $milestonePosition";
+                $reputation->type = "Gained";
+                $reputation->save();
+                Helper::createRepHistory($item->user_id, $extraFormalVote,  $voter->profile->rep, 'Gained', 'Proposal Vote Result Return  Value Formal Vote', $proposal->id, $vote->id, 'runWinnerFlow');
             }
-
             // return minted pending
             $reputationMintedFormal = Reputation::where('user_id', $voter->id)
               ->where('proposal_id', $vote->proposal_id)
@@ -327,19 +326,20 @@ class Helper
               ->first();
             if($reputationMintedFormal) {
               $extraMintedFormalVote = $reputationMintedFormal->pending * $milestone_extra;
-              if ($isCompletedProposal) {
-                $reputationMintedFormal->delete();
-              } else {
-                $reputationMintedFormal->pending =  $reputationMintedFormal->pending - $extraMintedFormalVote;
-                $reputationMintedFormal->save();
-                Helper::createRepHistory($item->user_id, $extraMintedFormalVote,  $voter->profile->rep, 'Return', 'Proposal Vote Result Minted Formal Vote Pending', $proposal->id, $vote->id, 'runWinnerFlow');
-              }
               $voter->profile->rep_pending = (float) $voter->profile->rep_pending - $extraMintedFormalVote;
               if ((float) $voter->profile->rep_pending < 0) {
                 $voter->profile->rep_pending = 0;
               }
               $voter->profile->save();
               Helper::updateRepProfile($voter->id, $extraMintedFormalVote);
+              $reputation = new Reputation;
+              $reputation->user_id = $voter->id;
+              $reputation->proposal_id = $vote->proposal_id;
+              $reputation->vote_id = $vote->id;
+              $reputation->value = $extraMintedFormalVote;
+              $reputation->event = "Return Minted Proposal $proposal->id milestone $milestonePosition";
+              $reputation->type = "Minted";
+              $reputation->save();
               Helper::createRepHistory($voter->id, $extraMintedFormalVote, $voter->profile->rep, 'Minted', 'Proposal Vote Result Minted Formal Vote', $proposal->id, null , 'return minted formal by milestone');
             }
           }
@@ -476,10 +476,14 @@ class Helper
         } else {
           Helper::updateRepProfile($op->id, (float) $op_extra + (float) $proposal->rep);
           Helper::createRepHistory($op->id, (float) $op_extra + (float) $proposal->rep, $op->profile->rep, 'Gained', 'Proposal Vote Result', $proposal->id, $vote->id, 'runWinnerFlow2');
-          Reputation::where('user_id', $op->id)
-            ->where('proposal_id', $vote->proposal_id)
-            ->where('type', 'Staked')
-            ->delete();
+          $reputation = new Reputation;
+          $reputation->user_id = $op->id;
+          $reputation->proposal_id = $vote->proposal_id;
+          $reputation->vote_id = $vote->id;
+          $reputation->value = $proposal->rep;
+          $reputation->event = "Proposal Vote Result - OP";
+          $reputation->type = "Gained";
+          $reputation->save();  
         }
         // handle return milestone
         if ($proposal->type == "grant" && $vote->content_type == "milestone" && $voteFormal) {
@@ -489,14 +493,14 @@ class Helper
             ->first();
           if ($reputationOp) {
             $extraRepProposal = $proposal->rep * $milestone_extra;
-            $stakeValueOp = $reputationOp->staked + $extraRepProposal;
-            if ($isCompletedProposal) {
-              $reputationOp->delete();
-            } else {
-              $reputationOp->staked = $stakeValueOp;
-              $reputationOp->save();
-              Helper::createRepHistory($op->id, (float) $extraRepProposal, $op->profile->rep, 'Return', 'Return Stake Proposal Vote Formal Result', $proposal->id, $voteFormal->id, 'runWinnerFlow2');
-            }
+            $reputation = new Reputation;
+            $reputation->user_id = $op->id;
+            $reputation->proposal_id = $vote->proposal_id;
+            $reputation->vote_id = $vote->id;
+            $reputation->value = $extraRepProposal;
+            $reputation->event = "Return Vote Result Proposal $proposal->id milestone $milestonePosition - OP";
+            $reputation->type = "Gained";
+            $reputation->save();  
             Helper::updateRepProfile($voter->id, $extraRepProposal);
             Helper::createRepHistory($op->id, (float) $extraRepProposal, $op->profile->rep, 'Gained', 'Proposal Vote Result', $proposal->id, $voteFormal->id, 'runWinnerFlow2 return milestone');
           }
@@ -509,19 +513,21 @@ class Helper
             ->first();
           if ($reputationMintedFormalOp) {
             $extraMintedFormalVoteOp = $reputationMintedFormalOp->pending * $milestone_extra;
-            if ($isCompletedProposal) {
-              $reputationMintedFormalOp->delete();
-            } else {
-              $reputationMintedFormalOp->pending =  $reputationMintedFormalOp->pending - $extraMintedFormalVoteOp;
-              $reputationMintedFormalOp->save();
-              Helper::createRepHistory($op->id, $extraMintedFormalVote, $op->profile->rep, 'Return', 'Return Minted Proposal Vote Formal Result', $proposal->id, $voteFormal->id, 'return minted formal by milestone');
-            }
             $op->profile->rep_pending = (float) $op->profile->rep_pending - $extraMintedFormalVoteOp;
             if ((float) $op->profile->rep_pending < 0) {
               $op->profile->rep_pending = 0;
             }
             $op->profile->save();
             Helper::updateRepProfile($op->id, $extraMintedFormalVote);
+            $extraRepProposal = $proposal->rep * $milestone_extra;
+            $reputation = new Reputation;
+            $reputation->user_id = $op->id;
+            $reputation->proposal_id = $vote->proposal_id;
+            $reputation->vote_id = $vote->id;
+            $reputation->value = $extraMintedFormalVoteOp;
+            $reputation->event = "Return Minted Proposal $proposal->id milestone $milestonePosition - OP";
+            $reputation->type = "Gained";
+            $reputation->save();  
             Helper::createRepHistory($op->id, $extraMintedFormalVote, $op->profile->rep, 'Minted', 'Return Minted Proposal Vote Formal Result', $proposal->id, $voteFormal->id, 'return minted formal by milestone');
           }
         }
