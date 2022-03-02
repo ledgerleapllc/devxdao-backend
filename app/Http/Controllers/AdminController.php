@@ -2548,7 +2548,7 @@ class AdminController extends Controller
 		$data['totalUserRegisted'] = User::where('is_admin', '!=', 1)->count();
 		$data['totalVAs'] = User::where('is_member', 1)->count();
 		$data['totalProposalSubmitted'] = Proposal::count();
-		$data['totalGrantActive'] = FinalGrant::where('status', 'active')->count();
+		$data['totalGrantActive'] = FinalGrant::whereIn('status', ['active', 'completed'])->count();
 		$data['totalGrantCompleted'] = FinalGrant::where('status', 'completed')->count();
 		return [
 			'success' => true,
