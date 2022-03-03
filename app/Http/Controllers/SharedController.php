@@ -55,6 +55,7 @@ use App\SignatureGrant;
 use App\Survey;
 use App\SurveyDownVoteRank;
 use App\SurveyRank;
+use App\TopicRead;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\App;
@@ -3432,5 +3433,132 @@ class SharedController extends Controller
 		$finalGrant->save();
 		SignatureGrant::where('proposal_id', $proposalId)->update(['signed' => 1]);
 		return ['success' => true];
+	}
+
+	public function getMetricAttestations()
+	{
+		$user = Auth::user();
+		if (!$user) {
+			return [
+				'success' => false,
+				'message' => 'Unauthorized'
+			];
+		}
+		$settings = Helper::getSettings();
+		$time30DaysAgo = Carbon::now()->subDays(30);
+		$totalVAs = Helper::getTotalMembers();
+		$attestsReached30Days = 0;
+		$attestsReachedAll = 0;
+		$attestsNotReachedAll = 0;
+		$autostart_threshhold = isset($settings['autostart_threshhold']) ? (float) $settings['autostart_threshhold'] : 0;
+		$newDiscusstions30Days = Proposal::where('status', 'approved')->where('approved_at', '>=', $time30DaysAgo)
+			->whereNotNull('discourse_topic_id')->count();
+		$proposalReached30Days = Proposal::where('proposal.status', 'approved')->whereNotNull('proposal.discourse_topic_id')
+		->join('vote', function ($join) {
+			$join->on('proposal.id', '=', 'vote.proposal_id');
+			$join->on('proposal.type', '=', 'vote.content_type');
+			$join->where('vote.type', '=', 'informal');
+		})
+		->where('vote.created_at', '>=', $time30DaysAgo)
+		->select(['proposal.discourse_topic_id', 'proposal.total_user_va', 'vote.*'])
+		->get();
+		foreach($proposalReached30Days as $proposal) {
+			$countVARead = TopicRead::where('topic_id', $proposal->discourse_topic_id)->count();
+			$total = $proposal->total_user_va ?  $proposal->total_user_va : $totalVAs;
+			$rate = $countVARead / $total * 100;
+			if($rate >= $autostart_threshhold) {
+				$attestsReached30Days += 1;
+			}
+		}
+		$countProposalReached30Days = count($proposalReached30Days) > 0 ? count($proposalReached30Days) : 1;
+		$percentageAttested30Days = $attestsReached30Days / $countProposalReached30Days * 100;
+
+		$proposalReachedAll = Proposal::where('proposal.status', 'approved')->whereNotNull('proposal.discourse_topic_id')
+		->join('vote', function ($join) {
+			$join->on('proposal.id', '=', 'vote.proposal_id');
+			$join->on('proposal.type', '=', 'vote.content_type');
+			$join->where('vote.type', '=', 'informal');
+		})
+		->select(['proposal.discourse_topic_id', 'proposal.total_user_va', 'vote.*'])
+		->get();
+		foreach($proposalReachedAll as $proposal) {
+			$countVARead = TopicRead::where('topic_id', $proposal->discourse_topic_id)->count();
+			$total = $proposal->total_user_va ?  $proposal->total_user_va : $totalVAs;
+			$rate = $countVARead / $total * 100;
+			if($rate >= $autostart_threshhold) {
+				$attestsReachedAll += 1;
+			} else {
+				$attestsNotReachedAll += 1;
+			}
+		}
+		$proposalReachedAll = count($proposalReachedAll) > 0 ? count($proposalReachedAll) : 1;
+		$percentageAttestedAll = $attestsReachedAll / $proposalReachedAll * 100;
+		$data['attestsReached30Days'] = $attestsReached30Days;
+		$data['newDiscusstions30Days'] = $newDiscusstions30Days;
+		$data['percentageAttested30Days'] = $percentageAttested30Days;
+		$data['attestsNotReachedAll'] = $attestsNotReachedAll;
+		$data['attestsReachedAll'] = $attestsReachedAll;
+		$data['percentageAttestedAll'] = $percentageAttestedAll;
+		return [
+			'success' => true,
+			'data' => $data
+		];
+	}
+
+	public function reportDiscussions(ProposalService $proposalService, Request $request)
+	{
+		$user = Auth::user();
+		if (!$user) {
+			return [
+				'success' => false,
+				'message' => 'Unauthorized'
+			];
+		}
+		$proposals = [];
+		$time30DaysAgo = Carbon::now()->subDays(30);
+		// Variables
+		$sort_key = $sort_direction = $search = '';
+		$page_id = 0;
+		$data = $request->all();
+		if ($data && is_array($data)) extract($data);
+
+		if (!$sort_key) $sort_key = 'proposal.id';
+		if (!$sort_direction) $sort_direction = 'desc';
+		$page_id = (int) $page_id;
+		if ($page_id <= 0) $page_id = 1;
+
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
+		$start = $limit * ($page_id - 1);
+
+		// Record
+		if ($user) {
+			$proposals = Proposal::where('proposal.status', 'approved')->whereNotNull('proposal.discourse_topic_id')
+			->join('vote', function ($join) {
+				$join->on('proposal.id', '=', 'vote.proposal_id');
+				$join->on('proposal.type', '=', 'vote.content_type');
+				$join->where('vote.type', '=', 'informal');
+			})
+			->where('vote.created_at', '>=', $time30DaysAgo)
+			->select(['proposal.discourse_topic_id', 'proposal.total_user_va', 'vote.*'])
+			->get();
+
+			$proposals = $proposalService->withAttestation($proposals);
+			$proposals = $proposalService->withStatusLabel($proposals);
+		}
+		foreach ($proposals as $proposal) {
+			$proposal->attestation_rate = isset($proposal->attestation['rate']) ? $proposal->attestation['rate'] : 0;
+			$proposal->is_attestated = isset($proposal->attestation['is_attestated']) && $proposal->attestation['is_attestated'] == true ? 1 : 0;
+		}
+		if ($sort_direction == 'asc') {
+			$sorted = $proposals->sortBy($sort_key)->values();
+		} else {
+			$sorted = $proposals->sortByDesc($sort_key)->values();
+		}
+		$response = $sorted->slice($start, $limit)->values();
+		return [
+			'success' => true,
+			'proposals' => $response,
+			'finished' => count($response) < $limit ? true : false
+		];
 	}
 }
