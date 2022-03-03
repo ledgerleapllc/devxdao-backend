@@ -40,7 +40,12 @@ class DiscourseService
     public function attestationRate($id)
     {
         try {
-            return TopicRead::where('topic_id', $id)->count() / User::where('is_member', true)->count() * 100;
+            $totalVas = User::where('is_member', true)->count();
+            $proposal = DB::table('proposal')
+            ->where('discourse_topic_id', $id)
+            ->first();
+            $total = $proposal->total_user_va ? $proposal->total_user_va : $totalVas;
+            return TopicRead::where('topic_id', $id)->count() / $total * 100;
         } catch (ErrorException $e) {
             return 0;
         }
@@ -355,7 +360,7 @@ class DiscourseService
         $topicIds = array_map(fn ($topic) => $topic['id'], $topics);
 
         $proposals = DB::table('proposal')
-            ->select('id', 'discourse_topic_id', 'status', 'dos_paid')
+            ->select('id', 'discourse_topic_id', 'status', 'dos_paid', 'total_user_va')
             ->whereIn('discourse_topic_id', $topicIds)
             ->get();
 
@@ -380,10 +385,10 @@ class DiscourseService
             }
 
             $count = $attestationRates->firstWhere('topic_id', $topic['id'])->count ?? 0;
-
+            $total = $proposal->total_user_va ? $proposal->total_user_va : $VACount;
             $topics[$key]['proposal'] = [
                 'id' => $proposal->id,
-                'attestation_rate' => $count / $VACount * 100,
+                'attestation_rate' => $count / $total * 100,
                 'status' => Helper::getStatusProposal($proposal),
                 'is_attestated' => $attestationUsers->where('user_id', Auth::id())->where('topic_id', $topic['id'])->isNotEmpty(),
             ];

@@ -29,9 +29,9 @@ class ProposalService
 
         foreach ($proposals as $key => $proposal) {
             $count = $attestationRates->firstWhere('topic_id', $proposal->discourse_topic_id)->count ?? 0;
-
+            $total = $proposal->total_user_va ? $proposal->total_user_va : $VACount;
             $proposals[$key]['attestation'] = [
-                'rate' => $count / $VACount * 100,
+                'rate' => $count / $total * 100,
                 'is_attestated' => $attestationUsers
                     ->where('user_id', Auth::id())
                     ->where('topic_id', $proposal->discourse_topic_id)
