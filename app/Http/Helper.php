@@ -33,6 +33,7 @@ use App\Mail\ComplianceReview;
 use App\Milestone;
 use App\MilestoneLog;
 use App\MilestoneSubmitHistory;
+use App\ProposalChange;
 use App\RepHistory;
 use App\Shuftipro;
 use App\ShuftiproTemp;
@@ -2043,5 +2044,68 @@ class Helper
     } else {
       return $rank."th";
     }
+  }
+
+  public static function startInformalVoteProposal($proposalId)
+  {
+    $totalVAs = Helper::getTotalMembers();
+    $settings = Helper::getSettings();
+    
+    $proposal = Proposal::find($proposalId);
+    // Proposal Check
+    $statuses = ["approved"];
+    if (!$proposal || !in_array($proposal->status, $statuses)) {
+      return;
+    }
+    if(!isset($settings['autostart_if_attested']) || $settings['autostart_if_attested'] == 'no' || !isset($settings['autostart_threshhold'])) {
+      return;
+    }
+    if(isset($settings['autostart_if_attested']) && $settings['autostart_if_attested'] == 'yes') {
+      $counttopicReads = DB::table('topic_reads')->where('topic_id', $proposal->discourse_topic_id)->count();
+			$rate = $counttopicReads / $totalVAs * 100;
+      $autostart_threshhold = (float) $settings['autostart_threshhold'];
+      if($rate < $autostart_threshhold) {
+        return ;
+      }
+    }
+    // Pending Change Check
+    $change = ProposalChange::where('proposal_id', $proposalId)
+    ->where('status', 'pending')
+    ->where('what_section', '!=', 'general_discussion')
+    ->where('user_id', '!=', $proposal->user_id)
+    ->first();
+    if ($change) {
+      return;
+    }
+
+    // Vote Check
+    $vote = Vote::where('proposal_id', $proposalId)->first();
+    if ($vote) {
+      return;
+    }
+  
+    $proposal->total_user_va = $totalVAs;
+    $proposal->save();
+    $vote = new Vote;
+    $vote->proposal_id = $proposalId;
+    $vote->type = 'informal';
+    if ($proposal->type == "grant")
+    $vote->content_type = "grant";
+    else if ($proposal->type == "simple")
+    $vote->content_type = "simple";
+    else if ($proposal->type == "admin-grant")
+    $vote->content_type = "admin-grant";
+    else if ($proposal->type == "advance-payment") {
+      $vote->content_type = "advance-payment";
+      $proposal->proposal_advance_status = 'in-voting';
+      $proposal->save();
+    }
+    $vote->save();
+    // Emailer Admin
+    $emailerData = Helper::getEmailerData();
+    Helper::triggerAdminEmail('Vote Started', $emailerData, $proposal, $vote);
+    // Emailer Member
+    Helper::triggerMemberEmail('New Vote', $emailerData, $proposal, $vote);
+    Helper::createGrantTracking($proposalId, "Informal vote started", 'informal_vote_started');
   }
 }

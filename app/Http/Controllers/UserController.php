@@ -1197,7 +1197,7 @@ class UserController extends Controller
 			// Change Proposal Change
 			$proposalChange->status = 'approved';
 			$proposalChange->save();
-
+			Helper::startInformalVoteProposal($proposal->id);
 			return ['success' => true];
 		}
 

@@ -78,7 +78,7 @@ class TopicController extends Controller
             return $topic;
         }
 
-        $proposal = Proposal::select('id', 'user_id', 'status', 'dos_paid', 'topic_posts_count')
+        $proposal = Proposal::select('id', 'user_id', 'status', 'dos_paid', 'topic_posts_count', 'total_user_va')
             ->where('discourse_topic_id', $id)
             ->first();
 
@@ -154,10 +154,9 @@ class TopicController extends Controller
             return $topic;
         }
 
-        $proposal = Proposal::select('id', 'status', 'dos_paid')
+        $proposal = Proposal::select('id', 'status', 'dos_paid', 'total_user_va')
             ->where('discourse_topic_id', $id)
             ->first();
-
         if (!$proposal || Helper::getStatusProposal($proposal) !== 'In Discussion') {
             return ['failed' => true, 'message' => 'You can only mark topics as read if they are in discussion'];
         }
@@ -175,6 +174,7 @@ class TopicController extends Controller
         $check->user()->associate($user);
         $check->save();
 
+        Helper::startInformalVoteProposal($proposal->id);
         return ['success' => true, 'data' => [
             'attestation_rate' => $discourse->attestationRate($id),
         ]];
