@@ -730,7 +730,8 @@ class SharedController extends Controller
 					'message' => 'Vote has been already started'
 				];
 			}
-
+			$total_va = Helper::getTotalMembers();
+    		$proposal->total_user_va = $total_va;
 			$proposal->status = "approved";
 			$proposal->save();
 
@@ -2268,19 +2269,25 @@ class SharedController extends Controller
 							->whereNotIn('proposal.id', $survey_downvote_rank_ids->toArray());
 					}
 				})
-				->orderBy($sort_key, $sort_direction)
-				->offset($start)
-				->limit($limit)
 				->get();
 
 			$proposals = $proposalService->withAttestation($proposals);
 			$proposals = $proposalService->withStatusLabel($proposals);
 		}
-
+		foreach ($proposals as $proposal) {
+			$proposal->attestation_rate = isset($proposal->attestation['rate']) ? $proposal->attestation['rate'] : 0;
+			$proposal->is_attestated = isset($proposal->attestation['is_attestated']) && $proposal->attestation['is_attestated'] == true ? 1 : 0;
+		}
+		if ($sort_direction == 'asc') {
+			$sorted = $proposals->sortBy($sort_key)->values();
+		} else {
+			$sorted = $proposals->sortByDesc($sort_key)->values();
+		}
+		$response = $sorted->slice($start, $limit)->values();
 		return [
 			'success' => true,
-			'proposals' => $proposals,
-			'finished' => count($proposals) < $limit ? true : false
+			'proposals' => $response,
+			'finished' => count($response) < $limit ? true : false
 		];
 	}
 
@@ -2316,19 +2323,25 @@ class SharedController extends Controller
 							->orWhere('proposal.member_reason', 'like', '%' . $search . '%');
 					}
 				})
-				->orderBy($sort_key, $sort_direction)
-				->offset($start)
-				->limit($limit)
 				->get();
 
 			$proposals = $proposalService->withAttestation($proposals);
 			$proposals = $proposalService->withStatusLabel($proposals);
 		}
-
+		foreach ($proposals as $proposal) {
+			$proposal->attestation_rate = isset($proposal->attestation['rate']) ? $proposal->attestation['rate'] : 0;
+			$proposal->is_attestated = isset($proposal->attestation['is_attestated']) && $proposal->attestation['is_attestated'] == true ? 1 : 0;
+		}
+		if ($sort_direction == 'asc') {
+			$sorted = $proposals->sortBy($sort_key)->values();
+		} else {
+			$sorted = $proposals->sortByDesc($sort_key)->values();
+		}
+		$response = $sorted->slice($start, $limit)->values();
 		return [
 			'success' => true,
-			'proposals' => $proposals,
-			'finished' => count($proposals) < $limit ? true : false
+			'proposals' => $response,
+			'finished' => count($response) < $limit ? true : false
 		];
 	}
 
@@ -2730,6 +2743,7 @@ class SharedController extends Controller
 						'proposal.title',
 						'proposal.include_membership',
 						'proposal.discourse_topic_id',
+						'proposal.total_user_va',
 						'users.first_name',
 						'users.last_name',
 						'users.id as user_id',
@@ -2771,7 +2785,8 @@ class SharedController extends Controller
 						$vote->informal_result_users = $ids;
 					}
 					$count = DB::table('topic_reads')->where('topic_id', $vote->discourse_topic_id)->count();
-					$vote->rate = $count / $totalVAs * 100;
+					$total = $vote->total_user_va ?  $vote->total_user_va : $totalVAs;
+					$vote->rate = $count / $total * 100;
 				}
 			}
 		}
@@ -2915,6 +2930,7 @@ class SharedController extends Controller
 						'proposal.include_membership',
 						'proposal.total_grant',
 						'proposal.discourse_topic_id',
+						'proposal.total_user_va',
 						'users.first_name',
 						'users.last_name',
 						'users.id as user_id',
@@ -2935,7 +2951,8 @@ class SharedController extends Controller
 		$totalVAs = Helper::getTotalMembers();
 		foreach($votes as $vote) {
 			$count = DB::table('topic_reads')->where('topic_id', $vote->discourse_topic_id)->count();
-			$vote->rate = $count / $totalVAs * 100;
+			$total = $vote->total_user_va ?  $vote->total_user_va : $totalVAs;
+			$vote->rate = $count / $total * 100;
 		}
 
 		return [

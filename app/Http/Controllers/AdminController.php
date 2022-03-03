@@ -909,6 +909,8 @@ class AdminController extends Controller
 				'gate_new_grant_votes' => 'required',
 				'gate_new_milestone_votes' => 'required',
 				'compliance_admin' => 'required',
+				'autostart_if_attested' => 'required',
+				'autostart_threshhold' => 'required',
 			]);
 			if ($validator->fails()) {
 				return [
@@ -958,6 +960,8 @@ class AdminController extends Controller
 				'gate_new_grant_votes' => $request->get('gate_new_grant_votes'),
 				'gate_new_milestone_votes' => $request->get('gate_new_milestone_votes'),
 				'compliance_admin' => $request->get('compliance_admin'),
+				'autostart_if_attested' => $request->get('autostart_if_attested'),
+				'autostart_threshhold' => $request->get('autostart_threshhold'),
 			];
 
 			foreach ($items as $name => $value) {
@@ -2075,6 +2079,7 @@ class AdminController extends Controller
 			// Change Proposal Change
 			$proposalChange->status = 'approved';
 			$proposalChange->save();
+			Helper::startInformalVoteProposal($proposal->id);
 
 			return ['success' => true];
 		}
