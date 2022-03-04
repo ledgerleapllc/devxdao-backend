@@ -139,17 +139,17 @@ class CheckAdvancePaymentVote extends Command
                 $vote->result = $result;
                 $vote->save();
 
-                if ($result == "success") {
-                    Helper::runWinnerFlow($proposal, $vote, $settings);
-                    Helper::completeProposal($proposal);
-                    $proposal->proposal_advance_status = 'passed';
-                    $proposal->save();
-                    Helper::triggerUserEmail($op, 'Advance Payment Vote Passed', $emailerData, $proposal, $vote);
-                } else {
-                    Helper::runLoserFlow($proposal, $vote, $settings);
+                // if ($result == "success") {
+                Helper::runWinnerFlow($proposal, $vote, $settings);
+                Helper::completeProposal($proposal);
+                $proposal->proposal_advance_status = 'passed';
+                $proposal->save();
+                Helper::triggerUserEmail($op, 'Advance Payment Vote Passed', $emailerData, $proposal, $vote);
+                // } else {
+                //     Helper::runLoserFlow($proposal, $vote, $settings);
 
-                    Helper::triggerUserEmail($op, 'Advance Payment Vote Failed', $emailerData, $proposal, $vote);
-                }
+                //     Helper::triggerUserEmail($op, 'Advance Payment Vote Failed', $emailerData, $proposal, $vote);
+                // }
             }
         }
     }
