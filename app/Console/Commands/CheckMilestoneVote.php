@@ -86,15 +86,15 @@ class CheckMilestoneVote extends Command
                 $vote->save();
 
                 // Emailer
-                if ($result == "success") {
-                    Helper::createMilestoneLog($vote->milestone_id, null, null, 'System', 'Vote passed');
-                    $milestonePosition = Helper::getPositionMilestone($milestone);
-                    Helper::createGrantTracking($milestone->proposal_id, "Milestone $milestonePosition passed informal vote", "milestone_" . $milestonePosition . "_passed_informal_vote");
-                    Helper::triggerUserEmail($op, 'Milestone Vote Passed Informal', $emailerData, $proposal, $vote);
-                } else if ($result == "fail") {
-                    Helper::createMilestoneLog($vote->milestone_id, null, null, 'System', 'Vote failed');
-                    Helper::triggerUserEmail($op, 'Milestone Vote Failed', $emailerData, $proposal, $vote);
-                }
+                // if ($result == "success") {
+                Helper::createMilestoneLog($vote->milestone_id, null, null, 'System', 'Vote passed');
+                $milestonePosition = Helper::getPositionMilestone($milestone);
+                Helper::createGrantTracking($milestone->proposal_id, "Milestone $milestonePosition passed informal vote", "milestone_" . $milestonePosition . "_passed_informal_vote");
+                Helper::triggerUserEmail($op, 'Milestone Vote Passed Informal', $emailerData, $proposal, $vote);
+                // } else if ($result == "fail") {
+                //     Helper::createMilestoneLog($vote->milestone_id, null, null, 'System', 'Vote failed');
+                //     Helper::triggerUserEmail($op, 'Milestone Vote Failed', $emailerData, $proposal, $vote);
+                // }
             }
         }
     }
