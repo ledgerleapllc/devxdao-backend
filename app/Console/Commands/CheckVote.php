@@ -90,21 +90,21 @@ class CheckVote extends Command
 
                 $emailerData = Helper::getEmailerData();
 
-                if ($result == "success") {
-                    try {
-                        Log::info("Start create tracking Informal vote of proposal $proposal->id");
-                        Helper::createGrantTracking($proposal->id, "Informal vote passed", 'informal_vote_passed');
-                        $shuftipro = Shuftipro::where('user_id', $proposal->user_id)->where('status', 'approved')->first();
-                        if ($shuftipro) {
-                            Helper::createGrantTracking($proposal->id, "KYC checks complete", 'kyc_checks_complete');
-                        }
-                        Log::info("Completed create tracking Informal vote of proposal $proposal->id");
-                    } catch (Exception $e) {
-                        Log::info($e->getMessage());
+                // if ($result == "success") {
+                try {
+                    Log::info("Start create tracking Informal vote of proposal $proposal->id");
+                    Helper::createGrantTracking($proposal->id, "Informal vote passed", 'informal_vote_passed');
+                    $shuftipro = Shuftipro::where('user_id', $proposal->user_id)->where('status', 'approved')->first();
+                    if ($shuftipro) {
+                        Helper::createGrantTracking($proposal->id, "KYC checks complete", 'kyc_checks_complete');
                     }
-                    
-                    Helper::startOnboarding($proposal, $vote);
-                    Helper::sendKycKangarooUser($op);
+                    Log::info("Completed create tracking Informal vote of proposal $proposal->id");
+                } catch (Exception $e) {
+                    Log::info($e->getMessage());
+                }
+
+                Helper::startOnboarding($proposal, $vote);
+                Helper::sendKycKangarooUser($op);
                     // Emailer
                     // Helper::triggerAdminEmail('Signatures Needed', $emailerData, $proposal);
                     // Helper::triggerUserEmail($op, 'Passed Informal Grant Vote', $emailerData, $proposal, $vote);
@@ -115,9 +115,9 @@ class CheckVote extends Command
                     // else {
                     //     Helper::startOnboarding($proposal, $vote);
                     // }
-                } else {
-                    Helper::triggerUserEmail($op, 'Failed Informal Grant Vote', $emailerData, $proposal, $vote);
-                }
+                // } else {
+                //     Helper::triggerUserEmail($op, 'Failed Informal Grant Vote', $emailerData, $proposal, $vote);
+                // }
             }
         }
     }

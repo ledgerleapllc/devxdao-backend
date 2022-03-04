@@ -86,16 +86,18 @@ class CheckAdminGrantVote extends Command
                 $vote->result = $result;
                 $vote->save();
 
-                if ($result == "success") {
-                    if ($proposal->type == 'admin-grant'
-                        && ($settings['autostart_admin_grant_formal_votes'] ?? null) == 'yes') {
-                        Helper::startFormalVote($vote);
-                    }
-
-                    Helper::triggerUserEmail($op, 'Admin Grant Vote Passed', $emailerData, $proposal, $vote);
-                } else if ($result == "fail") {
-                    Helper::triggerUserEmail($op, 'Admin Grant Vote Failed', $emailerData, $proposal, $vote);
+                // if ($result == "success") {
+                if (
+                    $proposal->type == 'admin-grant'
+                    && ($settings['autostart_admin_grant_formal_votes'] ?? null) == 'yes'
+                ) {
+                    Helper::startFormalVote($vote);
                 }
+
+                Helper::triggerUserEmail($op, 'Admin Grant Vote Passed', $emailerData, $proposal, $vote);
+                // } else if ($result == "fail") {
+                //     Helper::triggerUserEmail($op, 'Admin Grant Vote Failed', $emailerData, $proposal, $vote);
+                // }
             }
         }
     }

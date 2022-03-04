@@ -85,15 +85,15 @@ class CheckMilestoneVote extends Command
                 $vote->save();
 
                 // Emailer
-                if ($result == "success") {
-                    Helper::createMilestoneLog($vote->milestone_id, null, null, 'System', 'Vote passed');
-                    $milestonePosition = Helper::getPositionMilestone($milestone);
-					Helper::createGrantTracking($milestone->proposal_id, "Milestone $milestonePosition passed informal vote", "milestone_" . $milestonePosition ."_passed_informal_vote");
-                    Helper::triggerUserEmail($op, 'Milestone Vote Passed Informal', $emailerData, $proposal, $vote);
-                } else if ($result == "fail") {
-                    Helper::createMilestoneLog($vote->milestone_id, null, null, 'System', 'Vote failed');
-                    Helper::triggerUserEmail($op, 'Milestone Vote Failed', $emailerData, $proposal, $vote);
-                }
+                // if ($result == "success") {
+                Helper::createMilestoneLog($vote->milestone_id, null, null, 'System', 'Vote passed');
+                $milestonePosition = Helper::getPositionMilestone($milestone);
+                Helper::createGrantTracking($milestone->proposal_id, "Milestone $milestonePosition passed informal vote", "milestone_" . $milestonePosition . "_passed_informal_vote");
+                Helper::triggerUserEmail($op, 'Milestone Vote Passed Informal', $emailerData, $proposal, $vote);
+                // } else if ($result == "fail") {
+                //     Helper::createMilestoneLog($vote->milestone_id, null, null, 'System', 'Vote failed');
+                //     Helper::triggerUserEmail($op, 'Milestone Vote Failed', $emailerData, $proposal, $vote);
+                // }
             }
         }
     }
@@ -106,7 +106,7 @@ class CheckMilestoneVote extends Command
         $voteInfomal = Vote::where('proposal_id', $vote->proposal_id)
             ->where('milestone_id', $vote->milestone_id)
             ->where('type', 'informal')
-            ->where('content_type', 'milestone')->first(); 
+            ->where('content_type', 'milestone')->first();
         $totalMembers =  $voteInfomal->result_count ?? 0;
         $minMembers = $totalMembers  * $quorumRate / 100;
         $minMembers = ceil($minMembers);
@@ -118,7 +118,7 @@ class CheckMilestoneVote extends Command
             $milestone = Milestone::find($vote->milestone_id);
             if (!$milestone) return;
             $emailerData = Helper::getEmailerData();
-            
+
             if ($vote->result_count < $minMembers) {
                 // Can't Proceed
                 $vote->status = 'completed';
@@ -131,7 +131,7 @@ class CheckMilestoneVote extends Command
             } else {
                 // Needs to Complete
                 $result = Helper::getVoteResult($proposal, $vote, $settings);
-                
+
                 $vote->status = 'completed';
                 $vote->result = $result;
                 $vote->save();
@@ -194,8 +194,8 @@ class CheckMilestoneVote extends Command
 
         // Calculate Period
         if (
-            !$settings || 
-            !$settings['time_milestone'] || 
+            !$settings ||
+            !$settings['time_milestone'] ||
             !$settings['time_unit_milestone'] ||
             !$settings['pass_rate_milestone'] ||
             !$settings['quorum_rate_milestone']
@@ -213,7 +213,7 @@ class CheckMilestoneVote extends Command
         // Calculate Min Members
         $totalMembers = Helper::getTotalMembers();
         $quorumRate = (float) $settings['quorum_rate_milestone'];
-        
+
         $minMembers = $totalMembers * $quorumRate / 100;
         $minMembers = ceil($minMembers);
 

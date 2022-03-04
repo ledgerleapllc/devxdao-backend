@@ -86,16 +86,18 @@ class CheckSimpleVote extends Command
                 $vote->result = $result;
                 $vote->save();
 
-                if ($result == "success") {
-                    if ($proposal->type == 'simple'
-                        && ($settings['autostart_simple_formal_votes'] ?? null) == 'yes') {
-                        Helper::startFormalVote($vote);
-                    }
-
-                    Helper::triggerUserEmail($op, 'Simple Vote Passed', $emailerData, $proposal, $vote);
-                } else if ($result == "fail") {
-                    Helper::triggerUserEmail($op, 'Simple Vote Failed', $emailerData, $proposal, $vote);
+                // if ($result == "success") {
+                if (
+                    $proposal->type == 'simple'
+                    && ($settings['autostart_simple_formal_votes'] ?? null) == 'yes'
+                ) {
+                    Helper::startFormalVote($vote);
                 }
+
+                Helper::triggerUserEmail($op, 'Simple Vote Passed', $emailerData, $proposal, $vote);
+                // } else if ($result == "fail") {
+                //     Helper::triggerUserEmail($op, 'Simple Vote Failed', $emailerData, $proposal, $vote);
+                // }
             }
         }
     }

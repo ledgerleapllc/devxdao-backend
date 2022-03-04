@@ -547,7 +547,7 @@ class AdminController extends Controller
 			$votes = Vote::join('proposal', 'proposal.id', '=', 'vote.proposal_id')
 				->join('users', 'users.id', '=', 'proposal.user_id')
 				->where('vote.status', 'completed')
-				->where('vote.result', 'success')
+				->whereIn('vote.result', ['success', 'fail'])
 				->where('vote.type', 'informal')
 				->where('vote.content_type', '!=', 'grant')
 				->where('vote.formal_vote_id', 0)
