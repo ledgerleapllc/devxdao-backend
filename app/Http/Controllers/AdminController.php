@@ -250,9 +250,9 @@ class AdminController extends Controller
 	// Add Reputation
 	public function addReputation(Request $request)
 	{
-		$user = Auth::user();
+		$admin = Auth::user();
 
-		if ($user && $user->hasRole('admin')) {
+		if ($admin && $admin->hasRole('admin')) {
 			$userId = (int) $request->get('userId');
 			$reputation = (float) $request->get('reputation');
 
@@ -283,6 +283,7 @@ class AdminController extends Controller
 			$record->value = $reputation;
 			$record->event = "Admin Action";
 			$record->type = "Gained";
+			$record->email = $admin->email;
 			$record->save();
 
 			return ['success' => true];
@@ -294,9 +295,9 @@ class AdminController extends Controller
 	// Subtract Reputation
 	public function subtractReputation(Request $request)
 	{
-		$user = Auth::user();
+		$admin = Auth::user();
 
-		if ($user && $user->hasRole('admin')) {
+		if ($admin && $admin->hasRole('admin')) {
 			$userId = (int) $request->get('userId');
 			$reputation = (float) $request->get('reputation');
 
@@ -334,6 +335,7 @@ class AdminController extends Controller
 			$record->value = -$reputation;
 			$record->event = "Admin Action";
 			$record->type = "Lost";
+			$record->email = $admin->email;
 			$record->save();
 
 			return ['success' => true];
