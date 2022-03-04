@@ -3530,7 +3530,9 @@ class SharedController extends Controller
 				'message' => 'Unauthorized'
 			];
 		}
-		$proposals = [];
+		$responses = collect();
+		$settings = Helper::getSettings();
+		$autostart_threshhold = isset($settings['autostart_threshhold']) ? (float) $settings['autostart_threshhold'] : 0;
 		$time30DaysAgo = Carbon::now()->subDays(30);
 		// Variables
 		$sort_key = $sort_direction = $search = '';
@@ -3564,11 +3566,14 @@ class SharedController extends Controller
 		foreach ($proposals as $proposal) {
 			$proposal->attestation_rate = isset($proposal->attestation['rate']) ? $proposal->attestation['rate'] : 0;
 			$proposal->is_attestated = isset($proposal->attestation['is_attestated']) && $proposal->attestation['is_attestated'] == true ? 1 : 0;
+			if($proposal->attestation_rate >= $autostart_threshhold) {
+				$responses->push($proposal);
+			}
 		}
 		if ($sort_direction == 'asc') {
-			$sorted = $proposals->sortBy($sort_key)->values();
+			$sorted = $responses->sortBy($sort_key)->values();
 		} else {
-			$sorted = $proposals->sortByDesc($sort_key)->values();
+			$sorted = $responses->sortByDesc($sort_key)->values();
 		}
 		$response = $sorted->slice($start, $limit)->values();
 		return [
