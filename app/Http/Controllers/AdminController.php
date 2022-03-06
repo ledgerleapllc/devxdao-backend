@@ -519,6 +519,14 @@ class AdminController extends Controller
 	{
 		$user = Auth::user();
 		$votes = [];
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
 
 		// Variables
 		$sort_key = $sort_direction = $search = '';
@@ -572,6 +580,14 @@ class AdminController extends Controller
 	public function getPendingGrantOnboardings(Request $request)
 	{
 		$user = Auth::user();
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
 		$onboardings = [];
 
 		// Variables
@@ -698,6 +714,14 @@ class AdminController extends Controller
 	public function startFormalMilestoneVoting(Request $request)
 	{
 		$user = Auth::user();
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
 
 		if ($user && $user->hasRole('admin')) {
 			$proposalId = (int) $request->get('proposalId');
@@ -867,6 +891,14 @@ class AdminController extends Controller
 	public function updateGlobalSettings(Request $request)
 	{
 		$user = Auth::user();
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
 
 		if ($user && $user->hasRole('admin')) {
 			// Validator
@@ -1508,6 +1540,14 @@ class AdminController extends Controller
 	{
 		$user = Auth::user();
 		$items = [];
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
 
 		// Variables
 		$sort_key = $sort_direction = $search = '';
@@ -1549,6 +1589,14 @@ class AdminController extends Controller
 	public function getProposalsByUser($userId, Request $request)
 	{
 		$user = Auth::user();
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
 		$proposals = [];
 
 		// Variables
@@ -1581,6 +1629,14 @@ class AdminController extends Controller
 	public function getVotesByUser($userId, Request $request)
 	{
 		$user = Auth::user();
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
 		$items = [];
 
 		// Variables
@@ -1611,6 +1667,14 @@ class AdminController extends Controller
 	public function getProposalById($proposalId, Request $request)
 	{
 		$user = Auth::user();
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
 
 		if ($user && $user->hasRole('admin')) {
 			$proposal = Proposal::where('id', $proposalId)
@@ -1712,6 +1776,14 @@ class AdminController extends Controller
 	public function getSingleUser($userId, Request $request)
 	{
 		$user = Auth::user();
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
 		if ($user && $user->hasRole('admin')) {
 			$user = User::with(['profile', 'shuftipro', 'shuftiproTemp'])
 				->where('id', $userId)->first();
@@ -1763,6 +1835,14 @@ class AdminController extends Controller
 	public function getPreRegisterUsers(Request $request)
 	{
 		$user = Auth::user();
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
 		$users = [];
 
 		// Variables
@@ -1805,6 +1885,14 @@ class AdminController extends Controller
 	public function getPendingUsers(Request $request)
 	{
 		$user = Auth::user();
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
 		$users = [];
 
 		// Variables
@@ -1867,6 +1955,14 @@ class AdminController extends Controller
 	public function getUsers(Request $request)
 	{
 		$user = Auth::user();
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
 		$users = [];
 
 		// Variables
@@ -2748,6 +2844,14 @@ class AdminController extends Controller
 	public function denyMilestone(Request $request, $milestoneId)
 	{
 		$user = Auth::user();
+		if($user && $user->hasRole('admin')) {
+			//
+		} else {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
 		$validator = Validator::make($request->all(), [
 			'message' => 'required',
 		]);

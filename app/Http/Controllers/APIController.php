@@ -165,7 +165,7 @@ class APIController extends Controller
       'created_at' => Carbon::now()
     ]);
 
-    $resetUrl = $request->header('origin') . '/password/reset/' . $token . '?email=' . urlencode($email);
+    $resetUrl = config('app.fe_url') . '/password/reset/' . $token . '?email=' . urlencode($email);
 
     Mail::to($user)->send(new ResetPasswordLink($resetUrl));
 
@@ -693,6 +693,18 @@ class APIController extends Controller
           'city',
           'zip'
         ]);
+      }
+      if(!$user->is_member) {
+        $user->makeHidden('is_member');
+      }
+      if(!$user->is_participant) {
+        $user->makeHidden('is_participant');
+      }
+      if(!$user->is_admin) {
+        $user->makeHidden('is_admin');
+      }
+      if(!$user->is_super_admin) {
+        $user->makeHidden('is_super_admin');
       }
 
       return [
