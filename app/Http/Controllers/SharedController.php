@@ -423,16 +423,32 @@ class SharedController extends Controller
 
 		if ($user) {
 			$email = $request->get('email');
+			$code = $request->get('code');
 
-			if ($email) {
+			if ($email && $code) {
 				$temp = User::where('email', $email)->first();
+				$profile = Profile::where('user_id', $user->id)->first();
+				if (!$profile) {
+					return [
+						'success' => false,
+						'message' => 'User does not exist'
+					];
+				}
+				if($code != $profile->twoFA) {
+					return [
+						'success' => false,
+						'message' => 'Invalid 2FA code'
+					];
+				}
 				if ($temp) {
 					return [
 						'success' => false,
 						'message' => 'This email is already used'
 					];
 				}
-
+				$profile->twoFA = null;
+				$profile->twoFA_time = null;
+				$profile->save();
 				$user->email = $email;
 				$user->save();
 
@@ -1475,12 +1491,23 @@ class SharedController extends Controller
 	// Upload Proposal Files
 	public function uploadProposalFiles(Request $request)
 	{
+		$validator = Validator::make($request->all(), [
+			"files"    => "required|array",
+			"files.*"  => "required|file|mimes:pdf,doc,docx", 
+		]);
+
+		if ($validator->fails()) {
+			return [
+				'success' => false,
+				'message' => 'Provide all the necessary information',
+				'error' => $validator->errors(),
+			];
+		}
 		$user = Auth::user();
 
 		if ($user) {
 			$proposalId = (int) $request->get('proposal');
 			$proposal = Proposal::find($proposalId);
-
 			$ids_to_remove = $request->get('ids_to_remove');
 			$names = $request->get('names');
 			$files = $request->file('files');
@@ -1489,6 +1516,12 @@ class SharedController extends Controller
 				return [
 					'success' => false,
 					'message' => 'Invalid proposal'
+				];
+			}
+			if (!$user->hasRole('admin') && $proposal->user_id != $user->id) {
+				return [
+					'success' => false,
+					'message' => 'Invalid permission user'
 				];
 			}
 
