@@ -6103,7 +6103,7 @@ class AdminController extends Controller
 		->where('is_member', 1)
 		->select(['users.id', 'profile.forum_name'])
 		->get();
-		$votes = Vote::select(['id', 'proposal_id', 'type', 'content_type','for_value', 'against_value'])->get();
+		$votes = Vote::select(['id', 'proposal_id', 'type', 'content_type','for_value', 'against_value', 'created_at'])->get();
 		foreach($votes as $vote) {
 			$vote_results = VoteResult::where('vote_id', $vote->id)->select(['user_id', 'type', 'value'])->get();
 			$responseVotes = [];
