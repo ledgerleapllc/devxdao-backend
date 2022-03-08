@@ -40,7 +40,7 @@ class Handler extends ExceptionHandler
     {
         if ($exception instanceof AuthenticationException || $exception instanceof OAuthServerException) {
             return response()->json([
-                "message" => "Unauthenticated."
+                "message" => "Not authorized"
             ]);
         }
         parent::report($exception);
@@ -59,7 +59,7 @@ class Handler extends ExceptionHandler
     {
         if ($exception instanceof AuthenticationException || $exception instanceof OAuthServerException) {
             return response()->json([
-                "message" => "Unauthenticated."
+                "message" => "Not authorized"
             ]);
         }
         return parent::render($request, $exception);

@@ -44,7 +44,7 @@ class APIController extends Controller
     if (!$auth) {
       return [
         'success' => false,
-        'message' => 'Unauthorized'
+        'message' => 'Not authorized'
       ];
     }
     if (
@@ -81,7 +81,7 @@ class APIController extends Controller
     if (!$auth) {
       return [
         'success' => false,
-        'message' => 'Unauthorized'
+        'message' => 'Not authorized'
       ];
     }
 
