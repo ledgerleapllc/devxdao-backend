@@ -3437,7 +3437,7 @@ class SharedController extends Controller
 		if (!$auth) {
 			return [
 				'success' => false,
-				'message' => 'Unauthorized'
+				'message' => 'Not authorized'
 			];
 		}
 		$validator = Validator::make($request->all(), [
@@ -3474,7 +3474,7 @@ class SharedController extends Controller
 		if (!$user) {
 			return [
 				'success' => false,
-				'message' => 'Unauthorized'
+				'message' => 'Not authorized'
 			];
 		}
 		$settings = Helper::getSettings();
@@ -3544,7 +3544,7 @@ class SharedController extends Controller
 		if (!$user) {
 			return [
 				'success' => false,
-				'message' => 'Unauthorized'
+				'message' => 'Not authorized'
 			];
 		}
 		$responses = collect();
