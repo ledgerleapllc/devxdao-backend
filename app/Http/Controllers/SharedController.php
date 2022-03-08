@@ -1493,7 +1493,7 @@ class SharedController extends Controller
 	{
 		$validator = Validator::make($request->all(), [
 			"files"    => "required|array",
-			"files.*"  => "required|file|mimes:pdf,doc,docx", 
+			"files.*"  => "required|file|mimes:pdf,doc,docx",
 		]);
 
 		if ($validator->fails()) {
@@ -2268,7 +2268,7 @@ class SharedController extends Controller
 		$data = $request->all();
 		if ($data && is_array($data)) extract($data);
 
-		if (!$sort_key) $sort_key = 'proposal.id';
+		if (!$sort_key) $sort_key = 'id';
 		if (!$sort_direction) $sort_direction = 'desc';
 		$page_id = (int) $page_id;
 		if ($page_id <= 0) $page_id = 1;
