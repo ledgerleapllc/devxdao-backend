@@ -2710,7 +2710,7 @@ class SharedController extends Controller
 					$is_voted_informal = false;
 
 					$vote_informal = Vote::where('proposal_id', $vote->proposal_id)->where('type', 'informal')
-						->where('result', 'success')
+						->whereIn('result', ['success', 'fail'])
 						->where('milestone_id', $vote->milestone_id)->where('content_type', $vote->content_type)->first();
 					if ($vote_informal) {
 						$check_vote_informal = VoteResult::where('vote_id', $vote_informal->id)->where('user_id', $user->id)->count();
