@@ -343,13 +343,10 @@ class SharedController extends Controller
 					->has('user')
 					->has('user.profile')
 					->where('type', 'grant')
-					->whereIn('status', ["approved", "completed"])
 					->where('id', $proposalId)
 					->first();
 
-				$vote = Vote::where('proposal_id', $proposalId)->where('type', 'formal')
-					->where('result', 'success')->where('content_type', 'grant')->first();
-				if ($proposal && $vote) {
+				if ($proposal) {
 					return [
 						'success' => true,
 						'proposal' => $proposal
