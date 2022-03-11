@@ -6121,4 +6121,24 @@ class AdminController extends Controller
 		}
 		return Excel::download(new AllVoteExport($votes, $users), 'all_vote.csv');
 	}
+
+	public function getUrlFileHellosignUser($userId)
+	{
+		$admin = Auth::user();
+		if ($admin && $admin->hasRole('admin')) {
+			$profile = Profile::where('user_id', $userId)->first();
+			if (!$profile || !$profile->signature_request_id) {
+				return ['success' => false];
+			}
+			$signature_request_id = $profile->signature_request_id;
+			$client = new \HelloSign\Client(config('services.hellosign.api_key'));
+			$respone = $client->getFiles($signature_request_id, null, \HelloSign\SignatureRequest::FILE_TYPE_PDF);
+			$respone = $respone->toArray();
+			return [
+				'success' => true,
+				'file_url' => $respone['file_url'] ?? '',
+			];
+		}
+		return ['success' => false];
+	}
 }
