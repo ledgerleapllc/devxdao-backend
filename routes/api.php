@@ -269,6 +269,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth:api']], function () {
 	Route::get('/export-report', 'AdminController@exportPdfAdminReport');
 	Route::get('/export-all-rep', 'AdminController@exportCsvAllVARep');
 	Route::get('/export-all-vote', 'AdminController@exportCsvAllVote');
+	Route::get('/user/{userId}/file-url', 'AdminController@getUrlFileHellosignUser')->where('userId', '[0-9]+');;
 
 	// POST
 	Route::post('/formal-voting', 'AdminController@startFormalVoting');
