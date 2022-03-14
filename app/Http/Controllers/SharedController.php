@@ -342,7 +342,6 @@ class SharedController extends Controller
 				$proposal = Proposal::with(['user', 'user.profile'])
 					->has('user')
 					->has('user.profile')
-					->where('type', 'grant')
 					->where('id', $proposalId)
 					->first();
 
