@@ -1579,7 +1579,7 @@ class SharedController extends Controller
 				'grants',
 				'milestones',
 				'milestones.milestoneReview',
-				'milestones.milestoneReview.user',
+				// 'milestones.milestoneReview.user',
 				'milestones.milestoneReview.milestoneCheckList',
 				'milestones.milestoneReview.milestoneSubmitHistory',
 				'citations',
