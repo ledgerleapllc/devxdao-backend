@@ -146,7 +146,11 @@ class Helper
           ->has('profile')
           ->where('id', $item->user_id)
           ->first();
-
+        $voteFormal = Vote::where('id', $item->vote_id)->where('type', 'formal')
+          ->where('content_type', 'grant')->where('result', 'success')->first();
+        if ($voteFormal) {
+          continue;
+        }
         $value = (float) $item->pending;
         if ($value > 0) {
           $user->profile->rep_pending = (float) $user->profile->rep_pending - $value;
@@ -162,7 +166,7 @@ class Helper
         $item->type = 'Minted';
         $item->value = (float) $item->pending;
         $item->pending = 0;
-        $item->save();
+        $item->save();       
       }
     }
   }
@@ -342,6 +346,9 @@ class Helper
               $reputation->type = "Minted";
               $reputation->save();
               Helper::createRepHistory($voter->id, $extraMintedFormalVote, $voter->profile->rep, 'Minted', 'Proposal Vote Result Minted Formal Vote', $proposal->id, null , 'return minted formal by milestone');
+              if($isCompletedProposal) {
+                $reputationMintedFormal->delete();
+              }
             }
           }
         }
@@ -502,7 +509,7 @@ class Helper
             $reputation->event = "Return Vote Result Proposal $proposal->id milestone $milestonePosition - OP";
             $reputation->type = "Gained";
             $reputation->save();  
-            Helper::updateRepProfile($voter->id, $extraRepProposal);
+            Helper::updateRepProfile($op->id, $extraRepProposal);
             Helper::createRepHistory($op->id, (float) $extraRepProposal, $op->profile->rep, 'Gained', 'Proposal Vote Result', $proposal->id, $voteFormal->id, 'runWinnerFlow2 return milestone');
           }
 
@@ -530,6 +537,9 @@ class Helper
             $reputation->type = "Gained";
             $reputation->save();  
             Helper::createRepHistory($op->id, $extraMintedFormalVote, $op->profile->rep, 'Minted', 'Return Minted Proposal Vote Formal Result', $proposal->id, $voteFormal->id, 'return minted formal by milestone');
+            if($isCompletedProposal) {
+              $reputationMintedFormalOp->delete();
+            }
           }
         }
         
