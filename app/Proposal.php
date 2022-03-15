@@ -15,7 +15,7 @@ class Proposal extends Model
    * @var array
    */
   protected $hidden = [
-    'bank', 'crypto', 'user',
+    'bank', 'crypto', 'user', 'final_document'
   ];
 
 	public function user() {
