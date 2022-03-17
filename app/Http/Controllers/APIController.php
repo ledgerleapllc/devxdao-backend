@@ -276,12 +276,6 @@ class APIController extends Controller
         ];
       }
 
-      // Generate Token and Return
-      // Token::where([
-      //   'user_id' => $user->id,
-      //   'name' => 'User Access Token'
-      // ])->delete();
-
       $user->last_login_ip_address = request()->ip();
       $user->last_login_at = now();
       $user->save();
@@ -290,6 +284,14 @@ class APIController extends Controller
       $ipHistory->ip_address = request()->ip();
       $ipHistory->save();
 
+      // DB::delete("
+      //   DELETE
+      //   FROM oauth_access_tokens
+      //   WHERE user_id = $user->id
+      // ");
+      Token::where([
+        'user_id' => $user->id
+      ])->delete();
       $tokenResult = $user->createToken('User Access Token');
 
       $user->accessTokenAPI = $tokenResult->accessToken;
