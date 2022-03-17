@@ -46,6 +46,8 @@ use App\Mail\TwoFA;
 use App\Mail\HelpRequest;
 use PDF;
 
+use App\Services\DiscourseService;
+
 use App\Jobs\Test;
 use App\MilestoneReview;
 use App\ProposalDraft;
@@ -2050,7 +2052,7 @@ class UserController extends Controller
 	}
 
 	// * Submit Proposal
-	public function submitProposal(Request $request)
+	public function submitProposal(Request $request, DiscourseService $discourse)
 	{
 		$user = Auth::user();
 
@@ -2403,17 +2405,37 @@ class UserController extends Controller
 						}
 					}
 				}
+
 				$pdf = PDF::loadView('proposal_pdf', compact('proposal'));
 				$fullpath = 'pdf/proposal/proposal_' . $proposal->id . '.pdf';
 				Storage::disk('local')->put($fullpath, $pdf->output());
 				$url = Storage::disk('local')->url($fullpath);
 				$proposal->pdf = $url;
+
+				// Create Discourse Topic
+				$discourse->createUserIfDoesntExists($proposal->user);
+
+				$topic = $discourse->createPost([
+					'title' => $proposal->title,
+					'raw' => $proposal->short_description ?: $proposal->title,
+					'created_at' => $proposal->created_at->toDateTimeString(),
+				], $discourse->getUsername($proposal->user));
+
+				if ($topic) {
+					$proposal->discourse_topic_id = $topic['topic_id'] ?? null;
+					$proposal->save();
+				}
+
+				// save proposal
 				$proposal->save();
+
 				// save user
 				$user->press_dismiss = 1;
 				$user->save();
+
 				// save file
 				$proposal_draft_id = $request->get('proposal_draft_id');
+
 				if ($proposal_draft_id) {
 					$proposal_draft_files = ProposalDraftFile::where('proposal_draft_id', $proposal_draft_id)->get();
 					foreach ($proposal_draft_files as $file) {
@@ -2425,11 +2447,11 @@ class UserController extends Controller
 						$proposalFile->save();
 					}
 				}
+
 				// Emailer
 				$emailerData = Helper::getEmailerData();
 				Helper::triggerAdminEmail('New Proposal', $emailerData);
 				Helper::triggerUserEmail($user, 'New Proposal', $emailerData);
-
 				Helper::createGrantTracking($proposal->id, "Proposal $proposal->id submitted", 'proposal_submitted');
 				$shuftipro = Shuftipro::where('user_id', $proposal->user_id)->where('status', 'approved')->first();
 				if ($shuftipro) {

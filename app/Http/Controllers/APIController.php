@@ -202,7 +202,7 @@ class APIController extends Controller
           'Becoming a member',
           'Obtaining a grant',
           'If you are requesting to become a member, please state your qualifications',
-          'If you are requesting a grant please state what technologyg you will be building, or what service you will be providing, in exchange for granted funds',
+          'If you are requesting a grant please state what technology you will be building, or what service you will be providing, in exchange for granted funds',
           'Registration Date'
         ]);
 
