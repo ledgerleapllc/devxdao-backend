@@ -56,6 +56,7 @@ use App\SurveyResult;
 use App\SurveyRfpBid;
 use App\SurveyRfpResult;
 use Carbon\Carbon;
+use Exception;
 use Maatwebsite\Excel\Facades\Excel;
 
 class UserController extends Controller
@@ -2060,383 +2061,398 @@ class UserController extends Controller
 		$user = Auth::user();
 
 		if ($user && $user->hasRole(['participant', 'member']) && $user->email_verified) {
-			// Validator
-			$validator = Validator::make($request->all(), [
-				'title' => 'required',
-				'short_description' => 'required',
-				'explanation_benefit' => 'required',
-				//'explanation_goal' => 'required',
-				'total_grant' => 'required',
-				'resume' => 'required',
-				//   'extra_notes' => 'required',
-				// 'citations' => 'required|array',
-				// 'members' => 'required|array',
-				'grants' => 'required|array',
-				'milestones' => 'required|array',
-				'relationship' => 'required'
-				// 'previous_work' => 'required',
-				// 'other_work' => 'required',
-				//   'formField1' => 'required',
-				//   'formField2' => 'required',
-				//   'purpose' => 'required'
-			]);
-			if ($validator->fails()) {
-				return [
-					'success' => false,
-					'message' => 'Provide all the necessary information'
-				];
-			}
-
-			$include_membership = (int) $request->get('include_membership');
-			$member_reason = $request->get('member_reason');
-			$member_benefit = $request->get('member_benefit');
-			$linkedin = $request->get('linkedin');
-			$github = $request->get('github');
-
-			if ($include_membership) {
-				if (!$member_reason || !$member_benefit) {
+			try {
+				DB::beginTransaction();
+				// Validator
+				$validator = Validator::make($request->all(), [
+					'title' => 'required',
+					'short_description' => 'required',
+					'explanation_benefit' => 'required',
+					//'explanation_goal' => 'required',
+					'total_grant' => 'required',
+					'resume' => 'required',
+					//   'extra_notes' => 'required',
+					// 'citations' => 'required|array',
+					// 'members' => 'required|array',
+					'grants' => 'required|array',
+					'milestones' => 'required|array',
+					'milestones.*.title' => 'required',
+					'milestones.*.details' => 'required',
+					'milestones.*.deadline' => 'required',
+					'relationship' => 'required'
+					// 'previous_work' => 'required',
+					// 'other_work' => 'required',
+					//   'formField1' => 'required',
+					//   'formField2' => 'required',
+					//   'purpose' => 'required'
+				]);
+				if ($validator->fails()) {
 					return [
 						'success' => false,
 						'message' => 'Provide all the necessary information'
 					];
 				}
-			}
 
-			$title = $request->get('title');
-			$short_description = $request->get('short_description');
-			$explanation_benefit = $request->get('explanation_benefit');
-			// $explanation_goal = $request->get('explanation_goal');
+				$include_membership = (int) $request->get('include_membership');
+				$member_reason = $request->get('member_reason');
+				$member_benefit = $request->get('member_benefit');
+				$linkedin = $request->get('linkedin');
+				$github = $request->get('github');
 
-			$license = (int) $request->get('license');
-			$license_other = $request->get('license_other');
+				if ($include_membership) {
+					if (!$member_reason || !$member_benefit) {
+						return [
+							'success' => false,
+							'message' => 'Provide all the necessary information'
+						];
+					}
+				}
 
-			$resume = $request->get('resume');
-			$extra_notes = $request->get('extra_notes');
+				$title = $request->get('title');
+				$short_description = $request->get('short_description');
+				$explanation_benefit = $request->get('explanation_benefit');
+				// $explanation_goal = $request->get('explanation_goal');
 
-			$total_grant = (float) $request->get('total_grant');
+				$license = (int) $request->get('license');
+				$license_other = $request->get('license_other');
 
-			$members = $request->get('members');
-			$grants = $request->get('grants');
-			$milestones = $request->get('milestones');
-			$citations = $request->get('citations');
+				$resume = $request->get('resume');
+				$extra_notes = $request->get('extra_notes');
 
-			$bank_name = $request->get('bank_name');
-			$iban_number = $request->get('iban_number');
-			$swift_number = $request->get('swift_number');
-			$holder_name = $request->get('holder_name');
-			$account_number = $request->get('account_number');
-			$bank_address = $request->get('bank_address');
-			$bank_city = $request->get('bank_city');
-			$bank_country = $request->get('bank_country');
-			$bank_zip = $request->get('bank_zip');
-			$holder_address = $request->get('holder_address');
-			$holder_city = $request->get('holder_city');
-			$holder_country = $request->get('holder_country');
-			$holder_zip = $request->get('holder_zip');
+				$total_grant = (float) $request->get('total_grant');
 
-			$crypto_type = $request->get('crypto_type');
-			$crypto_address = $request->get('crypto_address');
+				$members = $request->get('members');
+				$grants = $request->get('grants');
+				$milestones = $request->get('milestones');
+				$citations = $request->get('citations');
 
-			$relationship = $request->get('relationship');
+				$bank_name = $request->get('bank_name');
+				$iban_number = $request->get('iban_number');
+				$swift_number = $request->get('swift_number');
+				$holder_name = $request->get('holder_name');
+				$account_number = $request->get('account_number');
+				$bank_address = $request->get('bank_address');
+				$bank_city = $request->get('bank_city');
+				$bank_country = $request->get('bank_country');
+				$bank_zip = $request->get('bank_zip');
+				$holder_address = $request->get('holder_address');
+				$holder_city = $request->get('holder_city');
+				$holder_country = $request->get('holder_country');
+				$holder_zip = $request->get('holder_zip');
 
-			$received_grant_before = (int) $request->get('received_grant_before');
-			$grant_id = $request->get('grant_id');
-			$has_fulfilled = (int) $request->get('has_fulfilled');
-			$previous_work = $request->get('previous_work');
-			$other_work = $request->get('other_work');
-			// $received_grant = (int) $request->get('received_grant');
-			// $foundational_work = $request->get('foundational_work');
+				$crypto_type = $request->get('crypto_type');
+				$crypto_address = $request->get('crypto_address');
 
-			// $yesNo1 = (int) $request->get('yesNo1');
-			// $yesNo1Exp = $request->get('yesNo1Exp');
-			// $yesNo2 = (int) $request->get('yesNo2');
-			// $yesNo2Exp = $request->get('yesNo2Exp');
-			// $yesNo3 = (int) $request->get('yesNo3');
-			// $yesNo3Exp = $request->get('yesNo3Exp');
-			// $yesNo4 = (int) $request->get('yesNo4');
-			// $yesNo4Exp = $request->get('yesNo4Exp');
-			// $formField1 = $request->get('formField1');
-			// $formField2 = $request->get('formField2');
-			// $purpose = $request->get('purpose');
-			// $purposeOther = $request->get('purposeOther');
-			$tags = $request->get('tags');
+				$relationship = $request->get('relationship');
 
-			$memberRequired = (int) $request->get('memberRequired');
+				$received_grant_before = (int) $request->get('received_grant_before');
+				$grant_id = $request->get('grant_id');
+				$has_fulfilled = (int) $request->get('has_fulfilled');
+				$previous_work = $request->get('previous_work');
+				$other_work = $request->get('other_work');
+				// $received_grant = (int) $request->get('received_grant');
+				// $foundational_work = $request->get('foundational_work');
 
-			if ($memberRequired && (!$members || !count($members))
-			) {
-				return [
-					'success' => false,
-					'message' => 'Provide all the necessary information'
-				];
-			}
+				// $yesNo1 = (int) $request->get('yesNo1');
+				// $yesNo1Exp = $request->get('yesNo1Exp');
+				// $yesNo2 = (int) $request->get('yesNo2');
+				// $yesNo2Exp = $request->get('yesNo2Exp');
+				// $yesNo3 = (int) $request->get('yesNo3');
+				// $yesNo3Exp = $request->get('yesNo3Exp');
+				// $yesNo4 = (int) $request->get('yesNo4');
+				// $yesNo4Exp = $request->get('yesNo4Exp');
+				// $formField1 = $request->get('formField1');
+				// $formField2 = $request->get('formField2');
+				// $purpose = $request->get('purpose');
+				// $purposeOther = $request->get('purposeOther');
+				$tags = $request->get('tags');
 
-			$proposal = Proposal::where('title', $title)->first();
-			if ($proposal) {
-				return [
-					'success' => false,
-					'message' => "Proposal with the same title already exists"
-				];
-			}
+				$memberRequired = (int) $request->get('memberRequired');
 
-			$codeObject = null;
-			ProposalDraft::where('user_id', $user->id)->where('title', $title)->delete();
-			// Creating Proposal
-			$proposal = new Proposal;
-			$proposal->title = $title;
-			$proposal->short_description = $short_description;
-			$proposal->explanation_benefit = $explanation_benefit;
-			//$proposal->explanation_goal = $explanation_goal;
-			$proposal->total_grant = $total_grant;
-			$proposal->license = $license;
-			$proposal->resume = $resume;
-			$proposal->extra_notes = $extra_notes;
-			if ($license_other)
+				if (
+					$memberRequired && (!$members || !count($members))
+				) {
+					return [
+						'success' => false,
+						'message' => 'Provide all the necessary information'
+					];
+				}
+
+				$proposal = Proposal::where('title', $title)->first();
+				if ($proposal) {
+					return [
+						'success' => false,
+						'message' => "Proposal with the same title already exists"
+					];
+				}
+
+				$codeObject = null;
+				ProposalDraft::where('user_id', $user->id)->where('title', $title)->delete();
+				// Creating Proposal
+				$proposal = new Proposal;
+				$proposal->title = $title;
+				$proposal->short_description = $short_description;
+				$proposal->explanation_benefit = $explanation_benefit;
+				//$proposal->explanation_goal = $explanation_goal;
+				$proposal->total_grant = $total_grant;
+				$proposal->license = $license;
+				$proposal->resume = $resume;
+				$proposal->extra_notes = $extra_notes;
+				if ($license_other)
 				$proposal->license_other = $license_other;
-			$proposal->relationship = $relationship;
-			$proposal->received_grant_before = $received_grant_before;
-			if ($received_grant_before) {
-				$proposal->grant_id = $grant_id;
-				$proposal->has_fulfilled = $has_fulfilled;
-			}
-			$proposal->previous_work = $previous_work;
-			$proposal->other_work = $other_work;
-			// $proposal->received_grant = $received_grant;
-			// if ($received_grant)
-			// 	$proposal->foundational_work = $foundational_work;
-			$proposal->user_id = $user->id;
-			$proposal->include_membership = $include_membership;
-			$proposal->member_reason = $member_reason;
-			$proposal->member_benefit = $member_benefit;
-			$proposal->linkedin = $linkedin;
-			$proposal->github = $github;
+				$proposal->relationship = $relationship;
+				$proposal->received_grant_before = $received_grant_before;
+				if ($received_grant_before) {
+					$proposal->grant_id = $grant_id;
+					$proposal->has_fulfilled = $has_fulfilled;
+				}
+				$proposal->previous_work = $previous_work;
+				$proposal->other_work = $other_work;
+				// $proposal->received_grant = $received_grant;
+				// if ($received_grant)
+				// 	$proposal->foundational_work = $foundational_work;
+				$proposal->user_id = $user->id;
+				$proposal->include_membership = $include_membership;
+				$proposal->member_reason = $member_reason;
+				$proposal->member_benefit = $member_benefit;
+				$proposal->linkedin = $linkedin;
+				$proposal->github = $github;
 
-			if ($codeObject)
+				if ($codeObject)
 				$proposal->sponsor_code_id = $codeObject->id;
 
-			// $proposal->yesNo1 = $yesNo1;
-			// $proposal->yesNo2 = $yesNo2;
-			// $proposal->yesNo3 = $yesNo3;
-			// $proposal->yesNo4 = $yesNo4;
+				// $proposal->yesNo1 = $yesNo1;
+				// $proposal->yesNo2 = $yesNo2;
+				// $proposal->yesNo3 = $yesNo3;
+				// $proposal->yesNo4 = $yesNo4;
 
-			// if ($yesNo1) $proposal->yesNo1Exp = $yesNo1Exp;
-			// if ($yesNo2) $proposal->yesNo2Exp = $yesNo2Exp;
-			// if (!$yesNo3) $proposal->yesNo3Exp = $yesNo3Exp;
-			// if ($yesNo4) $proposal->yesNo4Exp = $yesNo4Exp;
+				// if ($yesNo1) $proposal->yesNo1Exp = $yesNo1Exp;
+				// if ($yesNo2) $proposal->yesNo2Exp = $yesNo2Exp;
+				// if (!$yesNo3) $proposal->yesNo3Exp = $yesNo3Exp;
+				// if ($yesNo4) $proposal->yesNo4Exp = $yesNo4Exp;
 
-			// $proposal->formField1 = $formField1;
-			// $proposal->formField2 = $formField2;
+				// $proposal->formField1 = $formField1;
+				// $proposal->formField2 = $formField2;
 
-			// entity
-			$isCompanyOrOrganization = (int) $request->get('is_company_or_organization');
-			$nameEntity = $request->get('name_entity');
-			$entityCountry = $request->get('entity_country');
-			$proposal->is_company_or_organization = $isCompanyOrOrganization;
-			if ($isCompanyOrOrganization) {
-				$proposal->name_entity = $nameEntity;
-				$proposal->entity_country = $entityCountry;
-			}
+				// entity
+				$isCompanyOrOrganization = (int) $request->get('is_company_or_organization');
+				$nameEntity = $request->get('name_entity');
+				$entityCountry = $request->get('entity_country');
+				$proposal->is_company_or_organization = $isCompanyOrOrganization;
+				if ($isCompanyOrOrganization) {
+					$proposal->name_entity = $nameEntity;
+					$proposal->entity_country = $entityCountry;
+				}
 
-			// mentor
-			$haveMentor = (int) $request->get('have_mentor');
-			$nameMentor = $request->get('name_mentor');
-			$totalHoursMentor = $request->get('total_hours_mentor');
-			$proposal->have_mentor = $haveMentor;
-			if ($haveMentor) {
-				$proposal->name_mentor = $nameMentor;
-				$proposal->total_hours_mentor = $totalHoursMentor;
-			}
+				// mentor
+				$haveMentor = (int) $request->get('have_mentor');
+				$nameMentor = $request->get('name_mentor');
+				$totalHoursMentor = $request->get('total_hours_mentor');
+				$proposal->have_mentor = $haveMentor;
+				if ($haveMentor) {
+					$proposal->name_mentor = $nameMentor;
+					$proposal->total_hours_mentor = $totalHoursMentor;
+				}
 
-			$agree1 = (int) $request->get('agree1');
-			$agree2 = (int) $request->get('agree2');
-			$agree3 = (int) $request->get('agree3');
-			$proposal->agree1 = $agree1;
-			$proposal->agree2 = $agree2;
-			$proposal->agree3 = $agree3;
+				$agree1 = (int) $request->get('agree1');
+				$agree2 = (int) $request->get('agree2');
+				$agree3 = (int) $request->get('agree3');
+				$proposal->agree1 = $agree1;
+				$proposal->agree2 = $agree2;
+				$proposal->agree3 = $agree3;
 
-			// $proposal->purpose = $purpose;
-			// $proposal->purposeOther = $purposeOther;
+				// $proposal->purpose = $purpose;
+				// $proposal->purposeOther = $purposeOther;
 
-			if ($tags && count($tags))
-			$proposal->tags = implode(",", $tags);
+				if ($tags && count($tags))
+				$proposal->tags = implode(",", $tags);
 
-			$proposal->member_required = $memberRequired;
-			$proposal->save();
+				$proposal->member_required = $memberRequired;
+				$proposal->save();
 
 
-			if ($codeObject) {
-				$codeObject->used = 1;
-				$codeObject->proposal_id = $proposal->id;
-				$codeObject->save();
-			}
+				if ($codeObject) {
+					$codeObject->used = 1;
+					$codeObject->proposal_id = $proposal->id;
+					$codeObject->save();
+				}
 
-			// Creating Team
-			if ($memberRequired) {
-				foreach ($members as $member) {
-					$full_name = $bio = $address = $city = $zip = $country = '';
-					extract($member);
+				// Creating Team
+				if ($memberRequired) {
+					foreach ($members as $member) {
+						$full_name = $bio = $address = $city = $zip = $country = '';
+						extract($member);
 
-					if (
-						$full_name &&
-						$bio
-					) {
-						$team = new Team;
-						$team->full_name = $full_name;
-						$team->bio = $bio;
-						$team->address = $address;
-						$team->city = $city;
-						$team->zip = $zip;
-						$team->country = $country;
-						$team->proposal_id = (int) $proposal->id;
-						$team->save();
+						if (
+							$full_name &&
+							$bio
+						) {
+							$team = new Team;
+							$team->full_name = $full_name;
+							$team->bio = $bio;
+							$team->address = $address;
+							$team->city = $city;
+							$team->zip = $zip;
+							$team->country = $country;
+							$team->proposal_id = (int) $proposal->id;
+							$team->save();
+						}
 					}
 				}
-			}
 
-			// Creating Grant
-			foreach ($grants as $grantData) {
-				$type = -1;
-				$grant = $percentage = 0;
-				$type_other = '';
-				extract($grantData);
+				// Creating Grant
+				foreach ($grants as $grantData) {
+					$type = -1;
+					$grant = $percentage = 0;
+					$type_other = '';
+					extract($grantData);
 
-				$type = (int) $type;
-				$percentage = (int) $percentage;
-				$grant = (float) $grant;
+					$type = (int) $type;
+					$percentage = (int) $percentage;
+					$grant = (float) $grant;
 
-				if ($type >= 0 && $grant) {
-					$grantModel = new Grant;
-					$grantModel->type = $type;
-					$grantModel->grant = $grant;
-					if ($type_other)
-						$grantModel->type_other = $type_other;
-					$grantModel->proposal_id = (int) $proposal->id;
-					$grantModel->percentage = $percentage;
-					$grantModel->save();
+					if ($type >= 0 && $grant) {
+						$grantModel = new Grant;
+						$grantModel->type = $type;
+						$grantModel->grant = $grant;
+						if ($type_other)
+							$grantModel->type_other = $type_other;
+						$grantModel->proposal_id = (int) $proposal->id;
+						$grantModel->percentage = $percentage;
+						$grantModel->save();
+					}
 				}
-			}
 
-			// Creating Bank
-			$bank = new Bank;
-			$bank->proposal_id = (int) $proposal->id;
-			if ($bank_name)
-			$bank->bank_name = $bank_name;
-			if ($iban_number)
+				// Creating Bank
+				$bank = new Bank;
+				$bank->proposal_id = (int) $proposal->id;
+				if ($bank_name)
+				$bank->bank_name = $bank_name;
+				if ($iban_number)
 				$bank->iban_number = $iban_number;
-			if ($swift_number)
+				if ($swift_number)
 				$bank->swift_number = $swift_number;
-			if ($holder_name)
+				if ($holder_name)
 				$bank->holder_name = $holder_name;
-			if ($account_number)
+				if ($account_number)
 				$bank->account_number = $account_number;
-			if ($bank_address)
+				if ($bank_address)
 				$bank->bank_address = $bank_address;
-			if ($bank_city)
-			$bank->bank_city = $bank_city;
-			if ($bank_zip)
-			$bank->bank_zip = $bank_zip;
-			if ($bank_country)
+				if ($bank_city)
+				$bank->bank_city = $bank_city;
+				if ($bank_zip)
+				$bank->bank_zip = $bank_zip;
+				if ($bank_country)
 				$bank->bank_country = $bank_country;
-			if ($holder_address)
+				if ($holder_address)
 				$bank->address = $holder_address;
-			if ($holder_city)
+				if ($holder_city)
 				$bank->city = $holder_city;
-			if ($holder_zip)
+				if ($holder_zip)
 				$bank->zip = $holder_zip;
-			if ($holder_country)
+				if ($holder_country)
 				$bank->country = $holder_country;
-			$bank->save();
+				$bank->save();
 
-			// Creating Crypto
-			$crypto = new Crypto;
-			$crypto->proposal_id = (int) $proposal->id;
-			if ($crypto_address)
+				// Creating Crypto
+				$crypto = new Crypto;
+				$crypto->proposal_id = (int) $proposal->id;
+				if ($crypto_address)
 				$crypto->public_address = $crypto_address;
-			if ($crypto_type)
+				if ($crypto_type)
 				$crypto->type = $crypto_type;
-			$crypto->save();
+				$crypto->save();
 
-			// Creating Milestone
-			foreach ($milestones as $milestoneData) {
-				$title = $details = $criteria = $deadline = $level_difficulty = '';
-				$grant = 0;
-				extract($milestoneData);
-				$grant = (float) $grant;
+				// Creating Milestone
+				foreach ($milestones as $milestoneData) {
+					$title = $details = $criteria = $deadline = $level_difficulty = '';
+					$grant = 0;
+					extract($milestoneData);
+					$grant = (float) $grant;
 
-				if ($grant && $title && $details
-				) {
-					$milestone = new Milestone;
-					$milestone->proposal_id = (int) $proposal->id;
-					$milestone->title = $title;
-					$milestone->details = $details;
-					$milestone->criteria = $criteria;
-					// $milestone->kpi = $kpi;
-					$milestone->grant = $grant;
-					$milestone->deadline = $deadline;
-					$milestone->level_difficulty = $level_difficulty;
-					$milestone->save();
-				}
-			}
-
-			// Creating Citation
-			if ($citations && count($citations)) {
-				foreach ($citations as $citation) {
 					if (
-						isset($citation['proposalId']) &&
-						isset($citation['explanation']) &&
-						isset($citation['percentage']) &&
-						isset($citation['validProposal']) &&
-						isset($citation['checked'])
+						$grant && $title && $details
 					) {
-						$percentage = (int) $citation['percentage'];
-						$repProposalId = (int) $citation['proposalId'];
-						$explanation = $citation['explanation'];
-
-						$citation = new Citation;
-						$citation->proposal_id = (int) $proposal->id;
-						$citation->rep_proposal_id = (int) $repProposalId;
-						$citation->explanation = $explanation;
-						$citation->percentage = $percentage;
-						$citation->save();
+						$milestone = new Milestone;
+						$milestone->proposal_id = (int) $proposal->id;
+						$milestone->title = $title;
+						$milestone->details = $details;
+						$milestone->criteria = $criteria;
+						// $milestone->kpi = $kpi;
+						$milestone->grant = $grant;
+						$milestone->deadline = $deadline;
+						$milestone->level_difficulty = $level_difficulty;
+						$milestone->save();
 					}
 				}
-			}
-			$pdf = PDF::loadView('proposal_pdf', compact('proposal'));
-			$fullpath = 'pdf/proposal/proposal_' . $proposal->id . '.pdf';
-			Storage::disk('local')->put($fullpath, $pdf->output());
-			$url = Storage::disk('local')->url($fullpath);
-			$proposal->pdf = $url;
-			$proposal->save();
-			// save user
-			$user->press_dismiss = 1;
-			$user->save();
-			// save file
-			$proposal_draft_id = $request->get('proposal_draft_id');
-			if($proposal_draft_id) {
-				$proposal_draft_files = ProposalDraftFile::where('proposal_draft_id', $proposal_draft_id)->get();
-				foreach($proposal_draft_files as $file) {
-					$proposalFile = new ProposalFile;
-					$proposalFile->proposal_id = $proposal->id;
-					$proposalFile->name = $file->name;
-					$proposalFile->path = $file->path;
-					$proposalFile->url = $file->url;
-					$proposalFile->save();
-				}
-			}
-			// Emailer
-			$emailerData = Helper::getEmailerData();
-			Helper::triggerAdminEmail('New Proposal', $emailerData);
-			Helper::triggerUserEmail($user, 'New Proposal', $emailerData);
 
-            Helper::createGrantTracking($proposal->id, "Proposal $proposal->id submitted", 'proposal_submitted');
-            $shuftipro = Shuftipro::where('user_id', $proposal->user_id)->where('status', 'approved')->first();
-            if ($shuftipro) {
-                Helper::createGrantTracking($proposal->id, "KYC checks complete", 'kyc_checks_complete');
-            }
-			return [
-				'success' => true,
-				'proposal' => $proposal
-			];
+				// Creating Citation
+				if ($citations && count($citations)) {
+					foreach ($citations as $citation) {
+						if (
+							isset($citation['proposalId']) &&
+							isset($citation['explanation']) &&
+							isset($citation['percentage']) &&
+							isset($citation['validProposal']) &&
+							isset($citation['checked'])
+						) {
+							$percentage = (int) $citation['percentage'];
+							$repProposalId = (int) $citation['proposalId'];
+							$explanation = $citation['explanation'];
+
+							$citation = new Citation;
+							$citation->proposal_id = (int) $proposal->id;
+							$citation->rep_proposal_id = (int) $repProposalId;
+							$citation->explanation = $explanation;
+							$citation->percentage = $percentage;
+							$citation->save();
+						}
+					}
+				}
+				$pdf = PDF::loadView('proposal_pdf', compact('proposal'));
+				$fullpath = 'pdf/proposal/proposal_' . $proposal->id . '.pdf';
+				Storage::disk('local')->put($fullpath, $pdf->output());
+				$url = Storage::disk('local')->url($fullpath);
+				$proposal->pdf = $url;
+				$proposal->save();
+				// save user
+				$user->press_dismiss = 1;
+				$user->save();
+				// save file
+				$proposal_draft_id = $request->get('proposal_draft_id');
+				if ($proposal_draft_id) {
+					$proposal_draft_files = ProposalDraftFile::where('proposal_draft_id', $proposal_draft_id)->get();
+					foreach ($proposal_draft_files as $file) {
+						$proposalFile = new ProposalFile;
+						$proposalFile->proposal_id = $proposal->id;
+						$proposalFile->name = $file->name;
+						$proposalFile->path = $file->path;
+						$proposalFile->url = $file->url;
+						$proposalFile->save();
+					}
+				}
+				// Emailer
+				$emailerData = Helper::getEmailerData();
+				Helper::triggerAdminEmail('New Proposal', $emailerData);
+				Helper::triggerUserEmail($user, 'New Proposal', $emailerData);
+
+				Helper::createGrantTracking($proposal->id, "Proposal $proposal->id submitted", 'proposal_submitted');
+				$shuftipro = Shuftipro::where('user_id', $proposal->user_id)->where('status', 'approved')->first();
+				if ($shuftipro) {
+					Helper::createGrantTracking($proposal->id, "KYC checks complete", 'kyc_checks_complete');
+				}
+				DB::commit();
+				return [
+					'success' => true,
+					'proposal' => $proposal
+				];
+			} catch (Exception $ex) {
+				DB::rollBack();
+				return [
+					'success' => false,
+					'message' => $ex->getMessage(),
+				];
+			}
 		}
 
 		return ['success' => false];
