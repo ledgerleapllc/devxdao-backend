@@ -1035,7 +1035,8 @@ class AdminController extends Controller
 			// Update Proposal
 			$proposal->status = "approved";
 			$proposal->save();
-
+			$totalVAs = Helper::getTotalMembers();
+			$proposal->total_user_va = $totalVAs;
 			// Update Timestamp
 			$proposal->approved_at = $proposal->updated_at;
 			$proposal->save();
@@ -1098,10 +1099,11 @@ class AdminController extends Controller
 
 			if ($proposal) {
 				if ($proposal->type == 'admin-grant' || $proposal->type == 'advance-payment') {
+					$totalVAs = Helper::getTotalMembers();
                     $proposal->status = 'approved';
-
 					$proposal->save();
 					$proposal->approved_at = $proposal->updated_at;
+					$proposal->total_user_va = $totalVAs;
 					$proposal->save();
 
 					Helper::createGrantTracking($proposalId, "Approved by admin", 'approved_by_admin');

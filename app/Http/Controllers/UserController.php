@@ -739,7 +739,7 @@ class UserController extends Controller
 					'message' => 'Invalid proposal'
 				];
 			}
-
+			$totalVAs = Helper::getTotalMembers();
 			// Activates the Proposal ( Admin doesn't need to manually approve the payment by reputation )
 			$proposal->dos_paid = 1;
 			$proposal->status = 'approved';
@@ -756,6 +756,7 @@ class UserController extends Controller
 
 			// Update Timestamp
 			$proposal->approved_at = $proposal->updated_at;
+			$proposal->total_user_va = $totalVAs;
 			$proposal->save();
 
 			// Emailer Member
@@ -809,16 +810,18 @@ class UserController extends Controller
 			$profile->rep = (float) $profile->rep - $rep;
 			$profile->save();
 			Helper::createRepHistory($profile->user_id, - $rep, $profile->rep, 'Staked', 'Proposal Payment', $proposal->id, null, 'stakeReputation');
-
+			$totalVAs = Helper::getTotalMembers();
 			// Activates the Proposal ( Admin doesn't need to manually approve the payment by reputation )
 			$proposal->rep = $rep;
 			$proposal->dos_paid = 1;
 			$proposal->status = 'approved';
+			
 			$proposal->save();
 
 			// Update Timestamp
 			$proposal->approved_at = $proposal->updated_at;
 			$proposal->dos_amount = $dos_fee_amount;
+			$proposal->total_user_va = $totalVAs;
 			$proposal->save();
 
 			// Save Reputation Track
