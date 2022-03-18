@@ -87,7 +87,7 @@ class Helper
     $user->save();
 
     $user->member_no = $count + 1;
-    $user->member_at = $user->updated_at;
+    $user->member_at = Carbon::now();
     $user->save();
   }
 
