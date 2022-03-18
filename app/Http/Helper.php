@@ -2094,8 +2094,6 @@ class Helper
       return;
     }
   
-    $proposal->total_user_va = $totalVAs;
-    $proposal->save();
     $vote = new Vote;
     $vote->proposal_id = $proposalId;
     $vote->type = 'informal';
