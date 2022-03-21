@@ -2315,6 +2315,8 @@ class SharedController extends Controller
 		foreach ($proposals as $proposal) {
 			$proposal->attestation_rate = isset($proposal->attestation['rate']) ? $proposal->attestation['rate'] : 0;
 			$proposal->is_attestated = isset($proposal->attestation['is_attestated']) && $proposal->attestation['is_attestated'] == true ? 1 : 0;
+            $user = User::find($proposal->user_id);
+            $proposal->op_forum_name = $user->profile->forum_name;
 		}
 		if ($sort_direction == 'asc') {
 			$sorted = $proposals->sortBy($sort_key)->values();
