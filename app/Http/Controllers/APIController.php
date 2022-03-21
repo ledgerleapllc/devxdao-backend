@@ -152,6 +152,9 @@ class APIController extends Controller
     $user = User::where('email', $email)->first();
     if (!$user) return ["success" => true];
 
+    DB::table('oauth_access_tokens')
+    ->where('user_id', $user->id)
+    ->delete();
     // Clear Tokens
     DB::table('password_resets')
       ->where('email', $email)

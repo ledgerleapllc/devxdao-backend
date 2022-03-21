@@ -570,8 +570,15 @@ class SharedController extends Controller
 			$password = Hash::make($new_password);
 			$user->password = $password;
 			$user->save();
-
-			return ['success' => true];
+			// delete old token
+			$tokenResult = $user->createToken('User Access Token');
+			$tokenId = $tokenResult->token->id;
+			$user->accessTokenAPI = $tokenResult->accessToken;
+			DB::table('oauth_access_tokens')->where('user_id',$user->id)->where('id', '!=', $tokenId)->delete();
+			return [
+				'success' => true,
+				'user' => $user
+			];
 		}
 
 		return ['success' => false];
