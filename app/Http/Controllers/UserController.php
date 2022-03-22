@@ -340,7 +340,7 @@ class UserController extends Controller
 	public function getReputationTrack(Request $request) {
 		$user = Auth::user();
 		$items = [];
-		$total = 0;
+		$total_staked = 0;
 
 		// Variables
 		$sort_key = $sort_direction = $search = '';
@@ -359,40 +359,50 @@ class UserController extends Controller
 		// Records
 		if ($user && $user->hasRole(['member', 'participant']) && $user->email_verified) {
 			$total_staked = DB::table('reputation')
-													->where('user_id', $user->id)
-                          ->where('type', 'Staked')
-                          ->sum('staked');
-      $total = round(abs($total_staked), 2);
-			if ($total < 0) $total = 0;
+			->where('user_id', $user->id)
+				->where('type', 'Staked')
+				->sum('staked');
+			$total_staked = round(abs($total_staked), 5);
+			if ($total_staked < 0) $total_staked = 0;
 
+			$total_return_staked = DB::table('reputation')
+			->where('user_id', $user->id)
+				->where('type', 'Gained')
+				->where('return_type', 'Return Staked')
+				->sum('value');
+			$total_return_staked = round(abs($total_return_staked), 5);
+
+			$profile = Profile::where('user_id', $user->id)->first();
 			$items = Reputation::leftJoin('proposal', 'proposal.id', '=', 'reputation.proposal_id')
-													->leftJoin('users', 'users.id', '=', 'proposal.user_id')
-													->where('reputation.user_id', $user->id)
-													->where(function ($query) use ($search) {
-														if ($search) {
-															$query->where('proposal.title', 'like', '%' . $search . '%')
-																->orWhere('proposal.id', 'like', '%' . $search . '%')
-																		->orWhere('reputation.type', 'like', '%' . $search . '%');
-														}
-													})
-													->select([
-														'reputation.*',
-														'proposal.include_membership',
-														'proposal.title as proposal_title',
-														'users.first_name as op_first_name',
-														'users.last_name as op_last_name'
-													])
-    											->orderBy($sort_key, $sort_direction)
-													->offset($start)
-													->limit($limit)
-					                ->get();
+			->leftJoin('users', 'users.id', '=', 'proposal.user_id')
+			->where('reputation.user_id', $user->id)
+				->where(function ($query) use ($search) {
+					if ($search) {
+						$query->where('proposal.title', 'like', '%' . $search . '%')
+							->orWhere('proposal.id', 'like', '%' . $search . '%')
+							->orWhere('reputation.type', 'like', '%' . $search . '%');
+					}
+				})
+				->select([
+					'reputation.*',
+					'proposal.include_membership',
+					'proposal.title as proposal_title',
+					'users.first_name as op_first_name',
+					'users.last_name as op_last_name'
+				])
+				->orderBy($sort_key, $sort_direction)
+				->offset($start)
+				->limit($limit)
+				->get();
 		}
 
 		return [
 			'success' => true,
 			'items' => $items,
 			'finished' => count($items) < $limit ? true : false,
-			'total' => $total
+			'total' => $total_staked - $total_return_staked,
+			'rep' => $profile->rep,
+			'rep_pending' => $profile->rep_pending,
 		];
 	}
 

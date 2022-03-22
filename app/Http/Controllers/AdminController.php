@@ -1582,12 +1582,21 @@ class AdminController extends Controller
 				->where('user_id', $userId)
 				->where('type', 'Staked')
 				->sum('staked');
+			$total_staked = round(abs($total_staked), 5);
+			if ($total_staked < 0) $total_staked = 0;
+
+			$total_return_staked = DB::table('reputation')
+				->where('user_id', $userId)
+				->where('type', 'Gained')
+				->where('return_type', 'Return Staked')
+				->sum('value');
+			$total_return_staked = round(abs($total_return_staked), 5);
 		}
 
 		return [
 			'success' => true,
 			'items' => $items,
-			'total_staked' => $total_staked
+			'total_staked' => $total_staked - $total_return_staked,
 		];
 	}
 
