@@ -49,7 +49,7 @@ class CryptoPrice extends Command
           $setting->name = $key;
         }
 
-        $setting->value = round((float)$price, 2);
+        $setting->value = round((float)$price, 5);
         $setting->save();
       }
     }
