@@ -52,7 +52,8 @@ class CheckMilestoneVote extends Command
         parent::__construct();
     }
 
-    public function checkInformal($settings, $mins, $minMembers, $vote, $force = false) {
+    public function checkInformal($settings, $mins, $minMembers, $vote, $force = false)
+    {
         $start = Carbon::createFromFormat("Y-m-d H:i:s", $vote->created_at, "UTC");
         $start->addMinutes($mins);
         $today = Carbon::now('UTC');
@@ -98,7 +99,8 @@ class CheckMilestoneVote extends Command
         }
     }
 
-    public function checkFormal($settings, $mins, $minMembers, $vote, $force = false) {
+    public function checkFormal($settings, $mins, $minMembers, $vote, $force = false)
+    {
         $quorumRate = (float) $settings['quorum_rate_milestone'];
         $start = Carbon::createFromFormat("Y-m-d H:i:s", $vote->created_at, "UTC");
         $start->addMinutes($mins);
@@ -139,12 +141,12 @@ class CheckMilestoneVote extends Command
                 if ($result == "success") {
                     Helper::triggerUserEmail($op, 'Milestone Vote Passed Formal', $emailerData, $proposal, $vote);
                     $milestonePosition = Helper::getPositionMilestone($milestone);
-					Helper::createGrantTracking($proposal->id, "Milestone $milestonePosition passed formal vote",  "milestone_" . $milestonePosition ."_passed_formal_vote");
-                    Helper::runWinnerFlow($proposal, $vote, $settings);
+                    Helper::createGrantTracking($proposal->id, "Milestone $milestonePosition passed formal vote",  "milestone_" . $milestonePosition . "_passed_formal_vote");
+                    $isCompletedProposal = false;
 
                     $finalGrant = FinalGrant::where('proposal_id', $proposal->id)
-                                            ->where('status', 'active')
-                                            ->first();
+                        ->where('status', 'active')
+                        ->first();
                     Helper::createMilestoneLog($vote->milestone_id, null, null, 'System', 'Vote passed');
                     if ($finalGrant) {
                         $finalGrant->milestones_complete = (int) $finalGrant->milestones_complete + 1;
@@ -152,7 +154,7 @@ class CheckMilestoneVote extends Command
                             (int) $finalGrant->milestones_complete == (int) $finalGrant->milestones_total
                         ) {
                             Helper::triggerUserEmail($op, 'All Milestones Complete', $emailerData, $proposal, $vote);
-
+                            $isCompletedProposal = true;
                             $finalGrant->status = "completed";
                             Helper::completeProposal($proposal);
                             // if ($op->hasRole('member'))
@@ -170,6 +172,7 @@ class CheckMilestoneVote extends Command
                         $invoice->sent_at = now();
                         $invoice->save();
                     }
+                    Helper::runWinnerFlow($proposal, $vote, $settings, $isCompletedProposal);
                 } else {
                     Helper::createMilestoneLog($vote->milestone_id, null, null, 'System', 'Vote failed');
                     Helper::triggerUserEmail($op, 'Milestone Vote Failed', $emailerData, $proposal, $vote);
@@ -219,20 +222,20 @@ class CheckMilestoneVote extends Command
 
         // Vote Records
         $informals = Vote::has('proposal')
-                        ->where('content_type', 'milestone')
-                        ->where('type', 'informal')
-                        ->where('status', 'active')
-                        ->orderBy('created_at', 'asc')
-                        ->limit(15)
-                        ->get();
+            ->where('content_type', 'milestone')
+            ->where('type', 'informal')
+            ->where('status', 'active')
+            ->orderBy('created_at', 'asc')
+            ->limit(15)
+            ->get();
 
         $formals = Vote::has('proposal')
-                        ->where('content_type', 'milestone')
-                        ->where('type', 'formal')
-                        ->where('status', 'active')
-                        ->orderBy('created_at', 'asc')
-                        ->limit(15)
-                        ->get();
+            ->where('content_type', 'milestone')
+            ->where('type', 'formal')
+            ->where('status', 'active')
+            ->orderBy('created_at', 'asc')
+            ->limit(15)
+            ->get();
 
         if ($informals) {
             foreach ($informals as $informal) {

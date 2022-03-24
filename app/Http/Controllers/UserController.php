@@ -340,7 +340,7 @@ class UserController extends Controller
 	public function getReputationTrack(Request $request) {
 		$user = Auth::user();
 		$items = [];
-		$total = 0;
+		$total_staked = 0;
 
 		// Variables
 		$sort_key = $sort_direction = $search = '';
@@ -359,40 +359,50 @@ class UserController extends Controller
 		// Records
 		if ($user && $user->hasRole(['member', 'participant']) && $user->email_verified) {
 			$total_staked = DB::table('reputation')
-													->where('user_id', $user->id)
-                          ->where('type', 'Staked')
-                          ->sum('staked');
-      $total = round(abs($total_staked), 2);
-			if ($total < 0) $total = 0;
+			->where('user_id', $user->id)
+				->where('type', 'Staked')
+				->sum('staked');
+			$total_staked = round(abs($total_staked), 5);
+			if ($total_staked < 0) $total_staked = 0;
 
+			$total_return_staked = DB::table('reputation')
+			->where('user_id', $user->id)
+				->where('type', 'Gained')
+				->where('return_type', 'Return Staked')
+				->sum('value');
+			$total_return_staked = round(abs($total_return_staked), 5);
+
+			$profile = Profile::where('user_id', $user->id)->first();
 			$items = Reputation::leftJoin('proposal', 'proposal.id', '=', 'reputation.proposal_id')
-													->leftJoin('users', 'users.id', '=', 'proposal.user_id')
-													->where('reputation.user_id', $user->id)
-													->where(function ($query) use ($search) {
-														if ($search) {
-															$query->where('proposal.title', 'like', '%' . $search . '%')
-																->orWhere('proposal.id', 'like', '%' . $search . '%')
-																		->orWhere('reputation.type', 'like', '%' . $search . '%');
-														}
-													})
-													->select([
-														'reputation.*',
-														'proposal.include_membership',
-														'proposal.title as proposal_title',
-														'users.first_name as op_first_name',
-														'users.last_name as op_last_name'
-													])
-    											->orderBy($sort_key, $sort_direction)
-													->offset($start)
-													->limit($limit)
-					                ->get();
+			->leftJoin('users', 'users.id', '=', 'proposal.user_id')
+			->where('reputation.user_id', $user->id)
+				->where(function ($query) use ($search) {
+					if ($search) {
+						$query->where('proposal.title', 'like', '%' . $search . '%')
+							->orWhere('proposal.id', 'like', '%' . $search . '%')
+							->orWhere('reputation.type', 'like', '%' . $search . '%');
+					}
+				})
+				->select([
+					'reputation.*',
+					'proposal.include_membership',
+					'proposal.title as proposal_title',
+					'users.first_name as op_first_name',
+					'users.last_name as op_last_name'
+				])
+				->orderBy($sort_key, $sort_direction)
+				->offset($start)
+				->limit($limit)
+				->get();
 		}
 
 		return [
 			'success' => true,
 			'items' => $items,
 			'finished' => count($items) < $limit ? true : false,
-			'total' => $total
+			'total' => $total_staked - $total_return_staked,
+			'rep' => $profile->rep,
+			'rep_pending' => $profile->rep_pending,
 		];
 	}
 
@@ -739,7 +749,7 @@ class UserController extends Controller
 					'message' => 'Invalid proposal'
 				];
 			}
-
+			$totalVAs = Helper::getTotalMembers();
 			// Activates the Proposal ( Admin doesn't need to manually approve the payment by reputation )
 			$proposal->dos_paid = 1;
 			$proposal->status = 'approved';
@@ -756,6 +766,7 @@ class UserController extends Controller
 
 			// Update Timestamp
 			$proposal->approved_at = $proposal->updated_at;
+			$proposal->total_user_va = $totalVAs;
 			$proposal->save();
 
 			// Emailer Member
@@ -809,16 +820,18 @@ class UserController extends Controller
 			$profile->rep = (float) $profile->rep - $rep;
 			$profile->save();
 			Helper::createRepHistory($profile->user_id, - $rep, $profile->rep, 'Staked', 'Proposal Payment', $proposal->id, null, 'stakeReputation');
-
+			$totalVAs = Helper::getTotalMembers();
 			// Activates the Proposal ( Admin doesn't need to manually approve the payment by reputation )
 			$proposal->rep = $rep;
 			$proposal->dos_paid = 1;
 			$proposal->status = 'approved';
+			
 			$proposal->save();
 
 			// Update Timestamp
 			$proposal->approved_at = $proposal->updated_at;
 			$proposal->dos_amount = $dos_fee_amount;
+			$proposal->total_user_va = $totalVAs;
 			$proposal->save();
 
 			// Save Reputation Track
@@ -1133,7 +1146,7 @@ class UserController extends Controller
 				if ($grants) {
 					foreach ($grants as $grant) {
 						$temp = (float) $grant->grant * $rate;
-						$temp = round($temp, 2);
+						$temp = round($temp, 5);
 						$grant->grant = $temp;
 						$grant->save();
 					}
@@ -1144,7 +1157,7 @@ class UserController extends Controller
 				if ($milestones) {
 					foreach ($milestones as $milestone) {
 						$temp = (float) $milestone->grant * $rate;
-						$temp = round($temp, 2);
+						$temp = round($temp, 5);
 						$milestone->grant = $temp;
 						$milestone->save();
 					}
@@ -1423,12 +1436,18 @@ class UserController extends Controller
 
 		    // Create Reputation Track
 		    if ($value != 0) {
+				$event = "Proposal $proposal->id Vote";
+				if($vote->milestone_id) {
+					$milestone = Milestone::find($vote->milestone_id);
+					$milestonePosition = Helper::getPositionMilestone($milestone);
+					$event = "Proposal $proposal->id Milestone $milestonePosition Vote";
+				}
 			    $reputation = new Reputation;
 			    $reputation->user_id = $user->id;
 			    $reputation->proposal_id = $proposalId;
 			    $reputation->vote_id = $vote->id;
 			  	$reputation->staked = -$value;
-			    $reputation->event = "Proposal Vote";
+			    $reputation->event = $event;;
 			    $reputation->type = "Staked";
 			    $reputation->save();
 			  }
@@ -1539,7 +1558,7 @@ class UserController extends Controller
 			}
 
 			$grant = (float) $request->get('grant');
-			$grant = round($grant, 2);
+			$grant = round($grant, 5);
 
 			if (!$proposal) {
 				return [

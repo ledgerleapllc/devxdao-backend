@@ -1035,7 +1035,8 @@ class AdminController extends Controller
 			// Update Proposal
 			$proposal->status = "approved";
 			$proposal->save();
-
+			$totalVAs = Helper::getTotalMembers();
+			$proposal->total_user_va = $totalVAs;
 			// Update Timestamp
 			$proposal->approved_at = $proposal->updated_at;
 			$proposal->save();
@@ -1098,10 +1099,11 @@ class AdminController extends Controller
 
 			if ($proposal) {
 				if ($proposal->type == 'admin-grant' || $proposal->type == 'advance-payment') {
+					$totalVAs = Helper::getTotalMembers();
                     $proposal->status = 'approved';
-
 					$proposal->save();
 					$proposal->approved_at = $proposal->updated_at;
+					$proposal->total_user_va = $totalVAs;
 					$proposal->save();
 
 					Helper::createGrantTracking($proposalId, "Approved by admin", 'approved_by_admin');
@@ -1580,12 +1582,21 @@ class AdminController extends Controller
 				->where('user_id', $userId)
 				->where('type', 'Staked')
 				->sum('staked');
+			$total_staked = round(abs($total_staked), 5);
+			if ($total_staked < 0) $total_staked = 0;
+
+			$total_return_staked = DB::table('reputation')
+				->where('user_id', $userId)
+				->where('type', 'Gained')
+				->where('return_type', 'Return Staked')
+				->sum('value');
+			$total_return_staked = round(abs($total_return_staked), 5);
 		}
 
 		return [
 			'success' => true,
 			'items' => $items,
-			'total_staked' => $total_staked
+			'total_staked' => $total_staked - $total_return_staked,
 		];
 	}
 
@@ -2147,7 +2158,7 @@ class AdminController extends Controller
 				if ($grants) {
 					foreach ($grants as $grant) {
 						$temp = (float) $grant->grant * $rate;
-						$temp = round($temp, 2);
+						$temp = round($temp, 5);
 						$grant->grant = $temp;
 						$grant->save();
 					}
@@ -2158,7 +2169,7 @@ class AdminController extends Controller
 				if ($milestones) {
 					foreach ($milestones as $milestone) {
 						$temp = (float) $milestone->grant * $rate;
-						$temp = round($temp, 2);
+						$temp = round($temp, 5);
 						$milestone->grant = $temp;
 						$milestone->save();
 					}

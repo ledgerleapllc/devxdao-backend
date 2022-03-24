@@ -87,7 +87,7 @@ class Helper
     $user->save();
 
     $user->member_no = $count + 1;
-    $user->member_at = $user->updated_at;
+    $user->member_at = Carbon::now();
     $user->save();
   }
 
@@ -146,7 +146,11 @@ class Helper
           ->has('profile')
           ->where('id', $item->user_id)
           ->first();
-
+        $voteFormal = Vote::where('id', $item->vote_id)->where('type', 'formal')
+          ->where('content_type', 'grant')->where('result', 'success')->first();
+        if ($voteFormal) {
+          continue;
+        }
         $value = (float) $item->pending;
         if ($value > 0) {
           $user->profile->rep_pending = (float) $user->profile->rep_pending - $value;
@@ -162,7 +166,7 @@ class Helper
         $item->type = 'Minted';
         $item->value = (float) $item->pending;
         $item->pending = 0;
-        $item->save();
+        $item->save();       
       }
     }
   }
@@ -204,7 +208,7 @@ class Helper
   }
 
   // Run Winner Flow
-  public static function runWinnerFlow($proposal, $vote, $settings)
+  public static function runWinnerFlow($proposal, $vote, $settings, $isCompletedProposal = false)
   {
     $op = User::with('profile')->where('id', $proposal->user_id)->first();
 
@@ -231,18 +235,30 @@ class Helper
 
     // Minted Pending Rep
     $total_minted_pending = (float) $proposal->total_grant * (float) $settings['minted_ratio'];
-    $total_minted_pending = round($total_minted_pending, 2);
+    $total_minted_pending = round($total_minted_pending, 5);
 
     $op_minted_pending = $total_minted_pending * (float)((float) $settings['op_percentage'] / 100);
-    $op_minted_pending = round($op_minted_pending, 2);
+    $op_minted_pending = round($op_minted_pending, 5);
 
     $minted_pending = $total_minted_pending - $op_minted_pending;
-    $minted_pending = round($minted_pending, 2);
+    $minted_pending = round($minted_pending, 5);
     if ($minted_pending < 0) $minted_pending = 0;
 
     $op_rate = (float) $proposal->rep / ($for_value + (float) $proposal->rep);
     $op_extra = (float) $against_value * $op_rate;
     $op_extra = round($op_extra);
+
+    // get percent gtant milestone
+    $milestone_extra = 1;
+    $milestonePosition = 1;
+    $milestone = Milestone::find($vote->milestone_id);
+    $voteFormal = Vote::where('type', 'formal')->where('content_type', 'grant')->where('proposal_id', $proposal->id)->first();
+    if ($proposal->type == "grant" && $vote->content_type == "milestone" && $vote->milestone_id) {
+      if ($milestone) {
+        $milestone_extra = (float) $milestone->grant / $proposal->total_grant;
+        $milestonePosition = Helper::getPositionMilestone($milestone);
+      }
+    }
 
     // Split Algorithm - Grant Has Minted Pending
     foreach ($items as $item) {
@@ -250,37 +266,94 @@ class Helper
       $rate = (float) $value / ($for_value + (float) $proposal->rep);
 
       $extra = (float) $against_value * $rate;
-      $extra = round($extra, 2);
+      $extra = round($extra, 5);
 
       $extra_minted = (float) $minted_pending * $rate;
-      $extra_minted = round($extra_minted, 2);
-
+      $extra_minted = round($extra_minted, 5);
+      if ($proposal->type == "grant" && $vote->content_type == "milestone") {
+      }
       $rep = $value + $extra;
-      $rep = (float) round($rep, 2);
+      $rep = (float) round($rep, 5);
 
       $voter = User::with('profile')->where('id', $item->user_id)->first();
       if ($voter && isset($voter->profile)) {
-        // $voter->profile->rep = (float) $voter->profile->rep + $rep;
-        Helper::updateRepProfile($voter->id, $rep);
+        if ($vote->content_type == "grant" && $vote->type == "formal") {
+          // Helper::updateRepProfile($voter->id, $extra);
+        } else {
+          // $voter->profile->rep = (float) $voter->profile->rep + $rep;
+          Helper::updateRepProfile($voter->id, $rep);
+          $reputation = new Reputation;
+          $reputation->user_id = $voter->id;
+          $reputation->proposal_id = $vote->proposal_id;
+          $reputation->vote_id = $vote->id;
+          $reputation->value = $value;
+          $reputation->event = $vote->content_type == "milestone" ?  "Proposal $proposal->id Milestone $milestonePosition Vote Result" : "Proposal $proposal->id Vote Result";
+          $reputation->type = "Gained";
+          $reputation->return_type = "Return Staked";
+          $reputation->save();
+          Helper::createRepHistory($item->user_id, $rep,  $voter->profile->rep, 'Gained', 'Proposal Vote Result', $proposal->id, $vote->id, 'runWinnerFlow');
+        }
         if (
           $proposal->type == "grant" &&
           $vote->content_type != "milestone"
         ) {
           $voter->profile->rep_pending = (float) $voter->profile->rep_pending + $extra_minted;
+          $voter->profile->save();
         }
-        $voter->profile->save();
-        Helper::createRepHistory($item->user_id, $rep,  $voter->profile->rep,'Gained', 'Proposal Vote Result', $proposal->id, $vote->id, 'runWinnerFlow');
 
         // Stake Returned
         if ($value != 0) {
-          Reputation::where('user_id', $voter->id)
-            ->where('proposal_id', $vote->proposal_id)
-            ->where('type', 'Staked')
-            //->where('event', 'Proposal Vote')
-            ->where('vote_id', $vote->id)
-            ->delete();
+          if ($proposal->type == "grant" && $vote->content_type == "milestone" && $voteFormal) {
+            // return rep formal vote
+            $voteResultFormal = VoteResult::where('user_id', $voter->id)->where('vote_id', $voteFormal->id)->first();
+            $reputationFormal = Reputation::where('user_id', $voter->id)
+              ->where('proposal_id', $vote->proposal_id)
+              ->where('type', 'Staked')
+              ->where('vote_id', $voteFormal->id)
+              ->first();
+            if ($reputationFormal && $reputationFormal) {
+                $extraFormalVote = $voteResultFormal->value * $milestone_extra;
+                Helper::updateRepProfile($voter->id, $extraFormalVote);
+                $reputation = new Reputation;
+                $reputation->user_id = $voter->id;
+                $reputation->proposal_id = $vote->proposal_id;
+                $reputation->vote_id = $vote->id;
+                $reputation->value = $extraFormalVote;
+                $reputation->event = "Return Proposal $proposal->id milestone $milestonePosition";
+                $reputation->type = "Gained";
+                $reputation->return_type = "Return Staked";
+                $reputation->save();
+                Helper::createRepHistory($item->user_id, $extraFormalVote,  $voter->profile->rep, 'Gained', 'Proposal Vote Result Return  Value Formal Vote', $proposal->id, $vote->id, 'runWinnerFlow');
+            }
+            // return minted pending
+            $reputationMintedFormal = Reputation::where('user_id', $voter->id)
+              ->where('proposal_id', $vote->proposal_id)
+              ->where('type', 'Minted Pending')
+              ->where('vote_id', $voteFormal->id)
+              ->first();
+            if($reputationMintedFormal) {
+              $extraMintedFormalVote = $reputationMintedFormal->pending * $milestone_extra;
+              $voter->profile->rep_pending = (float) $voter->profile->rep_pending - $extraMintedFormalVote;
+              if ((float) $voter->profile->rep_pending < 0) {
+                $voter->profile->rep_pending = 0;
+              }
+              $voter->profile->save();
+              Helper::updateRepProfile($voter->id, $extraMintedFormalVote);
+              $reputation = new Reputation;
+              $reputation->user_id = $voter->id;
+              $reputation->proposal_id = $vote->proposal_id;
+              $reputation->vote_id = $vote->id;
+              $reputation->value = $extraMintedFormalVote;
+              $reputation->event = "Return Minted Proposal $proposal->id milestone $milestonePosition";
+              $reputation->type = "Minted";
+              $reputation->save();
+              Helper::createRepHistory($voter->id, $extraMintedFormalVote, $voter->profile->rep, 'Minted', 'Proposal Vote Result Minted Formal Vote', $proposal->id, null , 'return minted formal by milestone');
+              if($isCompletedProposal) {
+                $reputationMintedFormal->delete();
+              }
+            }
+          }
         }
-
         // Gained
         if ($extra != 0) {
           $reputation = new Reputation;
@@ -288,7 +361,7 @@ class Helper
           $reputation->proposal_id = $vote->proposal_id;
           $reputation->vote_id = $vote->id;
           $reputation->value = $extra;
-          $reputation->event = "Proposal Vote Result";
+          $reputation->event = "Proposal $proposal->id Gained Vote result";
           $reputation->type = "Gained";
           $reputation->save();
         }
@@ -304,7 +377,7 @@ class Helper
           $reputation->proposal_id = $vote->proposal_id;
           $reputation->vote_id = $vote->id;
           $reputation->pending = $extra_minted;
-          $reputation->event = "Proposal Vote Result";
+          $reputation->event = "Proposal $proposal->id Minted Pending Vote";
           $reputation->type = "Minted Pending";
           $reputation->save();
         }
@@ -332,7 +405,7 @@ class Helper
             $reputationNew->vote_id = $vote->id;
             $reputationNew->value = $value;
             $reputationNew->type = "Stake Lost";
-            $reputationNew->event = "Proposal Vote Result";
+            $reputationNew->event = "Proposal $proposal->id Vote Result";
             $reputationNew->save();
           }
 
@@ -365,7 +438,7 @@ class Helper
           $percentage -= $p;
 
           $pending = (float)($op_minted_pending * $p / 100);
-          $pending = round($pending, 2);
+          $pending = round($pending, 5);
 
           if ($pending > 0) {
             $current = (float) $citation->repProposal->user->profile->rep_pending;
@@ -387,13 +460,12 @@ class Helper
       if ($percentage < 0) $percentage = 0;
 
       $op_minted_pending = (float)($op_minted_pending * $percentage / 100);
-      $op_minted_pending = round($op_minted_pending, 2);
+      $op_minted_pending = round($op_minted_pending, 5);
 
       // $op->profile->rep =
       //   (float) $op->profile->rep +
       //   (float) $op_extra +
       //   (float) $proposal->rep;
-      Helper::updateRepProfile($op->id, (float) $op_extra + (float) $proposal->rep);
       if ($proposal->type == "grant" && $vote->content_type != "milestone") {
         if ($sponsor) {
           $sponsor->profile->rep_pending = (float) $sponsor->profile->rep_pending + $op_minted_pending;
@@ -404,16 +476,77 @@ class Helper
       }
 
       $op->profile->save();
-      Helper::createRepHistory($op->id, (float) $op_extra + (float) $proposal->rep, $op->profile->rep,'Gained', 'Proposal Vote Result', $proposal->id, $vote->id, 'runWinnerFlow2');
 
       // Stake Returned
       if ((float) $proposal->rep != 0) {
-        Reputation::where('user_id', $op->id)
-          ->where('proposal_id', $vote->proposal_id)
-          ->where('type', 'Staked')
-          ->delete();
-      }
+        if ($vote->content_type == "grant"  && $vote->type == "formal") {
+        } else if($proposal->type == "grant" && $vote->content_type == "milestone") {
+          Helper::updateRepProfile($op->id, (float) $op_extra);
+        } else {
+          Helper::updateRepProfile($op->id, (float) $op_extra + (float) $proposal->rep);
+          Helper::createRepHistory($op->id, (float) $op_extra + (float) $proposal->rep, $op->profile->rep, 'Gained', 'Proposal Vote Result', $proposal->id, $vote->id, 'runWinnerFlow2');
+          $reputation = new Reputation;
+          $reputation->user_id = $op->id;
+          $reputation->proposal_id = $vote->proposal_id;
+          $reputation->vote_id = $vote->id;
+          $reputation->value = $proposal->rep;
+          $reputation->event = "Proposal $proposal->id Vote Result - OP";
+          $reputation->type = "Gained";
+          $reputation->return_type = "Return Staked";
+          $reputation->save();  
+        }
+        // handle return milestone
+        if ($proposal->type == "grant" && $vote->content_type == "milestone" && $voteFormal) {
+          $reputationOp = Reputation::where('user_id', $op->id)
+            ->where('proposal_id', $vote->proposal_id)
+            ->where('type', 'Staked')
+            ->first();
+          if ($reputationOp) {
+            $extraRepProposal = $proposal->rep * $milestone_extra;
+            $reputation = new Reputation;
+            $reputation->user_id = $op->id;
+            $reputation->proposal_id = $vote->proposal_id;
+            $reputation->vote_id = $vote->id;
+            $reputation->value = $extraRepProposal;
+            $reputation->event = "Return Vote Result Proposal $proposal->id milestone $milestonePosition - OP";
+            $reputation->type = "Gained";
+            $reputation->return_type = "Return Staked";
+            $reputation->save();  
+            Helper::updateRepProfile($op->id, $extraRepProposal);
+            Helper::createRepHistory($op->id, (float) $extraRepProposal, $op->profile->rep, 'Gained', 'Proposal Vote Result', $proposal->id, $voteFormal->id, 'runWinnerFlow2 return milestone');
+          }
 
+          // return minted pending OP
+          $reputationMintedFormalOp = Reputation::where('user_id', $op->id)
+            ->where('proposal_id', $vote->proposal_id)
+            ->where('type', 'Minted Pending')
+            ->where('vote_id', $voteFormal->id)
+            ->first();
+          if ($reputationMintedFormalOp) {
+            $extraMintedFormalVoteOp = $reputationMintedFormalOp->pending * $milestone_extra;
+            $op->profile->rep_pending = (float) $op->profile->rep_pending - $extraMintedFormalVoteOp;
+            if ((float) $op->profile->rep_pending < 0) {
+              $op->profile->rep_pending = 0;
+            }
+            $op->profile->save();
+            Helper::updateRepProfile($op->id, $extraMintedFormalVoteOp);
+            $extraRepProposal = $proposal->rep * $milestone_extra;
+            $reputation = new Reputation;
+            $reputation->user_id = $op->id;
+            $reputation->proposal_id = $vote->proposal_id;
+            $reputation->vote_id = $vote->id;
+            $reputation->value = $extraMintedFormalVoteOp;
+            $reputation->event = "Return Minted Proposal $proposal->id milestone $milestonePosition - OP";
+            $reputation->type = "Minted";
+            $reputation->save();  
+            Helper::createRepHistory($op->id, $extraMintedFormalVoteOp, $op->profile->rep, 'Minted', 'Return Minted Proposal Vote Formal Result', $proposal->id, $voteFormal->id, 'return minted formal by milestone');
+            if($isCompletedProposal) {
+              $reputationMintedFormalOp->delete();
+            }
+          }
+        }
+        
+      }
       // Gained
       if ($op_extra != 0) {
         $reputation = new Reputation;
@@ -421,7 +554,7 @@ class Helper
         $reputation->proposal_id = $vote->proposal_id;
         $reputation->vote_id = $vote->id;
         $reputation->value = $op_extra;
-        $reputation->event = "Proposal Vote Result - OP";
+        $reputation->event = "Proposal $proposal->id Gained Vote Result - OP";
         $reputation->type = "Gained";
         $reputation->save();
       }
@@ -447,7 +580,7 @@ class Helper
           $reputation->proposal_id = $vote->proposal_id;
           $reputation->vote_id = $vote->id;
           $reputation->pending = $op_minted_pending;
-          $reputation->event = "Proposal Vote Result - OP";
+          $reputation->event = "Proposal $proposal->id Minted Pending Vote - OP";
           $reputation->type = "Minted Pending";
           $reputation->save();
         }
@@ -484,10 +617,10 @@ class Helper
       $rate = (float) $value / $against_value;
 
       $extra = (float) ($for_value + (float) $proposal->rep) * $rate;
-      $extra = round($extra, 2);
+      $extra = round($extra, 5);
 
       $rep = $value + $extra;
-      $rep = (float) round($rep, 2);
+      $rep = (float) round($rep, 5);
 
       $voter = User::with('profile')->where('id', $item->user_id)->first();
       if ($voter && isset($voter->profile)) {
@@ -1964,8 +2097,6 @@ class Helper
       return;
     }
   
-    $proposal->total_user_va = $totalVAs;
-    $proposal->save();
     $vote = new Vote;
     $vote->proposal_id = $proposalId;
     $vote->type = 'informal';
