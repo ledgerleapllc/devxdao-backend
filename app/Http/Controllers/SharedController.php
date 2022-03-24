@@ -2279,6 +2279,7 @@ class SharedController extends Controller
 		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
 		$is_winner = $request->is_winner;
+		$hide_attested = $request->hide_attested;
 
 		// Record
 		if ($user) {
@@ -2317,6 +2318,9 @@ class SharedController extends Controller
             $user = User::find($proposal->user_id);
             $proposal->op_forum_name = $user->profile->forum_name;
 		}
+		if($hide_attested) {
+			$proposals = $proposals->where('attestation_rate', '=', 0);
+		}
 		if ($sort_direction == 'asc') {
 			$sorted = $proposals->sortBy($sort_key)->values();
 		} else {
@@ -2349,6 +2353,7 @@ class SharedController extends Controller
 
 		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
 		$start = $limit * ($page_id - 1);
+		$hide_attested = $request->hide_attested;
 
 		// Record
 		if ($user) {
@@ -2370,6 +2375,9 @@ class SharedController extends Controller
 		foreach ($proposals as $proposal) {
 			$proposal->attestation_rate = isset($proposal->attestation['rate']) ? $proposal->attestation['rate'] : 0;
 			$proposal->is_attestated = isset($proposal->attestation['is_attestated']) && $proposal->attestation['is_attestated'] == true ? 1 : 0;
+		}
+		if($hide_attested) {
+			$proposals = $proposals->where('attestation_rate', '=', 0);
 		}
 		if ($sort_direction == 'asc') {
 			$sorted = $proposals->sortBy($sort_key)->values();
