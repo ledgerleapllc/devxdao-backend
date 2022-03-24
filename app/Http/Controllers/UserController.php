@@ -3027,6 +3027,7 @@ class UserController extends Controller
 					}
 				})->count();
 				$user->this_month_vote_percent = $this_month_voted > 0 ? ($this_month_voted / $this_month_informal_votes) * 100 : 0 ;
+				$user->total_grant = Proposal::where('user_id',$user->id)->whereIn('status',['approved', 'completed'] )->where('type', 'grant')->sum('total_grant');
 			}
 			if ($sort_direction == 'asc') {
 				$sorted = $users->sortBy($sort_key)->values();
