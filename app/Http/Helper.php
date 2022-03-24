@@ -235,13 +235,13 @@ class Helper
 
     // Minted Pending Rep
     $total_minted_pending = (float) $proposal->total_grant * (float) $settings['minted_ratio'];
-    $total_minted_pending = round($total_minted_pending, 2);
+    $total_minted_pending = round($total_minted_pending, 5);
 
     $op_minted_pending = $total_minted_pending * (float)((float) $settings['op_percentage'] / 100);
-    $op_minted_pending = round($op_minted_pending, 2);
+    $op_minted_pending = round($op_minted_pending, 5);
 
     $minted_pending = $total_minted_pending - $op_minted_pending;
-    $minted_pending = round($minted_pending, 2);
+    $minted_pending = round($minted_pending, 5);
     if ($minted_pending < 0) $minted_pending = 0;
 
     $op_rate = (float) $proposal->rep / ($for_value + (float) $proposal->rep);
@@ -266,10 +266,10 @@ class Helper
       $rate = (float) $value / ($for_value + (float) $proposal->rep);
 
       $extra = (float) $against_value * $rate;
-      $extra = round($extra, 2);
+      $extra = round($extra, 5);
 
       $extra_minted = (float) $minted_pending * $rate;
-      $extra_minted = round($extra_minted, 2);
+      $extra_minted = round($extra_minted, 5);
       if ($proposal->type == "grant" && $vote->content_type == "milestone") {
       }
       $rep = $value + $extra;
@@ -438,7 +438,7 @@ class Helper
           $percentage -= $p;
 
           $pending = (float)($op_minted_pending * $p / 100);
-          $pending = round($pending, 2);
+          $pending = round($pending, 5);
 
           if ($pending > 0) {
             $current = (float) $citation->repProposal->user->profile->rep_pending;
@@ -460,7 +460,7 @@ class Helper
       if ($percentage < 0) $percentage = 0;
 
       $op_minted_pending = (float)($op_minted_pending * $percentage / 100);
-      $op_minted_pending = round($op_minted_pending, 2);
+      $op_minted_pending = round($op_minted_pending, 5);
 
       // $op->profile->rep =
       //   (float) $op->profile->rep +
@@ -617,10 +617,10 @@ class Helper
       $rate = (float) $value / $against_value;
 
       $extra = (float) ($for_value + (float) $proposal->rep) * $rate;
-      $extra = round($extra, 2);
+      $extra = round($extra, 5);
 
       $rep = $value + $extra;
-      $rep = (float) round($rep, 2);
+      $rep = (float) round($rep, 5);
 
       $voter = User::with('profile')->where('id', $item->user_id)->first();
       if ($voter && isset($voter->profile)) {

@@ -2158,7 +2158,7 @@ class AdminController extends Controller
 				if ($grants) {
 					foreach ($grants as $grant) {
 						$temp = (float) $grant->grant * $rate;
-						$temp = round($temp, 2);
+						$temp = round($temp, 5);
 						$grant->grant = $temp;
 						$grant->save();
 					}
@@ -2169,7 +2169,7 @@ class AdminController extends Controller
 				if ($milestones) {
 					foreach ($milestones as $milestone) {
 						$temp = (float) $milestone->grant * $rate;
-						$temp = round($temp, 2);
+						$temp = round($temp, 5);
 						$milestone->grant = $temp;
 						$milestone->save();
 					}

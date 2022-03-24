@@ -1146,7 +1146,7 @@ class UserController extends Controller
 				if ($grants) {
 					foreach ($grants as $grant) {
 						$temp = (float) $grant->grant * $rate;
-						$temp = round($temp, 2);
+						$temp = round($temp, 5);
 						$grant->grant = $temp;
 						$grant->save();
 					}
@@ -1157,7 +1157,7 @@ class UserController extends Controller
 				if ($milestones) {
 					foreach ($milestones as $milestone) {
 						$temp = (float) $milestone->grant * $rate;
-						$temp = round($temp, 2);
+						$temp = round($temp, 5);
 						$milestone->grant = $temp;
 						$milestone->save();
 					}
@@ -1558,7 +1558,7 @@ class UserController extends Controller
 			}
 
 			$grant = (float) $request->get('grant');
-			$grant = round($grant, 2);
+			$grant = round($grant, 5);
 
 			if (!$proposal) {
 				return [
