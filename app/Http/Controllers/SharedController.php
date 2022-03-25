@@ -2319,7 +2319,7 @@ class SharedController extends Controller
             $proposal->op_forum_name = $user->profile->forum_name;
 		}
 		if($hide_attested) {
-			$proposals = $proposals->where('attestation_rate', '=', 0);
+			$proposals = $proposals->where('is_attestated', '=', 0);
 		}
 		if ($sort_direction == 'asc') {
 			$sorted = $proposals->sortBy($sort_key)->values();
@@ -2377,7 +2377,7 @@ class SharedController extends Controller
 			$proposal->is_attestated = isset($proposal->attestation['is_attestated']) && $proposal->attestation['is_attestated'] == true ? 1 : 0;
 		}
 		if($hide_attested) {
-			$proposals = $proposals->where('attestation_rate', '=', 0);
+			$proposals = $proposals->where('is_attestated', '=', 0);
 		}
 		if ($sort_direction == 'asc') {
 			$sorted = $proposals->sortBy($sort_key)->values();
