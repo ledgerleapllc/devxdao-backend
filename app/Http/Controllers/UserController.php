@@ -358,20 +358,6 @@ class UserController extends Controller
 
 		// Records
 		if ($user && $user->hasRole(['member', 'participant']) && $user->email_verified) {
-			$total_staked = DB::table('reputation')
-			->where('user_id', $user->id)
-				->where('type', 'Staked')
-				->sum('staked');
-			$total_staked = round(abs($total_staked), 5);
-			if ($total_staked < 0) $total_staked = 0;
-
-			$total_return_staked = DB::table('reputation')
-			->where('user_id', $user->id)
-				->where('type', 'Gained')
-				->where('return_type', 'Return Staked')
-				->sum('value');
-			$total_return_staked = round(abs($total_return_staked), 5);
-
 			$profile = Profile::where('user_id', $user->id)->first();
 			$items = Reputation::leftJoin('proposal', 'proposal.id', '=', 'reputation.proposal_id')
 			->leftJoin('users', 'users.id', '=', 'proposal.user_id')
@@ -400,7 +386,7 @@ class UserController extends Controller
 			'success' => true,
 			'items' => $items,
 			'finished' => count($items) < $limit ? true : false,
-			'staked' => $total_staked - $total_return_staked,
+			'staked' => Helper::getActualStaked($user->id),
 			'rep' => $profile->rep,
 			'rep_pending' => $profile->rep_pending,
 		];
@@ -2989,16 +2975,8 @@ class UserController extends Controller
 					->where('vote_result.user_id', $user->id)->where('vote.type', 'informal')
 					->where('vote.result', '!=', 'no-quorum')->where('vote.created_at', '>=', $member_at)->count();
 				$user->total_vote_percent = $total_informal_votes > 0 ? ($total_voted / $total_informal_votes) * 100 : 0 ;
-				$total_staked = round(abs($total_staked), 5);
-                if ($total_staked < 0) $total_staked = 0;
-
-                $total_return_staked = DB::table('reputation')
-                ->where('user_id', $user->id)
-                    ->where('type', 'Gained')
-                    ->where('return_type', 'Return Staked')
-                    ->sum('value');
-                $total_return_staked = round(abs($total_return_staked), 5);
-				$user->total_rep = $total_staked - $total_return_staked + $user->rep;
+				
+				$user->total_rep = Helper::getActualStaked($user->id) + $user->rep;
 
 				// get last month
 				$firstDayofPreviousMonth = Carbon::now()->startOfMonth()->subMonth()->format('Y-m-d');
