@@ -3612,4 +3612,76 @@ class SharedController extends Controller
 			'finished' => count($response) < $limit ? true : false
 		];
 	}
+
+	public function getAttestedTopic($topicId, Request $request)
+	{
+		$user = Auth::user();
+		if (!$user) {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+		$data = $request->all();
+		if ($data && is_array($data)) extract($data);
+
+		if (!$sort_key) $sort_key = 'users.id';
+		if (!$sort_direction) $sort_direction = 'desc';
+		$page_id = (int) $page_id;
+		if ($page_id <= 0) $page_id = 1;
+
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
+		$start = $limit * ($page_id - 1);
+		$proposal = Proposal::where('discourse_topic_id', $topicId)->first();
+
+		$userAttested = TopicRead::join('users', 'topic_reads.user_id', '=', 'users.id')
+			->join('profile', 'profile.user_id', '=', 'users.id')
+			->where('topic_reads.topic_id', $topicId)
+			->orderBy($sort_key, $sort_direction)
+			->offset($start)
+			->limit($limit)
+			->select(['topic_reads.*', 'profile.forum_name'])
+			->get();
+		return [
+			'success' => true,
+			'users' => $userAttested,
+			'finished' => count($userAttested) < $limit ? true : false
+		];
+	}
+
+	public function getNotAttestedTopic($topicId, Request $request)
+	{
+		$user = Auth::user();
+		if (!$user) {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+		$data = $request->all();
+		if ($data && is_array($data)) extract($data);
+
+		if (!$sort_key) $sort_key = 'users.id';
+		if (!$sort_direction) $sort_direction = 'desc';
+		$page_id = (int) $page_id;
+		if ($page_id <= 0) $page_id = 1;
+
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
+		$start = $limit * ($page_id - 1);
+		$proposal = Proposal::where('discourse_topic_id', $topicId)->first();
+		$userAttested = TopicRead::where('topic_id', $topicId)->pluck('user_id');
+		$userNotAttested = User::join('profile', 'profile.user_id', '=', 'users.id')
+			->where('users.is_member', 1)->where('users.banned', 0)->where('users.can_access', 1)
+			->whereNotIn('users.id', $userAttested)
+			->orderBy($sort_key, $sort_direction)
+			->offset($start)
+			->limit($limit)
+			->select(['profile.user_id', 'profile.forum_name'])
+			->get();;
+		return [
+			'success' => true,
+			'users' => $userNotAttested,
+			'finished' => count($userNotAttested) < $limit ? true : false
+		];
+	}
 }
