@@ -116,6 +116,8 @@ Route::group(['prefix' => 'shared', 'middleware' => ['auth:api']], function () {
 	Route::get('/completed-votes-export', 'SharedController@exportVoteCompleted');
 	Route::get('/metric-discussions', 'SharedController@getMetricAttestations');
 	Route::get('/report-discussions', 'SharedController@reportDiscussions');
+	Route::get('/topic-attested/{topicId}', 'SharedController@getAttestedTopic');
+	Route::get('/topic-not-attested/{topicId}', 'SharedController@getNotAttestedTopic');
 });
 
 // User Functions
