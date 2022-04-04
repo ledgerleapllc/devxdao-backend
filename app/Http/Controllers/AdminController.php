@@ -2077,12 +2077,9 @@ class AdminController extends Controller
 			}
 			$user->total_informal_votes = $total_informal_votes;
 			$user->total_voted = $total_voted;
-			$total_staked = DB::table('reputation')
-				->where('user_id', $user->id)
-				->where('type', 'Staked')
-				->sum('staked');
-			$user->total_staked = $total_staked;
-			$user->total_rep = abs($total_staked) + $user->rep;
+			$actual_staked = Helper::getActualStaked($user->id);
+			$user->total_staked = $actual_staked;
+			$user->total_rep = abs($actual_staked) + $user->rep;
 		}
 
 		return [
@@ -3864,12 +3861,9 @@ class AdminController extends Controller
 			}
 			$user->total_informal_votes = $total_informal_votes;
 			$user->total_voted = $total_voted;
-			$total_staked = DB::table('reputation')
-				->where('user_id', $user->id)
-				->where('type', 'Staked')
-				->sum('staked');
-			$user->total_staked = $total_staked;
-			$user->total_rep = abs($total_staked) + $user->rep;
+			$actual_staked = Helper::getActualStaked($user->id);
+			$user->total_staked = $actual_staked;
+			$user->total_rep = abs($actual_staked) + $user->rep;
 		}
 		return Excel::download(new UserExport($users), 'user.csv');
 	}
