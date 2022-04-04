@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Http\Helper;
 use App\Proposal;
 use App\Reputation;
 use App\User;
@@ -42,22 +43,32 @@ class ReturnMintedProposalCompleted extends Command
     public function handle()
     {
         $proposals = Proposal::where('proposal.type', 'grant')
-        ->where('proposal.status', 'completed')
-        ->where(function ($query) {
+            ->where('proposal.status', 'completed')
+            ->where(function ($query) {
                 $query->where('proposal.rep', 0)
                     ->orWhere('proposal.rep', null);
-        })
-        ->get();
-        foreach($proposals as $proposal) {
+            })
+            ->get();
+        foreach ($proposals as $proposal) {
             $op = User::where('id', $proposal->user_id)->where('is_member', 1)->first();
-            if($op) {
+            if ($op) {
                 $repuations = Reputation::where('user_id', $op->id)->where('proposal_id', $proposal->id)->where('type', 'Minted Pending')->get();
-                foreach($repuations as $repuation) {
-                    Log::info( "Proposal: $repuation->proposal_id , user: $op->id");
+                foreach ($repuations as $repuation) {
+                    Log::info("Proposal: $repuation->proposal_id , user: $op->id");
+                    $value = (float) $repuation->pending;
+                    if ($value > 0) {
+                        $op->profile->rep_pending = (float) $op->profile->rep_pending - $value;
+                        if ((float) $op->profile->rep_pending < 0) {
+                            $op->profile->rep_pending = 0;
+                        }
+                        $op->profile->save();
+                        Helper::updateRepProfile($op->id, $value);
+                        Helper::createRepHistory($op->id, $value, $op->profile->rep, 'Minted', $repuation->event, $proposal->id, null, 'completeProposal');
+                    }
                     $repuation->type = 'Minted';
                     $repuation->value = (float) $repuation->pending;
                     $repuation->pending = 0;
-                    $repuation->save();       
+                    $repuation->save();
                 }
             }
         }
