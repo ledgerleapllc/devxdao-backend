@@ -55,6 +55,7 @@ use App\SignatureGrant;
 use App\Survey;
 use App\SurveyDownVoteRank;
 use App\SurveyRank;
+use App\TopicFlag;
 use App\TopicRead;
 use Carbon\Carbon;
 use Exception;
@@ -3682,6 +3683,42 @@ class SharedController extends Controller
 			'success' => true,
 			'users' => $userNotAttested,
 			'finished' => count($userNotAttested) < $limit ? true : false
+		];
+	}
+
+	public function getFlagTopic($topicId, Request $request)
+	{
+		$user = Auth::user();
+		if (!$user) {
+			return [
+				'success' => false,
+				'message' => 'Not authorized'
+			];
+		}
+		$data = $request->all();
+		if ($data && is_array($data)) extract($data);
+
+		if (!$sort_key) $sort_key = 'users.id';
+		if (!$sort_direction) $sort_direction = 'desc';
+		$page_id = (int) $page_id;
+		if ($page_id <= 0) $page_id = 1;
+
+		$limit = isset($data['limit']) ? $data['limit'] : config('define.default.limit');
+		$start = $limit * ($page_id - 1);
+
+		$flagTopics = TopicFlag::join('users', 'topic_flags.user_id', '=', 'users.id')
+			->join('profile', 'profile.user_id', '=', 'users.id')
+			->where('topic_flags.topic_id', $topicId)
+			->orderBy($sort_key, $sort_direction)
+			->offset($start)
+			->limit($limit)
+			->distinct('topic_flags.user_id')
+			->select(['topic_flags.user_id', 'profile.forum_name'])
+			->get();
+		return [
+			'success' => true,
+			'users' => $flagTopics,
+			'finished' => count($flagTopics) < $limit ? true : false
 		];
 	}
 }
