@@ -38,7 +38,6 @@ class CreateDataComplianceUser extends Migration
             $compliance_user->is_super_admin = 1;
             $compliance_user->email_verified_at = now();
             $compliance_user->save();
-          
         }
         // if (!$compliance_user->hasRole('admin'))
         // $compliance_user->assignRole('admin');

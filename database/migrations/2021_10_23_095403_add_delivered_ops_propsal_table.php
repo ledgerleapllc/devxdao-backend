@@ -16,7 +16,6 @@ class AddDeliveredOpsPropsalTable extends Migration
         Schema::table('proposal', function (Blueprint $table) {
             $table->text('things_delivered')->nullable();
             $table->timestampTz('delivered_at', 0)->nullable();
-            \DB::statement("ALTER TABLE `proposal` CHANGE `type` `type` ENUM('grant', 'membership', 'simple', 'admin-grant') DEFAULT 'grant';");
         });
     }
 

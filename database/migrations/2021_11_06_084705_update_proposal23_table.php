@@ -18,7 +18,6 @@ class UpdateProposal23Table extends Migration
             $table->integer('proposal_request_payment')->nullable();
             $table->integer('proposal_request_from')->nullable();
             $table->string('proposal_advance_status')->nullable();
-            \DB::statement("ALTER TABLE `proposal` CHANGE `type` `type` ENUM('grant', 'membership', 'simple', 'admin-grant', 'advance-payment') DEFAULT 'grant';");
         });
     }
 
