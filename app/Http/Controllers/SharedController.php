@@ -2695,6 +2695,7 @@ class SharedController extends Controller
 						'proposal.title',
 						'proposal.include_membership',
 						'proposal.discourse_topic_id',
+						'proposal.total_user_va',
 						'users.first_name',
 						'users.last_name',
 						'users.id as user_id',
@@ -2811,7 +2812,7 @@ class SharedController extends Controller
 					->limit($limit)
 					->get();
 			}
-			$totalVAs = Helper::getTotalMembers();
+			$totalVAs = User::where('is_member', true)->count();
 			if ($votes) {
 				foreach ($votes as $vote) {
 					$informalVote = Vote::where('proposal_id', $vote->proposal_id)
@@ -2918,6 +2919,7 @@ class SharedController extends Controller
 						'proposal.include_membership',
 						'proposal.total_grant',
 						'proposal.discourse_topic_id',
+						'proposal.total_user_va',
 						'users.first_name',
 						'users.last_name',
 						'users.id as user_id',
@@ -2996,7 +2998,7 @@ class SharedController extends Controller
 					->get();
 			}
 		}
-		$totalVAs = Helper::getTotalMembers();
+		$totalVAs = User::where('is_member', true)->count();
 		foreach($votes as $vote) {
 			$count = DB::table('topic_reads')->where('topic_id', $vote->discourse_topic_id)->count();
 			$total = $vote->total_user_va ?  $vote->total_user_va : $totalVAs;
