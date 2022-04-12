@@ -517,7 +517,7 @@ class Helper
         }
       }
       // return minted pending OP
-      if ($op->hasRole('member')) {
+      if ($op->hasRole('member') && $voteFormal) {
         $reputationMintedFormalOp = Reputation::where('user_id', $op->id)
           ->where('proposal_id', $vote->proposal_id)
           ->where('type', 'Minted Pending')
