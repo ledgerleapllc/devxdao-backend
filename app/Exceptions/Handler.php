@@ -4,6 +4,7 @@ namespace App\Exceptions;
 
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use League\OAuth2\Server\Exception\OAuthServerException;
 use Throwable;
 
@@ -60,6 +61,12 @@ class Handler extends ExceptionHandler
         if ($exception instanceof AuthenticationException || $exception instanceof OAuthServerException) {
             return response()->json([
                 "message" => "Not authorized"
+            ]);
+        }
+        if ($exception instanceof ThrottleRequestsException) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You attempted too many times',
             ]);
         }
         return parent::render($request, $exception);
