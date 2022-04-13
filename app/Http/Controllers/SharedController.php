@@ -542,12 +542,20 @@ class SharedController extends Controller
 			// Validator
 			$validator = Validator::make($request->all(), [
 				'current_password' => 'required',
-				'new_password' => 'required'
+				'new_password' => [
+					'required',
+					'string',
+					'min:8',
+					'regex:/[a-zA-Z]/',
+					'regex:/[0-9]/',
+					'regex:/[.,=+;:()_\[\]<>{}\^@$!%*#?&]/',
+				]
 			]);
 			if ($validator->fails()) {
 				return [
 					'success' => false,
-					'message' => 'Provide all the necessary information'
+					'message' => 'Provide all the necessary information',
+					'error' => $validator->errors()
 				];
 			}
 
@@ -576,6 +584,7 @@ class SharedController extends Controller
 			$tokenId = $tokenResult->token->id;
 			$user->accessTokenAPI = $tokenResult->accessToken;
 			DB::table('oauth_access_tokens')->where('user_id',$user->id)->where('id', '!=', $tokenId)->delete();
+			Mail::to($user)->send(new UserAlert('Notification', 'Your password has been changed.'));
 			return [
 				'success' => true,
 				'user' => $user

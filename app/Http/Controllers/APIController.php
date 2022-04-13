@@ -101,7 +101,14 @@ class APIController extends Controller
     // Validator
     $validator = Validator::make($request->all(), [
       'email' => 'required|email',
-      'password' => 'required',
+      'password' => [
+        'required',
+        'string',
+        'min:8',
+        'regex:/[a-zA-Z]/',
+        'regex:/[0-9]/',
+        'regex:/[.,=+;:()_\[\]<>{}\^@$!%*#?&]/',
+      ],
       'token' => 'required'
     ]);
     if ($validator->fails()) return ['success' => false];
@@ -423,7 +430,14 @@ class APIController extends Controller
     // Validator
     $validator = Validator::make($request->all(), [
       'email' => 'required|email',
-      'password' => 'required|min:7',
+      'password' => [
+        'required',
+        'string',
+        'min:8',
+        'regex:/[a-zA-Z]/',
+        'regex:/[0-9]/',
+        'regex:/[.,=+;:()_\[\]<>{}\^@$!%*#?&]/',
+      ],
       'first_name' => 'required',
       'last_name' => 'required',
       'forum_name' => 'required|regex:/^([A-Za-z0-9-_.]+)$/'
