@@ -1943,7 +1943,7 @@ class Helper
   {
     $checks = Reputation::where('proposal_id', $proposalId)->where('type', '!=', 'Staked')->count();
     if ($checks > 0) {
-        return;
+      return;
     }
     $reputations = Reputation::where('proposal_id', $proposalId)->whereNotNull('vote_id')->where('type', 'Staked')->get();
     foreach ($reputations as $reputation) {
@@ -1969,7 +1969,7 @@ class Helper
   public static function checkPathCompliance() {
     if (Str::contains(request()->path(), 'compliance')) {
 			return true;
-		};
+		}
     return false;
   }
 
@@ -2121,18 +2121,26 @@ class Helper
 
   public static function getActualStaked($userId) {
     $total_staked = DB::table('reputation')
-			->where('user_id', $userId)
+        ->where('user_id', $userId)
 				->where('type', 'Staked')
 				->sum('staked');
-			$total_staked = round(abs($total_staked), 5);
-			if ($total_staked < 0) $total_staked = 0;
+		$total_staked = round(abs($total_staked), 5);
+		if ($total_staked < 0) $total_staked = 0;
 
-			$total_return_staked = DB::table('reputation')
-			->where('user_id', $userId)
+		$total_return_staked = DB::table('reputation')
+        ->where('user_id', $userId)
 				->where('type', 'Gained')
 				->where('return_type', 'Return Staked')
 				->sum('value');
-			$total_return_staked = round(abs($total_return_staked), 5);
-      return $total_staked - $total_return_staked;
+		$total_return_staked = round(abs($total_return_staked), 5);
+    return $total_staked - $total_return_staked;
+  }
+
+  public static function hasURL($value) {
+    $regex = "/([a-z0-9-.]*)\.([a-z]{2,3})/";
+    if (preg_match($regex, $value)) {
+      return true;
+    }
+    return false; 
   }
 }

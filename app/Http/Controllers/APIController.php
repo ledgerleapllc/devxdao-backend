@@ -47,21 +47,19 @@ class APIController extends Controller
         'message' => 'Not authorized'
       ];
     }
-    if (
-      !$email_address ||
-      $email_address == '' ||
-      !filter_var($email_address, FILTER_VALIDATE_EMAIL)
-    ) {
+    if (!$email_address || $email_address == '' || !filter_var($email_address, FILTER_VALIDATE_EMAIL)) {
       return [
         'success' => false,
         'message' => 'Invalid email address'
       ];
     }
 
-    $user = DB::table('users')->join('profile', 'users.id', '=', 'profile.user_id')
-      ->where('users.is_member', 1)->where('users.email', $email_address)
-      ->select(['users.id as user_id', 'users.email', 'users.first_name', 'users.last_name', 'profile.forum_name'])
-      ->first();
+    $user = DB::table('users')
+              ->join('profile', 'users.id', '=', 'profile.user_id')
+              ->where('users.is_member', 1)
+              ->where('users.email', $email_address)
+              ->select(['users.id as user_id', 'users.email', 'users.first_name', 'users.last_name', 'profile.forum_name'])
+              ->first();
     if ($user) {
       return [
         'success' => true,
@@ -160,8 +158,9 @@ class APIController extends Controller
     if (!$user) return ["success" => true];
 
     DB::table('oauth_access_tokens')
-    ->where('user_id', $user->id)
-    ->delete();
+      ->where('user_id', $user->id)
+      ->delete();
+
     // Clear Tokens
     DB::table('password_resets')
       ->where('email', $email)
@@ -388,6 +387,20 @@ class APIController extends Controller
     $qualifications = $request->get('qualifications');
     $technology = $request->get('technology');
 
+    if (Helper::hasURL($first_name)) {
+      return [
+        'success' => false,
+        'message' => 'First name has URL',
+      ];
+    }
+
+    if (Helper::hasURL($last_name)) {
+      return [
+        'success' => false,
+        'message' => 'Last name has URL',
+      ];
+    }
+
     $item = PreRegister::where('email', $email)->first();
     if ($item) {
       return [
@@ -466,16 +479,45 @@ class APIController extends Controller
 
     $code = Str::random(6);
 
-    if (
-      !$first_name ||
-      !$last_name ||
-      !$email ||
-      !$password ||
-      !$forum_name
-    ) {
+    if (!$first_name || !$last_name || !$email || !$password || !$forum_name) {
       return [
         'success' => false,
         'message' => 'Provide all the necessary information'
+      ];
+    }
+
+    if (Helper::hasURL($first_name)) {
+      return [
+        'success' => false,
+        'message' => 'First name has url',
+      ];
+    }
+
+    if (Helper::hasURL($last_name)) {
+      return [
+        'success' => false,
+        'message' => 'Last name has url',
+      ];
+    }
+
+    if ($company && Helper::hasURL($company)) {
+      return [
+        'success' => false,
+        'message' => 'Company has url',
+      ];
+    }
+
+    if (Helper::hasURL($forum_name)) {
+      return [
+        'success' => false,
+        'message' => 'Forum name has url',
+      ];
+    }
+
+    if (Helper::hasURL($telegram)) {
+      return [
+        'success' => false,
+        'message' => 'Telegram has url',
       ];
     }
 
@@ -487,10 +529,7 @@ class APIController extends Controller
       ];
     }
 
-    if (
-      strlen($forum_name) < 2 ||
-      strlen($forum_name) > 25
-    ) {
+    if (strlen($forum_name) < 2 || strlen($forum_name) > 25) {
       return [
         'success' => false,
         'message' => 'Forum names must be at minimum 2 chacters, and maximum 25 characters.'
@@ -790,6 +829,21 @@ class APIController extends Controller
         'message' => 'Provide all the necessary information'
       ];
     }
+
+    if (Helper::hasURL($request->first_name)) {
+      return [
+        'success' => false,
+        'message' => 'First name has URL'
+      ];
+    }
+
+    if (Helper::hasURL($request->last_name)) {
+      return [
+        'success' => false,
+        'message' => 'Last name has URL'
+      ];
+    }
+
     $user = User::with(['profile', 'permissions'])->where('email', $request->email)->where('admin_status', 'invited')->where('confirmation_code', $request->code)->first();
     if (!$user) {
       return [

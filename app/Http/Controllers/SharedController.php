@@ -474,6 +474,20 @@ class SharedController extends Controller
 				$city = $request->get('city');
 				$zip = $request->get('zip');
 
+				if (Helper::hasURL($first_name)) {
+					return [
+						'success' => false,
+						'message' => 'First name has URL'
+					];
+				}
+
+				if (Helper::hasURL($last_name)) {
+					return [
+						'success' => false,
+						'message' => 'Last name has URL'
+					];
+				}
+
 				if ($first_name) $user->first_name = $first_name;
 				if ($last_name) $user->last_name = $last_name;
 				$user->save();
