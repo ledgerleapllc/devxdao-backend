@@ -1597,7 +1597,7 @@ class UserController extends Controller
 			if ($proposal) {
 				return [
 					'success' => false,
-					'message' => "Proposal with the same title already exists"
+					'message' => 'Proposal with the same title already exists'
 				];
 			}
 
@@ -1606,7 +1606,39 @@ class UserController extends Controller
 			$proposal->title = $title;
 			$proposal->short_description = $short_description;
 			$proposal->user_id = $user->id;
-			$proposal->type = "simple";
+			$proposal->type = 'simple';
+			
+			$proposal->explanation_solve = '';
+			$proposal->explanation_benefit = '';
+			$proposal->explanation_goal = '';
+			$proposal->total_grant = 0;
+			$proposal->license = 0;
+			$proposal->relationship = '';
+			$proposal->received_grant_before = 0;
+			$proposal->has_fulfilled = 0;
+			$proposal->received_grant = 0;
+			$proposal->status = 'pending';
+			$proposal->comments = 0;
+			$proposal->changes = 0;
+			$proposal->dos_paid = 0;
+			$proposal->include_membership = 0;
+			$proposal->form_submitted = 0;
+			$proposal->informal_vote_ready_sent = 0;
+			$proposal->formal_vote_ready_sent = 0;
+			$proposal->onboarding_ready_sent = 0;
+			$proposal->grant_ready_sent = 0;
+			$proposal->yesNo1 = 0;
+			$proposal->yesNo2 = 0;
+			$proposal->yesNo3 = 0;
+			$proposal->yesNo4 = 0;
+			$proposal->signed_count = 0;
+			$proposal->agree1 = 0;
+			$proposal->agree2 = 0;
+			$proposal->is_company_or_organization = 0;
+			$proposal->have_mentor = 0;
+			$proposal->agree3 = 0;
+			$proposal->topic_posts_count = 0;
+
 			$proposal->save();
 
 			// Emailer
@@ -1630,10 +1662,10 @@ class UserController extends Controller
 		if ($user && $user->hasRole('member') && $user->email_verified) {
 			// Validator
 			$validator = Validator::make($request->all(), [
-			'title' => 'required',
-			'total_grant' => 'required',
-			'things_delivered' => 'required',
-			'delivered_at' => 'required',
+				'title' => 'required',
+				'total_grant' => 'required',
+				'things_delivered' => 'required',
+				'delivered_at' => 'required',
 			]);
 			if ($validator->fails()) {
 				return [
@@ -2069,7 +2101,7 @@ class UserController extends Controller
 					'title' => 'required',
 					'short_description' => 'required',
 					'explanation_benefit' => 'required',
-					//'explanation_goal' => 'required',
+					'explanation_goal' => 'required',
 					'total_grant' => 'required',
 					'resume' => 'required',
 					//   'extra_notes' => 'required',
@@ -2112,7 +2144,7 @@ class UserController extends Controller
 				$title = $request->get('title');
 				$short_description = $request->get('short_description');
 				$explanation_benefit = $request->get('explanation_benefit');
-				// $explanation_goal = $request->get('explanation_goal');
+				$explanation_goal = $request->get('explanation_goal');
 
 				$license = (int) $request->get('license');
 				$license_other = $request->get('license_other');
@@ -2170,9 +2202,7 @@ class UserController extends Controller
 
 				$memberRequired = (int) $request->get('memberRequired');
 
-				if (
-					$memberRequired && (!$members || !count($members))
-				) {
+				if ($memberRequired && (!$members || !count($members))) {
 					return [
 						'success' => false,
 						'message' => 'Provide all the necessary information'
@@ -2194,7 +2224,7 @@ class UserController extends Controller
 				$proposal->title = $title;
 				$proposal->short_description = $short_description;
 				$proposal->explanation_benefit = $explanation_benefit;
-				//$proposal->explanation_goal = $explanation_goal;
+				$proposal->explanation_goal = $explanation_goal;
 				$proposal->total_grant = $total_grant;
 				$proposal->license = $license;
 				$proposal->resume = $resume;
@@ -2271,7 +2301,6 @@ class UserController extends Controller
 				$proposal->member_required = $memberRequired;
 				$proposal->save();
 
-
 				if ($codeObject) {
 					$codeObject->used = 1;
 					$codeObject->proposal_id = $proposal->id;
@@ -2284,10 +2313,7 @@ class UserController extends Controller
 						$full_name = $bio = $address = $city = $zip = $country = '';
 						extract($member);
 
-						if (
-							$full_name &&
-							$bio
-						) {
+						if ($full_name && $bio) {
 							$team = new Team;
 							$team->full_name = $full_name;
 							$team->bio = $bio;
@@ -2371,9 +2397,7 @@ class UserController extends Controller
 					extract($milestoneData);
 					$grant = (float) $grant;
 
-					if (
-						$grant && $title && $details
-					) {
+					if ($grant && $title && $details) {
 						$milestone = new Milestone;
 						$milestone->proposal_id = (int) $proposal->id;
 						$milestone->title = $title;

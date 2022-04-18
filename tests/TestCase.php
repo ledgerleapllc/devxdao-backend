@@ -66,6 +66,45 @@ abstract class TestCase extends BaseTestCase
         }
     }
 
+    public function addMember() {
+        $user = User::where(['email' => 'testuser@gmail.com'])->first();
+        if (!$user) {
+            $user = new User;
+            $user->first_name = 'Test';
+            $user->last_name = 'User';
+            $user->email = 'testuser@gmail.com';
+            $user->password = Hash::make('testuser');
+            $user->confirmation_code = 'testuser';
+            $user->email_verified = 1;
+            $user->is_admin = 1;
+            $user->save();
+        }
+
+        if (!$user->hasRole('participant')) {
+            $user->assignRole('participant');
+        }
+
+        if (!$user->hasRole('member')) {
+            $user->assignRole('member');
+        }
+
+        $profile = Profile::where('user_id', $user->id)->first();
+        if (!$profile) {
+            $profile = new Profile;
+            $profile->user_id = $user->id;
+            $profile->company = 'Test User';
+            $profile->dob = '1989-12-1';
+            $profile->country_citizenship = 'United States';
+            $profile->country_residence = 'United States';
+            $profile->address = 'New York';
+            $profile->city = 'New York';
+            $profile->zip = '10025';
+            $profile->step_review = 1;
+            $profile->step_kyc = 1;
+            $profile->save();
+        }
+    }
+
     public function addAdmin() {
         $user = User::where(['email' => 'ledgerleapllc@gmail.com'])->first();
         if (!$user) {
@@ -130,6 +169,22 @@ abstract class TestCase extends BaseTestCase
         }
     }
 
+    public function getMemberToken() {
+        $user = [
+            'email' => 'testuser@gmail.com',
+            'password' => 'testuser',
+        ];
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->json('post', '/api/login', $user);
+        
+        $apiResponse = $response->baseResponse->getData();
+        $token = $apiResponse->user->accessTokenAPI;
+        
+        return $token;
+    }
+
     public function getAdminToken() {
         $user = [
             'email' => 'ledgerleapllc@gmail.com',
@@ -139,7 +194,7 @@ abstract class TestCase extends BaseTestCase
         $response = $this->withHeaders([
             'Accept' => 'application/json',
         ])->json('post', '/api/login', $user);
-    
+        
         $apiResponse = $response->baseResponse->getData();
         $token = $apiResponse->user->accessTokenAPI;
         
