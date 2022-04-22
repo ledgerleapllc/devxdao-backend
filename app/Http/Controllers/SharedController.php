@@ -1519,8 +1519,8 @@ class SharedController extends Controller
 	public function uploadProposalFiles(Request $request)
 	{
 		$validator = Validator::make($request->all(), [
-			"files"    => "required|array",
-			"files.*"  => "required|file|mimes:pdf,doc,docx",
+			"files"    => "array",
+			"files.*"  => "file|mimes:pdf,doc,docx",
 		]);
 
 		if ($validator->fails()) {
