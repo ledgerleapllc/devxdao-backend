@@ -360,26 +360,26 @@ class UserController extends Controller
 		if ($user && $user->hasRole(['member', 'participant']) && $user->email_verified) {
 			$profile = Profile::where('user_id', $user->id)->first();
 			$items = Reputation::leftJoin('proposal', 'proposal.id', '=', 'reputation.proposal_id')
-			->leftJoin('users', 'users.id', '=', 'proposal.user_id')
-			->where('reputation.user_id', $user->id)
-				->where(function ($query) use ($search) {
-					if ($search) {
-						$query->where('proposal.title', 'like', '%' . $search . '%')
-							->orWhere('proposal.id', 'like', '%' . $search . '%')
-							->orWhere('reputation.type', 'like', '%' . $search . '%');
-					}
-				})
-				->select([
-					'reputation.*',
-					'proposal.include_membership',
-					'proposal.title as proposal_title',
-					'users.first_name as op_first_name',
-					'users.last_name as op_last_name'
-				])
-				->orderBy($sort_key, $sort_direction)
-				->offset($start)
-				->limit($limit)
-				->get();
+													->leftJoin('users', 'users.id', '=', 'proposal.user_id')
+													->where('reputation.user_id', $user->id)
+													->where(function ($query) use ($search) {
+														if ($search) {
+															$query->where('proposal.title', 'like', '%' . $search . '%')
+																->orWhere('proposal.id', 'like', '%' . $search . '%')
+																->orWhere('reputation.type', 'like', '%' . $search . '%');
+														}
+													})
+													->select([
+														'reputation.*',
+														'proposal.include_membership',
+														'proposal.title as proposal_title',
+														'users.first_name as op_first_name',
+														'users.last_name as op_last_name'
+													])
+													->orderBy($sort_key, $sort_direction)
+													->offset($start)
+													->limit($limit)
+													->get();
 		}
 
 		return [
@@ -741,9 +741,9 @@ class UserController extends Controller
 			$proposal->status = 'approved';
 			$proposal->dos_amount = $dos_fee_amount;
 			$proposal->dos_cc_amount = $dos_fee_amount;
-            $proposal->save();
+      $proposal->save();
 
-            // Create Change Record
+      // Create Change Record
 			$proposalChange = new ProposalChange();
 			$proposalChange->proposal_id = $proposalId;
 			$proposalChange->user_id = $user->id;
@@ -934,12 +934,7 @@ class UserController extends Controller
 		$user = Auth::user();
 		$amount = (float) $request->get('amount');
 
-		if (
-			$user &&
-			$user->hasRole(['participant', 'member']) &&
-			$amount > 0 &&
-			$user->email_verified
-		) {
+		if ($user && $user->hasRole(['participant', 'member']) && $amount > 0 && $user->email_verified) {
 			$amount = (int) (100 * $amount);
 
 			$stripe = new \Stripe\StripeClient(
@@ -955,7 +950,6 @@ class UserController extends Controller
 
 				if ($paymentIntent && isset($paymentIntent->client_secret)) {
 					$secret = $paymentIntent->client_secret;
-
 					return [
 				  	'success' => true,
 				  	'secret' => $secret,
@@ -972,22 +966,6 @@ class UserController extends Controller
 					'message' => $e->getMessage()
 				];
 			}
-
-			/*
-			\Stripe\Stripe::setApiKey(config('services.stripe.sk_test'));
-
-			$paymentIntent = \Stripe\PaymentIntent::create([
-				'amount' => $amount,
-				'currency' => 'eur',
-		  ]);
-
-		  $secret = $paymentIntent->client_secret;
-
-		  return [
-		  	'success' => true,
-		  	'secret' => $secret,
-		  ];
-		  */
 		}
 
 		return ['success' => false];
@@ -1607,38 +1585,10 @@ class UserController extends Controller
 			$proposal->short_description = $short_description;
 			$proposal->user_id = $user->id;
 			$proposal->type = 'simple';
-			
-			$proposal->explanation_solve = '';
 			$proposal->explanation_benefit = '';
 			$proposal->explanation_goal = '';
 			$proposal->total_grant = 0;
-			$proposal->license = 0;
 			$proposal->relationship = '';
-			$proposal->received_grant_before = 0;
-			$proposal->has_fulfilled = 0;
-			$proposal->received_grant = 0;
-			$proposal->status = 'pending';
-			$proposal->comments = 0;
-			$proposal->changes = 0;
-			$proposal->dos_paid = 0;
-			$proposal->include_membership = 0;
-			$proposal->form_submitted = 0;
-			$proposal->informal_vote_ready_sent = 0;
-			$proposal->formal_vote_ready_sent = 0;
-			$proposal->onboarding_ready_sent = 0;
-			$proposal->grant_ready_sent = 0;
-			$proposal->yesNo1 = 0;
-			$proposal->yesNo2 = 0;
-			$proposal->yesNo3 = 0;
-			$proposal->yesNo4 = 0;
-			$proposal->signed_count = 0;
-			$proposal->agree1 = 0;
-			$proposal->agree2 = 0;
-			$proposal->is_company_or_organization = 0;
-			$proposal->have_mentor = 0;
-			$proposal->agree3 = 0;
-			$proposal->topic_posts_count = 0;
-
 			$proposal->save();
 
 			// Emailer
@@ -1675,6 +1625,7 @@ class UserController extends Controller
 			}
 
 			$title = $request->get('title');
+			$short_description = $request->get('short_description');
 			$total_grant = $request->get('total_grant');
 			$things_delivered = $request->get('things_delivered');
 			$delivered_at = $request->get('delivered_at');
@@ -1693,24 +1644,21 @@ class UserController extends Controller
 			// Creating Proposal
 			$proposal = new Proposal;
 			$proposal->title = $title;
-
-			$proposal->total_grant = $total_grant;
-			$proposal->things_delivered = $things_delivered;
+			$proposal->short_description = $short_description ?? '';
+			$proposal->total_grant = (float) $total_grant;
+			$proposal->things_delivered = $things_delivered ?? '';
 			$proposal->delivered_at = $delivered_at;
 			$proposal->extra_notes = $extra_notes;
-
 			$proposal->user_id = $user->id;
 			$proposal->type = "admin-grant";
+			$proposal->explanation_benefit = '';
+			$proposal->explanation_goal = '';
+			$proposal->total_grant = 0;
+			$proposal->relationship = '';
 			$proposal->save();
 
 			// Add Files
-			if (
-				$files &&
-				$names &&
-				is_array($files) &&
-				is_array($names) &&
-				count($files) == count($names)
-			) {
+			if ($files && $names && is_array($files) && is_array($names) && count($files) == count($names)) {
 				for ($i = 0; $i < count($files); $i++) {
 					$file = $files[$i];
 					$name = $names[$i];
@@ -1740,6 +1688,7 @@ class UserController extends Controller
 			$url = Storage::disk('local')->url($fullpath);
 			$proposal->pdf = $url;
 			$proposal->save();
+
 			return [
 				'success' => true,
 				'proposal' => $proposal
@@ -1756,9 +1705,9 @@ class UserController extends Controller
 		if ($user && $user->hasRole('member') && $user->email_verified) {
 			// Validator
 			$validator = Validator::make($request->all(), [
-                'total_grant' => 'required',
-                'proposal_id' => 'required',
-                'amount_advance_detail' => 'required',
+        'total_grant' => 'required',
+        'proposal_id' => 'required',
+        'amount_advance_detail' => 'required',
 			]);
 			if ($validator->fails()) {
 				return [
@@ -1790,25 +1739,23 @@ class UserController extends Controller
 			// Creating Proposal
 			$proposal = new Proposal;
 			$proposal->title = $title;
-			$proposal->total_grant = $request->total_grant;
+			$proposal->total_grant = (float) $request->total_grant;
 			$proposal->proposal_request_payment = $request->proposal_id;
 			$proposal->amount_advance_detail = $request->amount_advance_detail;
 			$proposal->user_id = $user->id;
 			$proposal->type = "advance-payment";
 			$proposal->proposal_advance_status = "requested";
+			$proposal->short_description = '';
+			$proposal->explanation_benefit = '';
+			$proposal->explanation_goal = '';
+			$proposal->relationship = '';
 			$proposal->save();
 
 			$proposalRequest->proposal_request_from = $proposal->id;
 			$proposalRequest->save();
 
 			// Add Files
-			if (
-				$files &&
-				$names &&
-				is_array($files) &&
-				is_array($names) &&
-				count($files) == count($names)
-			) {
+			if ($files && $names && is_array($files) && is_array($names) && count($files) == count($names)) {
 				for ($i = 0; $i < count($files); $i++) {
 					$file = $files[$i];
 					$name = $names[$i];
@@ -2104,20 +2051,12 @@ class UserController extends Controller
 					'explanation_goal' => 'required',
 					'total_grant' => 'required',
 					'resume' => 'required',
-					//   'extra_notes' => 'required',
-					// 'citations' => 'required|array',
-					// 'members' => 'required|array',
 					'grants' => 'required|array',
 					'milestones' => 'required|array',
 					'milestones.*.title' => 'required',
 					'milestones.*.details' => 'required',
 					'milestones.*.deadline' => 'required',
 					'relationship' => 'required'
-					// 'previous_work' => 'required',
-					// 'other_work' => 'required',
-					//   'formField1' => 'required',
-					//   'formField2' => 'required',
-					//   'purpose' => 'required'
 				]);
 				if ($validator->fails()) {
 					return [
@@ -2183,21 +2122,6 @@ class UserController extends Controller
 				$has_fulfilled = (int) $request->get('has_fulfilled');
 				$previous_work = $request->get('previous_work');
 				$other_work = $request->get('other_work');
-				// $received_grant = (int) $request->get('received_grant');
-				// $foundational_work = $request->get('foundational_work');
-
-				// $yesNo1 = (int) $request->get('yesNo1');
-				// $yesNo1Exp = $request->get('yesNo1Exp');
-				// $yesNo2 = (int) $request->get('yesNo2');
-				// $yesNo2Exp = $request->get('yesNo2Exp');
-				// $yesNo3 = (int) $request->get('yesNo3');
-				// $yesNo3Exp = $request->get('yesNo3Exp');
-				// $yesNo4 = (int) $request->get('yesNo4');
-				// $yesNo4Exp = $request->get('yesNo4Exp');
-				// $formField1 = $request->get('formField1');
-				// $formField2 = $request->get('formField2');
-				// $purpose = $request->get('purpose');
-				// $purposeOther = $request->get('purposeOther');
 				$tags = $request->get('tags');
 
 				$memberRequired = (int) $request->get('memberRequired');
@@ -2225,7 +2149,7 @@ class UserController extends Controller
 				$proposal->short_description = $short_description;
 				$proposal->explanation_benefit = $explanation_benefit;
 				$proposal->explanation_goal = $explanation_goal;
-				$proposal->total_grant = $total_grant;
+				$proposal->total_grant = (float) $total_grant;
 				$proposal->license = $license;
 				$proposal->resume = $resume;
 				$proposal->extra_notes = $extra_notes;
@@ -2239,9 +2163,6 @@ class UserController extends Controller
 				}
 				$proposal->previous_work = $previous_work;
 				$proposal->other_work = $other_work;
-				// $proposal->received_grant = $received_grant;
-				// if ($received_grant)
-				// 	$proposal->foundational_work = $foundational_work;
 				$proposal->user_id = $user->id;
 				$proposal->include_membership = $include_membership;
 				$proposal->member_reason = $member_reason;
@@ -2251,19 +2172,6 @@ class UserController extends Controller
 
 				if ($codeObject)
 				$proposal->sponsor_code_id = $codeObject->id;
-
-				// $proposal->yesNo1 = $yesNo1;
-				// $proposal->yesNo2 = $yesNo2;
-				// $proposal->yesNo3 = $yesNo3;
-				// $proposal->yesNo4 = $yesNo4;
-
-				// if ($yesNo1) $proposal->yesNo1Exp = $yesNo1Exp;
-				// if ($yesNo2) $proposal->yesNo2Exp = $yesNo2Exp;
-				// if (!$yesNo3) $proposal->yesNo3Exp = $yesNo3Exp;
-				// if ($yesNo4) $proposal->yesNo4Exp = $yesNo4Exp;
-
-				// $proposal->formField1 = $formField1;
-				// $proposal->formField2 = $formField2;
 
 				// entity
 				$isCompanyOrOrganization = (int) $request->get('is_company_or_organization');
@@ -2291,9 +2199,6 @@ class UserController extends Controller
 				$proposal->agree1 = $agree1;
 				$proposal->agree2 = $agree2;
 				$proposal->agree3 = $agree3;
-
-				// $proposal->purpose = $purpose;
-				// $proposal->purposeOther = $purposeOther;
 
 				if ($tags && count($tags))
 				$proposal->tags = implode(",", $tags);

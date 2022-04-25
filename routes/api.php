@@ -396,7 +396,7 @@ Route::group(['prefix' => 'ops', 'middleware' => ['auth:ops_api']], function () 
 Route::group(['prefix' => 'compliance', 'middleware' => ['auth:compliance_api']], function () {
 	Route::post('/logout', 'ComplianceController@logout');
 	Route::get('/me', 'ComplianceController@getMe');
-
+	
 	Route::prefix('/admin')->group(function () {
 		// POST
 		Route::post('/users/create-cm-user', 'ComplianceController@createPAUser');
@@ -455,7 +455,6 @@ Route::group(['prefix' => 'compliance'], function () {
 	// Route::get('/shared/milestone/export-csv', 'AdminController@exportMilestone');
 	// Route::get('/shared/dos-fee/export-csv', 'AdminController@exportCSVDosFee');
 	// Route::get('/shared/invoice-all/export-csv', 'ComplianceController@exportCSVInvoices');
-
 	Route::post('/login-user', 'ComplianceController@loginWithUserVa');
 });
 

@@ -15,6 +15,7 @@ use App\User;
 use App\Profile;
 use App\OpsUser;
 use App\ComplianceUser;
+use App\Proposal;
 
 use App\Http\Helper;
 
@@ -77,6 +78,7 @@ abstract class TestCase extends BaseTestCase
             $user->confirmation_code = 'testuser';
             $user->email_verified = 1;
             $user->is_admin = 1;
+            $user->is_member = 1;
             $user->save();
         }
 
@@ -101,6 +103,7 @@ abstract class TestCase extends BaseTestCase
             $profile->zip = '10025';
             $profile->step_review = 1;
             $profile->step_kyc = 1;
+            $profile->rep = 1000;
             $profile->save();
         }
     }
@@ -169,6 +172,22 @@ abstract class TestCase extends BaseTestCase
         }
     }
 
+    public function getMemberVAToken() {
+        $user = [
+            'email' => 'testuser@gmail.com',
+            'password' => 'testuser',
+        ];
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->json('post', '/api/compliance/login-user', $user);
+        
+        $apiResponse = $response->baseResponse->getData();
+        $token = $apiResponse->user->accessTokenAPI;
+        
+        return $token;
+    }
+    
     public function getMemberToken() {
         $user = [
             'email' => 'testuser@gmail.com',
@@ -185,6 +204,20 @@ abstract class TestCase extends BaseTestCase
         return $token;
     }
 
+    public function getMember() {
+        $user = [
+            'email' => 'testuser@gmail.com',
+            'password' => 'testuser',
+        ];
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->json('post', '/api/login', $user);
+        
+        $apiResponse = $response->baseResponse->getData();
+        return $apiResponse->user;
+    }
+
     public function getAdminToken() {
         $user = [
             'email' => 'ledgerleapllc@gmail.com',
@@ -199,5 +232,63 @@ abstract class TestCase extends BaseTestCase
         $token = $apiResponse->user->accessTokenAPI;
         
         return $token;
+    }
+
+    public function createProposal($token) {
+        $params = [
+            'title' => 'Test Proposal',
+            'short_description' => 'Test Description',
+            'explanation_benefit' => 'Test Explanation',
+            'explanation_goal' => 'Test Goal',
+            'total_grant' => '50',
+            'resume' => 'https://example.com',
+            'grants' => [
+                [
+                    'type' => '2',
+                    'grant' => '1',
+                    'percentage' => '100',
+                    'type_other' => 'Rewards',
+                ]
+            ],
+            'milestones' => [
+                [
+                    'title' => 'Test Milestone',
+                    'details' => 'Test Details',
+                    'deadline' => '2030-09-01',
+                ]
+            ],
+            'relationship' => '3'
+        ];
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $token,
+        ])->json('post', '/api/user/proposal', $params);
+
+        $apiResponse = $response->baseResponse->getData();
+        return $apiResponse->proposal->id;
+    }
+
+    public function createPaymentProposal($userId) {
+        $proposal = new Proposal;
+        $proposal->title = 'Test Payment Proposal';
+        $proposal->short_description = 'Test Description';
+        $proposal->explanation_benefit = '';
+        $proposal->explanation_goal = '';
+        $proposal->total_grant = 100;
+        $proposal->license = 0;
+        $proposal->resume = '';
+        $proposal->extra_notes = '';
+        $proposal->license_other = '';
+        $proposal->relationship = '';
+        $proposal->received_grant_before = 0;
+        $proposal->previous_work = '';
+        $proposal->other_work = '';
+        $proposal->user_id = $userId;
+        $proposal->include_membership = 0;
+        $proposal->status = 'payment';
+        $proposal->save();
+
+        return $proposal->id;
     }
 }

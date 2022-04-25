@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-final class CriticalFunctionsTest extends TestCase
+final class UserFunctionsTest extends TestCase
 {
 	public function testPreRegisterUser() {
 		$response = $this->withHeaders([
@@ -227,7 +227,6 @@ final class CriticalFunctionsTest extends TestCase
                 ]);
     }
 
-    /* // Not Working
     public function testSubmitSimpleProposal() {
         $this->addMember();
         $token = $this->getMemberToken();
@@ -242,11 +241,15 @@ final class CriticalFunctionsTest extends TestCase
             'Authorization' => 'Bearer ' . $token,
         ])->json('post', '/api/user/simple-proposal', $params);
 
-        $apiResponse = $response->baseResponse->getData();
-    }
-    */
+        // $apiResponse = $response->baseResponse->getData();
 
-    /* // Not Working
+        $response->assertStatus(200)
+                ->assertJsonStructure([
+                    'success',
+                    'proposal',
+                ]);
+    }
+    
     public function testSubmitAdminGrantProposal() {
         $this->addMember();
         $token = $this->getMemberToken();
@@ -263,16 +266,235 @@ final class CriticalFunctionsTest extends TestCase
             'Authorization' => 'Bearer ' . $token,
         ])->json('post', '/api/user/admin-grant-proposal', $params);
 
-        $apiResponse = $response->baseResponse->getData();
+        // $apiResponse = $response->baseResponse->getData();
 
-        var_dump($apiResponse);
-        exit();
+        $response->assertStatus(200)
+                ->assertJsonStructure([
+                    'success',
+                    'proposal',
+                ]);
     }
-    */
-
-    public function TestSubmitAdvancePaymentProposal() {
+    
+    public function testSubmitAdvancePaymentProposal() {
         $this->addMember();
         $token = $this->getMemberToken();
+        $proposalId = $this->createProposal($token);
+
+        $params = [
+            'total_grant' => 0,
+            'amount_advance_detail' => 'Test',
+            'proposal_id' => $proposalId
+        ];
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $token,
+        ])->json('post', '/api/user/advance-payment-proposal', $params);
+
+        // $apiResponse = $response->baseResponse->getData();
+
+        $response->assertStatus(200)
+                ->assertJsonStructure([
+                    'success',
+                    'proposal',
+                ]);
+    }
+
+    public function testSubmitProposalChange() {
+        $this->addMember();
+        $token = $this->getMemberToken();
+        $proposalId = $this->createProposal($token);
+
+        $params = [
+            'proposal' => $proposalId,
+            'what_section' => 'short_description',
+            'additional_notes' => 'Test',
+        ];
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $token,
+        ])->json('post', '/api/user/proposal-change', $params);
+
+        // $apiResponse = $response->baseResponse->getData();
+
+        $response->assertStatus(200)
+                ->assertJsonStructure([
+                    'success',
+                ]);
+    }
+
+    public function testUpdatePaymentProposal() {
+        $this->addMember();
+        $token = $this->getMemberToken();
+        $proposalId = $this->createProposal($token);
+
+        $params = [
+            'dos_txid' => 'TEST',
+            'dos_eth_amount' => 0.1
+        ];
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $token,
+        ])->json('put', '/api/user/payment-proposal/' . $proposalId, $params);
+
+        // $apiResponse = $response->baseResponse->getData();
+
+        $response->assertStatus(200)
+                ->assertJsonStructure([
+                    'success',
+                    'message',
+                ]);
+    }
+
+    public function testCreatePaymentIntent() {
+        $this->addMember();
+        $token = $this->getMemberToken();
+        $proposalId = $this->createProposal($token);
+
+        $params = [
+            'amount' => 20,
+        ];
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $token,
+        ])->json('put', '/api/user/payment-proposal/' . $proposalId . '/payment-intent', $params);
+
+        // $apiResponse = $response->baseResponse->getData();
+
+        $response->assertStatus(200)
+                ->assertJsonStructure([
+                    'success',
+                    'secret',
+                ]);
+    }
+
+    public function testStakeReputation() {
+        $this->addMember();
+        $user = $this->getMember();
+        $proposalId = $this->createPaymentProposal($user->id);
+
+        $params = [
+            'rep' => 50,
+        ];
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $user->accessTokenAPI,
+        ])->json('put', '/api/user/payment-proposal/' . $proposalId . '/stake-reputation', $params);
+
+        // $apiResponse = $response->baseResponse->getData();
+
+        $response->assertStatus(200)
+                ->assertJsonStructure([
+                    'success',
+                ]);
+    }
+
+    public function testStakeCC() {
+        $this->addMember();
+        $user = $this->getMember();
+        $proposalId = $this->createPaymentProposal($user->id);
+
+        $params = [];
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $user->accessTokenAPI,
+        ])->json('put', '/api/user/payment-proposal/' . $proposalId . '/stake-cc', $params);
+
+        // $apiResponse = $response->baseResponse->getData();
+
+        $response->assertStatus(200)
+                ->assertJsonStructure([
+                    'success',
+                ]);
+    }
+
+    public function testUpdatePaymentForm() {
+        $this->addMember();
+        $token = $this->getMemberToken();
+        $proposalId = $this->createProposal($token);
+
+        $params = [
+            'bank_name' => 'Test Bank',
+            'iban_number' => 'Test IBan',
+            'swift_number' => 'Swift',
+            'holder_name' => 'Test Holder',
+            'account_number' => 'Test Account',
+            'bank_address' => 'Test Bank',
+            'bank_city' => 'New York',
+            'bank_country' => 'United States',
+            'bank_zip' => '10016',
+            'holder_address' => 'New York',
+            'holder_city' => 'New York',
+            'holder_country' => 'United States',
+            'holder_zip' => '10016',
+            'crypto_type' => 'eth',
+            'crypto_address' => '0x1f82739ae412ff32cd28e4a1b2c80b96f4c770e3',
+        ];
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $token,
+        ])->json('put', '/api/user/proposal/' . $proposalId . '/payment-form', $params);
+
+        // $apiResponse = $response->baseResponse->getData();
+
+        $response->assertStatus(200)
+                ->assertJsonStructure([
+                    'success',
+                ]);
+    }
+
+    public function testGetReputationTrack() {
+        $this->addMember();
+        $token = $this->getMemberToken();
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $token,
+        ])->json('get', '/api/user/reputation-track', []);
+
+        // $apiResponse = $response->baseResponse->getData();
+
+        $response
+            ->assertStatus(200)
+            ->assertJsonPath('success', true);
+    }
+
+    public function testGetActiveProposals() {
+        $this->addMember();
+        $token = $this->getMemberToken();
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $token,
+        ])->json('get', '/api/user/active-proposals', []);
+
+        // $apiResponse = $response->baseResponse->getData();
+
+        $response
+            ->assertStatus(200)
+            ->assertJsonPath('success', true);
+    }
+
+    public function testGetOnboardings() {
+        $this->addMember();
+        $token = $this->getMemberToken();
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $token,
+        ])->json('get', '/api/user/onboardings', []);
+
+        $apiResponse = $response->baseResponse->getData();
+
+        $response
+            ->assertStatus(200)
+            ->assertJsonPath('success', true);
     }
 }
 ?>
