@@ -871,6 +871,15 @@ class SharedController extends Controller
 				if ($op) {
 					$op->profile->rep = (float) $op->profile->rep + $rep;
 					$op->profile->save();
+
+					$reputation = new Reputation;
+					$reputation->user_id = $proposal->user_id;
+					$reputation->proposal_id = $proposalId;
+					$reputation->value = abs($rep);
+					$reputation->event = "Proposal Withdraw";
+					$reputation->type = "Gained";
+					$reputation->return_type = "Return Staked";
+					$reputation->save();
 					Helper::createRepHistory($op->id, $rep,	$op->profile->rep, 'Gained', 'forceWithdrawProposal', null);
 				}
 			}
@@ -895,7 +904,7 @@ class SharedController extends Controller
 
 			FinalGrant::where('proposal_id', $proposalId)->delete();
 			ProposalFile::where('proposal_id', $proposalId)->delete();
-			Reputation::where('proposal_id', $proposalId)->delete();
+			// Reputation::where('proposal_id', $proposalId)->delete();
 
 			Team::where('proposal_id', $proposalId)->delete();
 			VoteResult::where('proposal_id', $proposalId)->delete();
@@ -940,6 +949,30 @@ class SharedController extends Controller
 					'message' => "You can't withdraw this proposal"
 				];
 			}
+			// Give Rep Back
+			$rep = (float) $proposal->rep;
+			if ($rep > 0) {
+				$op = User::with('profile')
+					->has('profile')
+					->where('id', $proposal->user_id)
+					->first();
+				if ($op) {
+					$op->profile->rep = (float) $op->profile->rep + $rep;
+					$op->profile->save();
+					
+					$reputation = new Reputation;
+					$reputation->user_id = $proposal->user_id;
+					$reputation->proposal_id = $proposalId;
+					$reputation->value = abs($rep);
+					$reputation->event = "Proposal Withdraw";
+					$reputation->type = "Gained";
+					$reputation->return_type = "Return Staked";
+					$reputation->save();
+					Helper::createRepHistory($op->id, $rep,	$op->profile->rep, 'Gained', 'withdrawProposal', null);
+				}
+			}
+			// return rep for user
+			Helper::returenRepProposalDeleted($proposalId);
 			// Remove Proposal Change
 			$proposalChange = ProposalChange::where('proposal_id', $proposalId)->pluck('id');
 			if ($proposalChange) {
@@ -958,7 +991,7 @@ class SharedController extends Controller
 
 			FinalGrant::where('proposal_id', $proposalId)->delete();
 			ProposalFile::where('proposal_id', $proposalId)->delete();
-			Reputation::where('proposal_id', $proposalId)->delete();
+			// Reputation::where('proposal_id', $proposalId)->delete();
 
 			Team::where('proposal_id', $proposalId)->delete();
 			VoteResult::where('proposal_id', $proposalId)->delete();

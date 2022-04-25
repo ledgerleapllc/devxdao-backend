@@ -1941,14 +1941,15 @@ class Helper
 
   public static function returenRepProposalDeleted($proposalId)
   {
-    $checks = Reputation::where('proposal_id', $proposalId)->where('type', '!=', 'Staked')->count();
-    if ($checks > 0) {
-      return;
-    }
     $reputations = Reputation::where('proposal_id', $proposalId)->whereNotNull('vote_id')->where('type', 'Staked')->get();
     foreach ($reputations as $reputation) {
       $user = User::find($reputation->user_id);
       if (!$user) {
+        continue;
+      }
+      $checkReturnStaked = Reputation::where('proposal_id', $proposalId)->where('vote_id', $reputation->vote_id)
+        ->where('user_id', $reputation->user_id)->where('type', 'Gained')->first();
+      if ($checkReturnStaked) {
         continue;
       }
       // Create Reputation Tracking
