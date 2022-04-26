@@ -17,6 +17,7 @@ class CreateOnboardingTable extends Migration
             $table->id();
             $table->foreignId('proposal_id')->constrained('proposal');
             $table->foreignId('user_id')->constrained('users');
+            $table->foreignId('vote_id')->constrained('vote');
             $table->timestamps();
         });
     }
