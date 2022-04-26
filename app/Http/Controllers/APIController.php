@@ -332,7 +332,7 @@ class APIController extends Controller
         ]);
       }
 
-      // $discourse->createUserIfDoesntExists($user);
+      $discourse->createUserIfDoesntExists($user);
 
       return [
         'success' => true,
