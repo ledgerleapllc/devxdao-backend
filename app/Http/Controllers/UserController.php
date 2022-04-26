@@ -2348,7 +2348,7 @@ class UserController extends Controller
 
 				// Create Discourse Topic
 				$discourse->createUserIfDoesntExists($proposal->user);
-
+				
 				$topic = $discourse->createPost([
 					'title' => $proposal->title,
 					'raw' => $proposal->short_description ?: $proposal->title,

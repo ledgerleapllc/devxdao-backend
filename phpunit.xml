@@ -28,7 +28,7 @@
         <server name="SESSION_DRIVER" value="array"/>
         <server name="TELESCOPE_ENABLED" value="false"/>
         <server name="DISCOURSE_URL" value="https://discourse.devxdao.com" />
-        <server name="DISCOURSE_API_KEY" value="" />
-        <server name="DISCOURSE_ADMIN_USERNAME" value="" />
+        <server name="DISCOURSE_API_KEY" value="08ab83e020d7b850cd3cbb24ff9c5ffc536649fb8847c650da18f54bfe68c46a" />
+        <server name="DISCOURSE_ADMIN_USERNAME" value="system" />
     </php>
 </phpunit>
