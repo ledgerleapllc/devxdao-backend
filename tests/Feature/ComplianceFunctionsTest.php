@@ -90,8 +90,8 @@ class ComplianceFunctionsTest extends TestCase
         $this->addMember();
         $token = $this->getMemberToken();
     }
-
+    
     public function testCreatePAUser() {
-        
+        //
     }
 }

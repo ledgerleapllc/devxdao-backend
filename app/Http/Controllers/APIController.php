@@ -228,7 +228,8 @@ class APIController extends Controller
     }
   }
 
-  public function login(Request $request, DiscourseService $discourse)
+  // public function login(Request $request, DiscourseService $discourse)
+  public function login(Request $request)
   {
     // Validator
     $validator = Validator::make($request->all(), [
@@ -332,7 +333,7 @@ class APIController extends Controller
         ]);
       }
 
-      $discourse->createUserIfDoesntExists($user);
+      // $discourse->createUserIfDoesntExists($user);
 
       return [
         'success' => true,
