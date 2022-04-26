@@ -223,7 +223,7 @@ abstract class TestCase extends BaseTestCase
             'email' => 'ledgerleapllc@gmail.com',
             'password' => 'ledgerleapllc',
         ];
-
+        
         $response = $this->withHeaders([
             'Accept' => 'application/json',
         ])->json('post', '/api/login', $user);

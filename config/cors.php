@@ -19,7 +19,9 @@ return [
 
     'allowed_methods' => ['GET', 'POST', 'PUT', 'DELETE'],
 
-    'allowed_origins' => [
+    'allowed_origins' => ['*'],
+
+    'allowed_originsTemp' => [
         'http://localhost:3000',
         '*.devxdao.com',
         'https://devxdao.com',
