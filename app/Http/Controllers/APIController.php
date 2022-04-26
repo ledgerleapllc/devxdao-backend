@@ -228,8 +228,7 @@ class APIController extends Controller
     }
   }
 
-  // public function login(Request $request, DiscourseService $discourse)
-  public function login(Request $request)
+  public function login(Request $request, DiscourseService $discourse)
   {
     // Validator
     $validator = Validator::make($request->all(), [

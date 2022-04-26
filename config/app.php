@@ -179,8 +179,8 @@ return [
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\HorizonServiceProvider::class,
-        App\Providers\RouteServiceProvider::class,
         App\Providers\DiscourseServiceProvider::class,
+        App\Providers\RouteServiceProvider::class,
     ],
 
     /*
