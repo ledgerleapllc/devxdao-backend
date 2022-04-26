@@ -25,12 +25,12 @@ abstract class TestCase extends BaseTestCase
     
     public function setUp(): void
     {
-        parent::setUp();
-        
         Artisan::call('config:cache');
         Artisan::call('config:clear');
         Artisan::call('cache:clear');
         Artisan::call('passport:install');
+        
+        parent::setUp();
 
         $this->app->make(\Spatie\Permission\PermissionRegistrar::class)->registerPermissions();
         $this->app->make(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
@@ -230,10 +230,6 @@ abstract class TestCase extends BaseTestCase
         ])->json('post', '/api/login', $user);
         
         $apiResponse = $response->baseResponse->getData();
-
-        var_dump($apiResponse);
-        exit();
-        
         $token = $apiResponse->user->accessTokenAPI;
         
         return $token;
