@@ -86,6 +86,11 @@ class ComplianceFunctionsTest extends TestCase
                     ]);
     }
 
+    public function testGetMeTemp() {
+        $this->addMember();
+        $token = $this->getMemberToken();
+    }
+
     public function testCreatePAUser() {
         
     }
