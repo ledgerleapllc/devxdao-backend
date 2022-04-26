@@ -27,6 +27,7 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
         
+        Artisan::call('config:cache');
         Artisan::call('config:clear');
         Artisan::call('cache:clear');
         Artisan::call('passport:install');
@@ -223,7 +224,7 @@ abstract class TestCase extends BaseTestCase
             'email' => 'ledgerleapllc@gmail.com',
             'password' => 'ledgerleapllc',
         ];
-        
+
         $response = $this->withHeaders([
             'Accept' => 'application/json',
         ])->json('post', '/api/login', $user);
