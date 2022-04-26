@@ -230,6 +230,10 @@ abstract class TestCase extends BaseTestCase
         ])->json('post', '/api/login', $user);
         
         $apiResponse = $response->baseResponse->getData();
+        
+        var_dump($apiResponse);
+        exit();
+        
         $token = $apiResponse->user->accessTokenAPI;
         
         return $token;
