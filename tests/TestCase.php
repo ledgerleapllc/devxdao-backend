@@ -197,7 +197,7 @@ abstract class TestCase extends BaseTestCase
 
         $response = $this->withHeaders([
             'Accept' => 'application/json',
-        ])->json('post', '/api/user/login-test', $user);
+        ])->json('post', '/api/login', $user);
         
         $apiResponse = $response->baseResponse->getData();
         
