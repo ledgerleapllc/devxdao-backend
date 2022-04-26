@@ -3,9 +3,10 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
-final class UserFunctionsTest extends TestCase
+class UserFunctionsTest extends TestCase
 {
 	public function testPreRegisterUser() {
 		$response = $this->withHeaders([
@@ -173,7 +174,7 @@ final class UserFunctionsTest extends TestCase
         $response = $this->withHeaders([
             'Accept' => 'application/json',
             'Authorization' => 'Bearer ' . $token,
-        ])->json('get', '/api/me', []);
+        ])->json('get', '/api/me');
 
         // $apiResponse = $response->baseResponse->getData();
 
