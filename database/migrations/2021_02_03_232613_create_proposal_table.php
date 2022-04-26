@@ -50,6 +50,6 @@ class CreateProposalTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('proposal');
+        // Schema::dropIfExists('proposal');
     }
 }

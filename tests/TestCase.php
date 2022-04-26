@@ -4,8 +4,6 @@ namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
@@ -199,7 +197,7 @@ abstract class TestCase extends BaseTestCase
 
         $response = $this->withHeaders([
             'Accept' => 'application/json',
-        ])->json('post', '/api/login-test', $user);
+        ])->json('post', '/api/user/login-test', $user);
         
         $apiResponse = $response->baseResponse->getData();
         
