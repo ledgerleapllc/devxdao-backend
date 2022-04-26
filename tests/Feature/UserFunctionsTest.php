@@ -358,6 +358,9 @@ class UserFunctionsTest extends TestCase
             'amount' => 20,
         ];
 
+        var_dump($proposalId);
+        exit();
+
         $response = $this->withHeaders([
             'Accept' => 'application/json',
             'Authorization' => 'Bearer ' . $token,

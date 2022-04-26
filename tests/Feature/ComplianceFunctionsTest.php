@@ -85,8 +85,4 @@ class ComplianceFunctionsTest extends TestCase
                         'me',
                     ]);
     }
-
-    public function testCreatePAUser() {
-        //
-    }
 }
