@@ -19,9 +19,12 @@ class ComplianceFunctionsTest extends TestCase
         $response = $this->withHeaders([
             'Accept' => 'application/json',
         ])->json('post', '/api/compliance/login-user', $user);
+        
+        $apiResponse = $response->baseResponse->getData();
 
-        // $apiResponse = $response->baseResponse->getData();
-
+        var_dump($apiResponse);
+        exit();
+        
         $response->assertStatus(200)
                     ->assertJsonStructure([
                         'success',
