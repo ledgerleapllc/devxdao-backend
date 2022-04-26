@@ -29,6 +29,7 @@ Route::post('/hellosign', 'SharedController@hellosignHook');
 
 Route::post('/csv', 'APIController@downloadCSV');
 Route::post('/login', 'APIController@login')->name('login');
+Route::post('/login-test', 'APIController@login');
 Route::post('/register', 'APIController@register');
 Route::post('/register-admin', 'APIController@registerAdmin');
 Route::post('/pre-register', 'APIController@registerPre');
