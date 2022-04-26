@@ -25,12 +25,12 @@ abstract class TestCase extends BaseTestCase
     
     public function setUp(): void
     {
-        Artisan::call('config:cache');
+        // Artisan::call('config:cache');
+        parent::setUp();
+
         Artisan::call('config:clear');
         Artisan::call('cache:clear');
         Artisan::call('passport:install');
-        
-        parent::setUp();
 
         $this->app->make(\Spatie\Permission\PermissionRegistrar::class)->registerPermissions();
         $this->app->make(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
