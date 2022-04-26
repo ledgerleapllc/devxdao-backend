@@ -167,8 +167,8 @@ final class UserFunctionsTest extends TestCase
     }
     
     public function testGetMe() {
-        $this->addAdmin();
-        $token = $this->getAdminToken();
+        $this->addMember();
+        $token = $this->getMemberToken();
 
         $response = $this->withHeaders([
             'Accept' => 'application/json',
