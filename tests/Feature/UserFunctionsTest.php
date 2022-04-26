@@ -358,9 +358,6 @@ class UserFunctionsTest extends TestCase
             'amount' => 20,
         ];
 
-        var_dump($proposalId);
-        exit();
-
         $response = $this->withHeaders([
             'Accept' => 'application/json',
             'Authorization' => 'Bearer ' . $token,
@@ -371,7 +368,6 @@ class UserFunctionsTest extends TestCase
         $response->assertStatus(200)
                 ->assertJsonStructure([
                     'success',
-                    'secret',
                 ]);
     }
 

@@ -937,6 +937,10 @@ class UserController extends Controller
 		if ($user && $user->hasRole(['participant', 'member']) && $amount > 0 && $user->email_verified) {
 			$amount = (int) (100 * $amount);
 
+			if (!config('services.stripe.sk_live')) {
+				return ['success' => false];
+			}
+			
 			$stripe = new \Stripe\StripeClient(
 				config('services.stripe.sk_live')
 			);
@@ -2348,7 +2352,7 @@ class UserController extends Controller
 
 				// Create Discourse Topic
 				$discourse->createUserIfDoesntExists($proposal->user);
-				
+
 				$topic = $discourse->createPost([
 					'title' => $proposal->title,
 					'raw' => $proposal->short_description ?: $proposal->title,
