@@ -344,13 +344,18 @@ class APIController extends Controller
       }
 
       $discourse = $discourse->createUserIfDoesntExists($user);
+      $discourseStatus = true;
+      $discourseMessage = null;
       if( isset($discourse['success']) && $discourse['success'] == false) {
-        return $discourse;
+        $discourseStatus = false;
+        $discourseMessage = $discourse['message'];
       }
 
       return [
         'success' => true,
-        'user' => $user
+        'user' => $user,
+        'discourse_status' => $discourseStatus,
+        'discourse_message' => $discourseMessage,
       ];
     } else {
       return [
