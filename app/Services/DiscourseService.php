@@ -337,7 +337,9 @@ class DiscourseService
 
             if (!isset($registered['user_id'])) {
                 info('Error when registering to discourse', [$registered]);
-
+                $message = $registered['message'];
+                $message = str_replace('Username', 'Forum name', $message);
+                $registered['message'] = $message;
                 return $registered;
             }
 
