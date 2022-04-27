@@ -338,7 +338,7 @@ class DiscourseService
             if (!isset($registered['user_id'])) {
                 info('Error when registering to discourse', [$registered]);
 
-                return;
+                return $registered;
             }
 
             if ($user->hasRole('admin')) {
@@ -436,7 +436,7 @@ class DiscourseService
 
             if ($class_name == 'User') {
                 $updated_forum_name = str_replace(' ', '-', $user->profile->forum_name);
-                $updated_forum_name = preg_replace("/([^A-Za-z0-9\-\_.])/", '', $updated_forum_name);
+                $updated_forum_name = preg_replace("/([^A-Za-z0-9\-])/", '', $updated_forum_name);
                 $updated_forum_name = str_replace('--', '-', $updated_forum_name);
                 return strtolower($updated_forum_name);
             } elseif ($class_name == 'ComplianceUser') {

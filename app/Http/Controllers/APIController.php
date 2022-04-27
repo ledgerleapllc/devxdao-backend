@@ -343,7 +343,10 @@ class APIController extends Controller
         ]);
       }
 
-      $discourse->createUserIfDoesntExists($user);
+      $discourse = $discourse->createUserIfDoesntExists($user);
+      if( isset($discourse['success']) && $discourse['success'] == false) {
+        return $discourse;
+      }
 
       return [
         'success' => true,
@@ -438,204 +441,219 @@ class APIController extends Controller
   }
 
   // User Registration
-  public function register(Request $request)
+  public function register(Request $request, DiscourseService $discourse)
   {
-    // Validator
-    $validator = Validator::make($request->all(), [
-      'email' => 'required|email',
-      'password' => [
-        'required',
-        'string',
-        'min:8',
-        'regex:/[a-zA-Z]/',
-        'regex:/[0-9]/',
-        'regex:/[.,=+;:()_\[\]<>{}\^@$!%*#?&]/',
-      ],
-      'first_name' => 'required',
-      'last_name' => 'required',
-      'forum_name' => 'required|regex:/^([A-Za-z0-9-_.]+)$/'
-    ]);
+    try {
+      DB::beginTransaction();
+      // Validator
+      $validator = Validator::make($request->all(), [
+        'email' => 'required|email',
+        'password' => [
+          'required',
+          'string',
+          'min:8',
+          'regex:/[a-zA-Z]/',
+          'regex:/[0-9]/',
+          'regex:/[.,=+;:()_\[\]<>{}\^@$!%*#?&]/',
+        ],
+        'first_name' => 'required',
+        'last_name' => 'required',
+        'forum_name' => 'required|regex:/^([A-Za-z0-9-_.]+)$/'
+      ]);
 
-    if ($validator->fails()) {
-      return [
-        'success' => false,
-        'message' => 'Provide all the necessary information',
-        'error' => $validator->errors()
-      ];
-    }
-
-    // Get Settings
-    $settings = Helper::getSettings();
-
-    // Variables
-    $first_name = $request->get('first_name');
-    $last_name = $request->get('last_name');
-    $email = $request->get('email');
-    $password = $request->get('password');
-    $forum_name = $request->get('forum_name');
-    $company = $request->get('company');
-    $guest_key = $request->get('guest_key');
-    $telegram = $request->get('telegram');
-
-    $code = Str::random(6);
-
-    if (!$first_name || !$last_name || !$email || !$password || !$forum_name) {
-      return [
-        'success' => false,
-        'message' => 'Provide all the necessary information'
-      ];
-    }
-
-    if (Helper::hasURL($first_name)) {
-      return [
-        'success' => false,
-        'message' => 'First name has url',
-      ];
-    }
-
-    if (Helper::hasURL($last_name)) {
-      return [
-        'success' => false,
-        'message' => 'Last name has url',
-      ];
-    }
-
-    if ($company && Helper::hasURL($company)) {
-      return [
-        'success' => false,
-        'message' => 'Company has url',
-      ];
-    }
-
-    if (Helper::hasURL($forum_name)) {
-      return [
-        'success' => false,
-        'message' => 'Forum name has url',
-      ];
-    }
-
-    if (Helper::hasURL($telegram)) {
-      return [
-        'success' => false,
-        'message' => 'Telegram has url',
-      ];
-    }
-
-    $user = User::where('email', $email)->first();
-    if ($user) {
-      return [
-        'success' => false,
-        'message' => 'The email is already in use'
-      ];
-    }
-
-    if (strlen($forum_name) < 2 || strlen($forum_name) > 25) {
-      return [
-        'success' => false,
-        'message' => 'Forum names must be at minimum 2 chacters, and maximum 25 characters.'
-      ];
-    }
-
-    $profile = Profile::where('forum_name', $forum_name)->first();
-    if ($profile) {
-      return [
-        'success' => false,
-        'message' => 'The forum name is already in use'
-      ];
-    }
-
-    // Remove Guest
-    if ($guest_key) {
-      $guestUser = User::where('guest_key', $guest_key)->first();
-      if ($guestUser) {
-        Profile::where('user_id', $guestUser->id)->delete();
-        $guestUser->delete();
+      if ($validator->fails()) {
+        return [
+          'success' => false,
+          'message' => 'Provide all the necessary information',
+          'error' => $validator->errors()
+        ];
       }
-    }
 
-    $user = new User;
-    $user->first_name = $first_name;
-    $user->last_name = $last_name;
-    $user->email = $email;
-    $user->password = Hash::make($password);
-    $user->email_verified = 0;
-    $user->confirmation_code = $code;
-    $user->is_participant = 1;
+      // Get Settings
+      $settings = Helper::getSettings();
 
-    if (
-      $settings &&
-      isset($settings['need_to_approve']) &&
-      $settings['need_to_approve'] == 'no'
-    )
+      // Variables
+      $first_name = $request->get('first_name');
+      $last_name = $request->get('last_name');
+      $email = $request->get('email');
+      $password = $request->get('password');
+      $forum_name = $request->get('forum_name');
+      $company = $request->get('company');
+      $guest_key = $request->get('guest_key');
+      $telegram = $request->get('telegram');
+
+      $code = Str::random(6);
+
+      if (!$first_name || !$last_name || !$email || !$password || !$forum_name
+      ) {
+        return [
+          'success' => false,
+          'message' => 'Provide all the necessary information'
+        ];
+      }
+
+      if (Helper::hasURL($first_name)) {
+        return [
+          'success' => false,
+          'message' => 'First name has url',
+        ];
+      }
+
+      if (Helper::hasURL($last_name)) {
+        return [
+          'success' => false,
+          'message' => 'Last name has url',
+        ];
+      }
+
+      if ($company && Helper::hasURL($company)) {
+        return [
+          'success' => false,
+          'message' => 'Company has url',
+        ];
+      }
+
+      if (Helper::hasURL($forum_name)) {
+        return [
+          'success' => false,
+          'message' => 'Forum name has url',
+        ];
+      }
+
+      if (Helper::hasURL($telegram)) {
+        return [
+          'success' => false,
+          'message' => 'Telegram has url',
+        ];
+      }
+
+      $user = User::where('email', $email)->first();
+      if ($user) {
+        return [
+          'success' => false,
+          'message' => 'The email is already in use'
+        ];
+      }
+
+      if (strlen($forum_name) < 2 || strlen($forum_name) > 25) {
+        return [
+          'success' => false,
+          'message' => 'Forum names must be at minimum 2 chacters, and maximum 25 characters.'
+        ];
+      }
+
+      $profile = Profile::where('forum_name', $forum_name)->first();
+      if ($profile) {
+        return [
+          'success' => false,
+          'message' => 'The forum name is already in use'
+        ];
+      }
+
+      // Remove Guest
+      if ($guest_key) {
+        $guestUser = User::where('guest_key', $guest_key)->first();
+        if ($guestUser) {
+          Profile::where('user_id', $guestUser->id)->delete();
+          $guestUser->delete();
+        }
+      }
+
+      $user = new User;
+      $user->first_name = $first_name;
+      $user->last_name = $last_name;
+      $user->email = $email;
+      $user->password = Hash::make($password);
+      $user->email_verified = 0;
+      $user->confirmation_code = $code;
+      $user->is_participant = 1;
+
+      if (
+        $settings &&
+        isset($settings['need_to_approve']) &&
+        $settings['need_to_approve'] == 'no'
+      )
       $user->can_access = 1;
 
-    $user->save();
+      $user->save();
 
-    $profile = Profile::where('user_id', $user->id)->first();
-    if (!$profile) $profile = new Profile;
+      $profile = Profile::where('user_id', $user->id)->first();
+      if (!$profile) $profile = new Profile;
 
-    $profile->user_id = $user->id;
-    if ($company) $profile->company = $company;
-    $profile->forum_name = $forum_name;
-    $profile->dob = null;
-    $profile->country_citizenship = "";
-    $profile->country_residence = "";
-    $profile->address = "";
-    $profile->city = "";
-    $profile->zip = "";
-    $profile->telegram = $telegram;
-    $profile->save();
+      $profile->user_id = $user->id;
+      if ($company) $profile->company = $company;
+      $profile->forum_name = $forum_name;
+      $profile->dob = null;
+      $profile->country_citizenship = "";
+      $profile->country_residence = "";
+      $profile->address = "";
+      $profile->city = "";
+      $profile->zip = "";
+      $profile->telegram = $telegram;
+      $profile->save();
 
-    $user->assignRole('participant');
+      $user->assignRole('participant');
 
-    // Generate token and return
-    Token::where([
-      'user_id' => $user->id,
-      'name' => 'User Access Token'
-    ])->delete();
+      // Generate token and return
+      Token::where([
+        'user_id' => $user->id,
+        'name' => 'User Access Token'
+      ])->delete();
 
-    $user->last_login_ip_address = request()->ip();
-    $user->last_login_at = now();
-    $user->save();
-    $ipHistory = new IpHistory();
-    $ipHistory->user_id = $user->id;
-    $ipHistory->ip_address = request()->ip();
-    $ipHistory->save();
+      $user->last_login_ip_address = request()->ip();
+      $user->last_login_at = now();
+      $user->save();
 
-    $tokenResult = $user->createToken('User Access Token');
+      $discourse = $discourse->createUserIfDoesntExists($user);
+      if (isset($discourse['success']) && $discourse['success'] == false) {
+        return $discourse;
+      }
+      $ipHistory = new IpHistory();
+      $ipHistory->user_id = $user->id;
+      $ipHistory->ip_address = request()->ip();
+      $ipHistory->save();
 
-    $user->accessTokenAPI = $tokenResult->accessToken;
-    $user->profile = $profile;
+      $tokenResult = $user->createToken('User Access Token');
 
-    // Check Pre Register
-    $preRegister = PreRegister::where('email', $email)->first();
-    if ($preRegister) {
-      $preRegister->status = 'completed';
-      $preRegister->hash = null;
-      $preRegister->save();
+      $user->accessTokenAPI = $tokenResult->accessToken;
+      $user->profile = $profile;
+
+      // Check Pre Register
+      $preRegister = PreRegister::where('email', $email)->first();
+      if ($preRegister) {
+        $preRegister->status = 'completed';
+        $preRegister->hash = null;
+        $preRegister->save();
+      }
+
+      // Total Members
+      $user->totalMembers = Helper::getTotalMembers();
+
+      // Membership Proposal
+      $user->membership = Helper::getMembershipProposal($user);
+
+      $emailerData = Helper::getEmailerData();
+
+      // Emailer Admin
+      Helper::triggerAdminEmail('New User', $emailerData);
+
+      // Emailer User
+      Helper::triggerUserEmail($user, 'New User', $emailerData);
+
+      // Confirm Code
+      Mail::to($user)->send(new Confirmation($code));
+      DB::commit();
+      return [
+        'success' => true,
+        'user' => $user
+      ];
+    } catch (\Exception $e) {
+      DB::rollBack();
+      return [
+        'success' => false,
+        'message' => $e->getMessage()
+      ];
     }
-
-    // Total Members
-    $user->totalMembers = Helper::getTotalMembers();
-
-    // Membership Proposal
-    $user->membership = Helper::getMembershipProposal($user);
-
-    $emailerData = Helper::getEmailerData();
-
-    // Emailer Admin
-    Helper::triggerAdminEmail('New User', $emailerData);
-
-    // Emailer User
-    Helper::triggerUserEmail($user, 'New User', $emailerData);
-
-    // Confirm Code
-    Mail::to($user)->send(new Confirmation($code));
-
-    return [
-      'success' => true,
-      'user' => $user
-    ];
   }
 
   // Start Guest
