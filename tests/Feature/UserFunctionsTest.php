@@ -488,13 +488,89 @@ class UserFunctionsTest extends TestCase
         $response = $this->withHeaders([
             'Accept' => 'application/json',
             'Authorization' => 'Bearer ' . $token,
-        ])->json('get', '/api/user/onboardings', []);
+        ])->json('get', '/api/user/onboardings');
 
         $apiResponse = $response->baseResponse->getData();
 
         $response
             ->assertStatus(200)
             ->assertJsonPath('success', true);
+    }
+
+    public function testGetMyPendingProposals() {
+        $this->addMember();
+        $token = $this->getMemberToken();
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $token,
+        ])->json('get', '/api/user/my-pending-proposals');
+
+        // $apiResponse = $response->baseResponse->getData();
+
+        $response
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonStructure([
+                    'proposals',
+                ]);
+    }
+
+    public function testGetMyActiveProposals() {
+        $this->addMember();
+        $token = $this->getMemberToken();
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $token,
+        ])->json('get', '/api/user/my-active-proposals');
+
+        // $apiResponse = $response->baseResponse->getData();
+
+        $response
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonStructure([
+                    'proposals',
+                ]);
+    }
+
+    public function testGetMyPaymentProposals() {
+        $this->addMember();
+        $token = $this->getMemberToken();
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $token,
+        ])->json('get', '/api/user/my-payment-proposals');
+
+        // $apiResponse = $response->baseResponse->getData();
+
+        $response
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonStructure([
+                    'proposals',
+                ]);
+    }
+
+    public function testGetSurveys() {
+        $this->addMember();
+        $token = $this->getMemberToken();
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $token,
+        ])->json('get', '/api/user/survey');
+
+        // $apiResponse = $response->baseResponse->getData();
+
+        $response
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonStructure([
+                    'surveys',
+                ]);
     }
 }
 ?>
