@@ -144,6 +144,20 @@ abstract class TestCase extends BaseTestCase
         }
     }
 
+    public function addOpsPAUser($token) {
+        $params = [
+            'email' => 'ledgerleapllcopspauser1@gmail.com',
+            'password' => 'ledgerleapllc',
+        ];
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $token,
+        ])->json('post', '/api/ops/admin/users/create-pa-user', $params);
+
+        return $response;
+    }
+
     public function addOpsUser() {
         $ops_user = OpsUser::where(['email' => 'ledgerleapllcops@gmail.com'])->first();
         if (!$ops_user) {
@@ -171,6 +185,22 @@ abstract class TestCase extends BaseTestCase
             $compliance_user->email_verified_at = now();
             $compliance_user->save();
         }
+    }
+
+    public function getOpsUserToken() {
+        $user = [
+            'email' => 'ledgerleapllcops@gmail.com',
+            'password' => 'ledgerleapllc',
+        ];
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->json('post', '/api/ops/login', $user);
+
+        $apiResponse = $response->baseResponse->getData();
+        $token = $apiResponse->user->accessTokenAPI;
+        
+        return $token;
     }
 
     public function getMemberVAToken() {

@@ -35,7 +35,7 @@ Route::post('/pre-register', 'APIController@registerPre');
 Route::post('/start-guest', 'APIController@startGuest');
 Route::post('/send-reset-email', 'APIController@sendResetEmail');
 Route::post('/reset-password', 'APIController@resetPassword');
-Route::post('/ops/login', 'OpsController@login')->name('ops-login');;
+Route::post('/ops/login', 'OpsController@login')->name('ops-login');
 Route::post('/compliance-review/approve', 'AdminController@approveComplianceReview');
 Route::post('/compliance-review/deny', 'AdminController@denyComplianceReview');
 Route::post('/compliance/login', 'ComplianceController@login')->name('compliance-login');;
@@ -388,7 +388,7 @@ Route::group(['prefix' => 'ops', 'middleware' => ['auth:ops_api']], function () 
 		// PUT
 		Route::put('/change-password', 'OpsController@changePassword');
 
-		//post
+		// POST
 		Route::post('/check-current-password', 'OpsController@checkCurrentPassword');
 	});
 });

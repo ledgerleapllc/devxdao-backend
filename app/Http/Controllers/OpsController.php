@@ -141,6 +141,7 @@ class OpsController extends Controller
         $user->save();
         return [
             'success' => true,
+            'user' => $user,
         ];
     }
 

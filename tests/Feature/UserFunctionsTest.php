@@ -12,7 +12,7 @@ class UserFunctionsTest extends TestCase
 		$response = $this->withHeaders([
             'Accept' => 'application/json',
         ])->json('get', '/api/pre-register-user');
-
+        
         // $apiResponse = $response->baseResponse->getData();
         
         $response->assertStatus(200)
