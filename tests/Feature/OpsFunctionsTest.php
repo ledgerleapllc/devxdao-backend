@@ -183,7 +183,7 @@ class OpsFunctionsTest extends TestCase
                     'success',
                 ]);
     }
-
+    
     public function testOpsGetUserAll() {
         $this->addOpsUser();
         $token = $this->getOpsUserToken();

@@ -225,7 +225,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth:api']], function () {
 	Route::get('/user/{userId}/proposal-mentor/export-csv', 'AdminController@exportCSVMentorProposal');
 	Route::get('/active-grant/export-csv', 'AdminController@exxportCSVActiveGrants');
 	Route::get('/survey-rfp-vote/{id}/export-csv', 'AdminController@exportCSVVoteSurveyRfp');
-
+	
 	Route::get('/emailer-data', 'AdminController@getEmailerData');
 	Route::get('/pending-users', 'AdminController@getPendingUsers');
 	Route::get('/pre-register-users', 'AdminController@getPreRegisterUsers');
