@@ -279,7 +279,7 @@ class DiscourseService
             $response = $this->client->post('/users.json', [
                 'form_params' => [
                     'name' => $user->name,
-                    'username' => $this->getUsername($user),
+                    'username' => $this->getUsername($user, true),
                     'email' => $user->email,
                     'password' => Str::random(32),
                     'active' => true,
@@ -430,7 +430,7 @@ class DiscourseService
         return $posts;
     }
 
-    public function getUsername($user)
+    public function getUsername($user, $isregister = false)
     {
         if (gettype($user) == 'object') {
             $class_name = explode('\\', get_class($user));
@@ -438,7 +438,11 @@ class DiscourseService
 
             if ($class_name == 'User') {
                 $updated_forum_name = str_replace(' ', '-', $user->profile->forum_name);
-                $updated_forum_name = preg_replace("/([^A-Za-z0-9\-.])/", '', $updated_forum_name);
+                if ($isregister) {
+                    $updated_forum_name = preg_replace("/([^A-Za-z0-9\-.])/", '', $updated_forum_name);
+                } else {
+                    $updated_forum_name = preg_replace("/([^A-Za-z0-9\-\_.])/", '', $updated_forum_name);
+                }
                 $updated_forum_name = str_replace('--', '-', $updated_forum_name);
                 return strtolower($updated_forum_name);
             } elseif ($class_name == 'ComplianceUser') {
