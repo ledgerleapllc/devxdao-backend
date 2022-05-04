@@ -53,7 +53,7 @@ class UserFunctionsTest extends TestCase
 
         $user = [
             'email' => 'ledgerleapllc@gmail.com',
-            'password' => 'ledgerleapllc',
+            'password' => 'WelcomeTest1@',
         ];
 
         $response = $this->withHeaders([
@@ -70,7 +70,7 @@ class UserFunctionsTest extends TestCase
     public function testLoginFailure() {
         $user = [
             'email' => 'ledgerleapllc@gmail.com',
-            'password' => 'ledgerleapllc',
+            'password' => 'WelcomeTest1@',
         ];
 
         $response = $this->withHeaders([
@@ -87,7 +87,7 @@ class UserFunctionsTest extends TestCase
     public function testRegister() {
         $user = [
             'email' => 'ledgerleapllc@gmail.com',
-            'password' => 'ledgerleapllc',
+            'password' => 'WelcomeTest1@',
             'first_name' => 'Ledger',
             'last_name' => 'Leap',
             'forum_name' => 'ledgerleapllc'
@@ -97,7 +97,7 @@ class UserFunctionsTest extends TestCase
             'Accept' => 'application/json',
         ])->json('post', '/api/register', $user);
 
-        // $apiResponse = $response->baseResponse->getData();
+        $apiResponse = $response->baseResponse->getData();
 
         $response->assertStatus(200)
                 ->assertJsonStructure([
@@ -130,7 +130,7 @@ class UserFunctionsTest extends TestCase
 
         $user = [
             'email' => 'ledgerleapllcops@gmail.com',
-            'password' => 'ledgerleapllc',
+            'password' => 'WelcomeTest1@',
         ];
 
         $response = $this->withHeaders([
@@ -151,7 +151,7 @@ class UserFunctionsTest extends TestCase
 
         $user = [
             'email' => 'ledgerleapllccompliance@gmail.com',
-            'password' => 'ledgerleapllc',
+            'password' => 'WelcomeTest1@',
         ];
 
         $response = $this->withHeaders([

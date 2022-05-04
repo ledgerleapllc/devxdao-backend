@@ -75,7 +75,7 @@ abstract class TestCase extends BaseTestCase
             $user->first_name = 'Test';
             $user->last_name = 'User';
             $user->email = 'testuser@gmail.com';
-            $user->password = Hash::make('testuser');
+            $user->password = Hash::make('WelcomeTest1@');
             $user->confirmation_code = 'testuser';
             $user->email_verified = 1;
             $user->is_admin = 1;
@@ -116,7 +116,7 @@ abstract class TestCase extends BaseTestCase
             $user->first_name = 'Ledger';
             $user->last_name = 'Leap';
             $user->email = 'ledgerleapllc@gmail.com';
-            $user->password = Hash::make('ledgerleapllc');
+            $user->password = Hash::make('WelcomeTest1@');
             $user->confirmation_code = 'admin';
             $user->email_verified = 1;
             $user->is_admin = 1;
@@ -147,7 +147,7 @@ abstract class TestCase extends BaseTestCase
     public function addOpsPAUser($token) {
         $params = [
             'email' => 'ledgerleapllcopspauser1@gmail.com',
-            'password' => 'ledgerleapllc',
+            'password' => 'WelcomeTest1@',
         ];
 
         $response = $this->withHeaders([
@@ -166,7 +166,7 @@ abstract class TestCase extends BaseTestCase
             $ops_user->last_name = 'Leap';
             $ops_user->status = 'active';
             $ops_user->email = 'ledgerleapllcops@gmail.com';
-            $ops_user->password = Hash::make('ledgerleapllc');
+            $ops_user->password = Hash::make('WelcomeTest1@');
             $ops_user->is_super_admin = 1;
             $ops_user->save();
         }
@@ -180,7 +180,7 @@ abstract class TestCase extends BaseTestCase
             $compliance_user->last_name = 'Leap';
             $compliance_user->status = 'active';
             $compliance_user->email = 'ledgerleapllccompliance@gmail.com';
-            $compliance_user->password = Hash::make('ledgerleapllc');
+            $compliance_user->password = Hash::make('WelcomeTest1@');
             $compliance_user->is_super_admin = 1;
             $compliance_user->email_verified_at = now();
             $compliance_user->save();
@@ -190,7 +190,7 @@ abstract class TestCase extends BaseTestCase
     public function getOpsUserToken() {
         $user = [
             'email' => 'ledgerleapllcops@gmail.com',
-            'password' => 'ledgerleapllc',
+            'password' => 'WelcomeTest1@',
         ];
 
         $response = $this->withHeaders([
@@ -206,7 +206,7 @@ abstract class TestCase extends BaseTestCase
     public function getMemberVAToken() {
         $user = [
             'email' => 'testuser@gmail.com',
-            'password' => 'testuser',
+            'password' => 'WelcomeTest1@',
         ];
 
         $response = $this->withHeaders([
@@ -222,7 +222,7 @@ abstract class TestCase extends BaseTestCase
     public function getMemberToken() {
         $user = [
             'email' => 'testuser@gmail.com',
-            'password' => 'testuser',
+            'password' => 'WelcomeTest1@',
         ];
 
         $response = $this->withHeaders([
@@ -238,7 +238,7 @@ abstract class TestCase extends BaseTestCase
     public function getMember() {
         $user = [
             'email' => 'testuser@gmail.com',
-            'password' => 'testuser',
+            'password' => 'WelcomeTest1@',
         ];
 
         $response = $this->withHeaders([
@@ -252,7 +252,7 @@ abstract class TestCase extends BaseTestCase
     public function getAdminToken() {
         $user = [
             'email' => 'ledgerleapllc@gmail.com',
-            'password' => 'ledgerleapllc',
+            'password' => 'WelcomeTest1@',
         ];
 
         $response = $this->withHeaders([

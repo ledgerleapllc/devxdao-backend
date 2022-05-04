@@ -13,7 +13,7 @@ class OpsFunctionsTest extends TestCase
 
         $user = [
             'email' => 'ledgerleapllcops@gmail.com',
-            'password' => 'ledgerleapllc',
+            'password' => 'WelcomeTest1@',
         ];
 
         $response = $this->withHeaders([
@@ -114,7 +114,7 @@ class OpsFunctionsTest extends TestCase
             'Accept' => 'application/json',
             'Authorization' => 'Bearer ' . $token,
         ])->json('post', '/api/ops/admin/users/' . $user->id . '/reset-password', [
-            'password' => 'ledgerleapllc1'
+            'password' => 'WelcomeTest2@'
         ]);
 
         // $apiResponse = $response->baseResponse->getData();
@@ -133,7 +133,7 @@ class OpsFunctionsTest extends TestCase
             'Accept' => 'application/json',
             'Authorization' => 'Bearer ' . $token,
         ])->json('post', '/api/ops/shared/check-current-password', [
-            'current_password' => 'ledgerleapllc'
+            'current_password' => 'WelcomeTest1@'
         ]);
 
         // $apiResponse = $response->baseResponse->getData();
@@ -152,7 +152,7 @@ class OpsFunctionsTest extends TestCase
             'Accept' => 'application/json',
             'Authorization' => 'Bearer ' . $token,
         ])->json('post', '/api/ops/shared/check-current-password', [
-            'current_password' => 'ledgerleapllcwrong'
+            'current_password' => 'WelcomeTest1@Wrong'
         ]);
 
         // $apiResponse = $response->baseResponse->getData();
@@ -172,8 +172,8 @@ class OpsFunctionsTest extends TestCase
             'Accept' => 'application/json',
             'Authorization' => 'Bearer ' . $token,
         ])->json('put', '/api/ops/shared/change-password', [
-            'current_password' => 'ledgerleapllc',
-            'new_password' => 'ledgerleapllcnew',
+            'current_password' => 'WelcomeTest1@',
+            'new_password' => 'WelcomeTest2@',
         ]);
 
         // $apiResponse = $response->baseResponse->getData();

@@ -13,7 +13,7 @@ class AdminFunctionsTest extends TestCase
 
         $params = [
             'email' => 'ledgerleapllc@gmail.com',
-            'password' => 'ledgerleapllc',
+            'password' => 'WelcomeTest1@',
         ];
 
         $response = $this->withHeaders([

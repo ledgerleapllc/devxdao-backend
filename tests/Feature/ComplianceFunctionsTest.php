@@ -13,7 +13,7 @@ class ComplianceFunctionsTest extends TestCase
 
         $user = [
             'email' => 'testuser@gmail.com',
-            'password' => 'testuser',
+            'password' => 'WelcomeTest1@',
         ];
 
         $response = $this->withHeaders([
