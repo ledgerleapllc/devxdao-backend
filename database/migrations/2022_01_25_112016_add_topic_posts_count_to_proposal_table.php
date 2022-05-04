@@ -26,7 +26,7 @@ class AddTopicPostsCountToProposalTable extends Migration
     public function down()
     {
         Schema::table('proposal', function (Blueprint $table) {
-            $table->dropColumn('topic_posts_count');
+            // $table->dropColumn('topic_posts_count');
         });
     }
 }

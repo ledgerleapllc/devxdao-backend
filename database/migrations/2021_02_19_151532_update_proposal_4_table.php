@@ -14,7 +14,7 @@ class UpdateProposal4Table extends Migration
     public function up()
     {
         Schema::table('proposal', function ($table) {
-            $table->enum('type', ['grant', 'membership', 'simple'])->default('grant');
+            $table->enum('type', ['grant', 'membership', 'simple', 'admin-grant', 'advance-payment'])->default('grant');
             $table->text('member_reason')->nullable();
             $table->text('member_benefit')->nullable();
             $table->string('linkedin')->nullable();

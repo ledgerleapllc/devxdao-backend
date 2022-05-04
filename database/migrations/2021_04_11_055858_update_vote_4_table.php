@@ -14,7 +14,7 @@ class UpdateVote4Table extends Migration
     public function up()
     {
         Schema::table('vote', function ($table) {
-            $table->enum('content_type', ['grant', 'milestone', 'simple'])->nullable();
+            $table->enum('content_type', ['grant', 'milestone', 'simple', 'admin-grant', 'advance-payment'])->nullable();
         });
     }
 

@@ -52,14 +52,6 @@ class OpsController extends Controller
             ];
         }
 
-        /*
-        return [
-            'success' => false,
-            'message' => 'Login info is not correct',
-            'hash' => Hash::make('TestPassword1!')
-        ];
-        */
-
         if ($user->is_super_admin == 1 ||  $user->is_pa == 1) {
             if (!Hash::check($password, $user->password)) {
                 return [
@@ -149,6 +141,7 @@ class OpsController extends Controller
         $user->save();
         return [
             'success' => true,
+            'user' => $user,
         ];
     }
 

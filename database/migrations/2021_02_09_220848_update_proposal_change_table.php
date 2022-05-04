@@ -14,7 +14,6 @@ class UpdateProposalChangeTable extends Migration
     public function up()
     {
         Schema::table('proposal_change', function ($table) {
-            $table->foreignId('user_id')->constrained('users');
             $table->integer('up_count')->default(0);
             $table->integer('down_count')->default(0);
         });

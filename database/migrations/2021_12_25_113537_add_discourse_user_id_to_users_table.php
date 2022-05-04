@@ -26,7 +26,7 @@ class AddDiscourseUserIdToUsersTable extends Migration
     public function down()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('discourse_user_id');
+            // $table->dropColumn('discourse_user_id');
         });
     }
 }
