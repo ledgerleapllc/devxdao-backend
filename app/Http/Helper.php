@@ -52,6 +52,7 @@ use Illuminate\Support\Facades\Storage;
 
 class Helper
 {
+  // Authorize External API
   public static function authorizeExternalAPI() {
     $headers = getallheaders();
     $auth_token_header = (
