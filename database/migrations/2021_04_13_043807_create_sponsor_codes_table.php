@@ -18,6 +18,7 @@ class CreateSponsorCodesTable extends Migration
             $table->string('code')->nullable();
             $table->boolean('used')->default(false);
             $table->integer('proposal_id')->nullable();
+            $table->integer('user_id')->nullable();
             $table->timestamps();
         });
     }

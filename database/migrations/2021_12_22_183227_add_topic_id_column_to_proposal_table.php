@@ -26,7 +26,7 @@ class AddTopicIdColumnToProposalTable extends Migration
     public function down()
     {
         Schema::table('proposal', function (Blueprint $table) {
-            $table->dropColumn('discourse_topic_id');
+            // $table->dropColumn('discourse_topic_id');
         });
     }
 }

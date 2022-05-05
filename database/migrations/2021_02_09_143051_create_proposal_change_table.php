@@ -16,6 +16,7 @@ class CreateProposalChangeTable extends Migration
         Schema::create('proposal_change', function (Blueprint $table) {
             $table->id();
             $table->foreignId('proposal_id')->constrained('proposal');
+            $table->foreignId('user_id')->constrained('users');
             $table->string('what_section');
             $table->text('change_to')->nullable();
             $table->text('additional_notes')->nullable();
