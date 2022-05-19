@@ -467,9 +467,14 @@ class APIController extends Controller
       ]);
 
       if ($validator->fails()) {
+        if($validator->errors()->has('password')) {
+          $message = "Please use a password with at least 8 characters including at least one number, one letter and one symbol";
+        } else {
+          $message =  $validator->errors()->first();
+        }
         return [
           'success' => false,
-          'message' => 'Provide all the necessary information',
+          'message' =>$message,
           'error' => $validator->errors()
         ];
       }
