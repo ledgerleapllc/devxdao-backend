@@ -110,6 +110,11 @@ class AdminController extends Controller
 
 			$json = $response->json();
 			$invite_id_search = (int)($json->invite_id ?? 0);
+
+			if(!$invite_id_search) {
+				$invite_id_search = (int)($json['invite_id'] ?? 0);
+			}
+
 			$updated_at = Carbon::now();
 
 			if($invite_id_search > 1) {
