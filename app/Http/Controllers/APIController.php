@@ -293,11 +293,6 @@ class APIController extends Controller
       $ipHistory->ip_address = request()->ip();
       $ipHistory->save();
 
-      // DB::delete("
-      //   DELETE
-      //   FROM oauth_access_tokens
-      //   WHERE user_id = $user->id
-      // ");
       Token::where([
         'user_id' => $user->id
       ])->delete();
@@ -494,8 +489,7 @@ class APIController extends Controller
 
       $code = Str::random(6);
 
-      if (!$first_name || !$last_name || !$email || !$password || !$forum_name
-      ) {
+      if (!$first_name || !$last_name || !$email || !$password || !$forum_name) {
         return [
           'success' => false,
           'message' => 'Provide all the necessary information'
@@ -513,6 +507,13 @@ class APIController extends Controller
         return [
           'success' => false,
           'message' => 'Last name has url',
+        ];
+      }
+      
+      if (strlen($forum_name) < 2 || strlen($forum_name) > 25) {
+        return [
+          'success' => false,
+          'message' => 'Forum names must be at minimum 2 chacters, and maximum 25 characters.'
         ];
       }
 
@@ -850,7 +851,6 @@ class APIController extends Controller
       'last_name' => 'required',
       'code' => 'required'
     ]);
-
     if ($validator->fails()) {
       return [
         'success' => false,

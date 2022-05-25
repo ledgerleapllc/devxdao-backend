@@ -16,6 +16,7 @@ class CreateProposalTable extends Migration
         Schema::create('proposal', function (Blueprint $table) {
             $table->id();
             $table->string('title');
+            $table->foreignId('user_id')->constrained('users');
             $table->text('short_description');
             $table->text('explanation_benefit');
             $table->text('explanation_goal');
@@ -49,6 +50,6 @@ class CreateProposalTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('proposal');
+        // Schema::dropIfExists('proposal');
     }
 }
