@@ -167,7 +167,7 @@ class Helper
         $item->type = 'Minted';
         $item->value = (float) $item->pending;
         $item->pending = 0;
-        $item->save();       
+        $item->save();
       }
     }
   }
@@ -493,7 +493,7 @@ class Helper
           $reputation->event = "Proposal $proposal->id Vote Result - OP";
           $reputation->type = "Gained";
           $reputation->return_type = "Return Staked";
-          $reputation->save();  
+          $reputation->save();
         }
         // handle return milestone
         if ($proposal->type == "grant" && $vote->content_type == "milestone" && $voteFormal) {
@@ -511,7 +511,7 @@ class Helper
             $reputation->event = "Return Vote Result Proposal $proposal->id milestone $milestonePosition - OP";
             $reputation->type = "Gained";
             $reputation->return_type = "Return Staked";
-            $reputation->save();  
+            $reputation->save();
             Helper::updateRepProfile($op->id, $extraRepProposal);
             Helper::createRepHistory($op->id, (float) $extraRepProposal, $op->profile->rep, 'Gained', 'Proposal Vote Result', $proposal->id, $voteFormal->id, 'runWinnerFlow2 return milestone');
           }
@@ -2064,7 +2064,7 @@ class Helper
   {
     $totalVAs = Helper::getTotalMembers();
     $settings = Helper::getSettings();
-    
+
     $proposal = Proposal::find($proposalId);
     // Proposal Check
     $statuses = ["approved"];
@@ -2076,7 +2076,8 @@ class Helper
     }
     if(isset($settings['autostart_if_attested']) && $settings['autostart_if_attested'] == 'yes') {
       $counttopicReads = DB::table('topic_reads')->where('topic_id', $proposal->discourse_topic_id)->count();
-			$rate = $counttopicReads / $totalVAs * 100;
+      $total = $proposal->total_user_va ?  $proposal->total_user_va : $totalVAs;
+	  $rate = $counttopicReads / $total * 100;
       $autostart_threshhold = (float) $settings['autostart_threshhold'];
       if($rate < $autostart_threshhold) {
         return ;
@@ -2097,7 +2098,7 @@ class Helper
     if ($vote) {
       return;
     }
-  
+
     $vote = new Vote;
     $vote->proposal_id = $proposalId;
     $vote->type = 'informal';
@@ -2143,6 +2144,6 @@ class Helper
     if (preg_match($regex, $value)) {
       return true;
     }
-    return false; 
+    return false;
   }
 }
