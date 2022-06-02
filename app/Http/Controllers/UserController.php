@@ -1657,7 +1657,6 @@ class UserController extends Controller
 			$proposal->type = "admin-grant";
 			$proposal->explanation_benefit = '';
 			$proposal->explanation_goal = '';
-			$proposal->total_grant = 0;
 			$proposal->relationship = '';
 			$proposal->save();
 
@@ -2065,7 +2064,7 @@ class UserController extends Controller
 				if ($validator->fails()) {
 					return [
 						'success' => false,
-						'message' => 'Provide all the necessary information'
+						'message' => $validator->errors()->first(),
 					];
 				}
 
@@ -2087,7 +2086,7 @@ class UserController extends Controller
 				$title = $request->get('title');
 				$short_description = $request->get('short_description');
 				$explanation_benefit = $request->get('explanation_benefit');
-				$explanation_goal = $request->get('explanation_goal');
+				$explanation_goal = $request->get('explanation_goal') ?? '';
 
 				$license = (int) $request->get('license');
 				$license_other = $request->get('license_other');
