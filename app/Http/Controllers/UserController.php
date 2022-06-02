@@ -2051,7 +2051,7 @@ class UserController extends Controller
 					'title' => 'required',
 					'short_description' => 'required',
 					'explanation_benefit' => 'required',
-					'explanation_goal' => 'required',
+					'explanation_goal' => 'nullable',
 					'total_grant' => 'required',
 					'resume' => 'required',
 					'grants' => 'required|array',
