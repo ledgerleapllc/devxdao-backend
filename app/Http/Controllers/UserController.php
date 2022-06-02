@@ -1657,7 +1657,6 @@ class UserController extends Controller
 			$proposal->type = "admin-grant";
 			$proposal->explanation_benefit = '';
 			$proposal->explanation_goal = '';
-			$proposal->total_grant = 0;
 			$proposal->relationship = '';
 			$proposal->save();
 
