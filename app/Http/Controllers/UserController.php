@@ -2358,6 +2358,14 @@ class UserController extends Controller
 					'created_at' => $proposal->created_at->toDateTimeString(),
 				], $discourse->getUsername($proposal->user));
 
+				if(isset($topic['failed']) && $topic['failed'] == true ) {
+					DB::rollBack();
+					return [
+						'success' => false,
+						'message' => $topic['message'],
+					];
+				}
+
 				if ($topic) {
 					$proposal->discourse_topic_id = $topic['topic_id'] ?? null;
 					$proposal->save();
