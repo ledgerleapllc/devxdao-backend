@@ -547,7 +547,7 @@ class ComplianceController extends Controller
                 'message' => 'Proposal does not exist'
             ];
         }
-        if (in_array($onboarding->compliance_status, ['denied', 'approved'])) {
+        if (in_array($onboarding->compliance_status, ['approved'])) {
             return [
                 'success' => false,
                 'message' => "Can not perform this action. Proposal has been $onboarding->compliance_status",
