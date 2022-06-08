@@ -706,15 +706,12 @@ class ComplianceController extends Controller
         }
 
         if ($status == 'approved') {
-            $onboardings->where('onboarding.status', 'completed')
-                ->where('onboarding.compliance_status', 'approved')
-                ->where('shuftipro.status', 'approved');
+            $onboardings->where('onboarding.compliance_status', 'approved');
         }
 
         if ($status == 'denied') {
             $onboardings->where(function ($query) {
-                $query->where('onboarding.compliance_status', 'denied')
-                    ->orWhere('shuftipro.status', 'denied');
+                $query->where('onboarding.compliance_status', 'denied');
             });
         }
         $onboardings = $onboardings->select([
