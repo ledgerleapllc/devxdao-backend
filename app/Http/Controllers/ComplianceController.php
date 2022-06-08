@@ -150,7 +150,7 @@ class ComplianceController extends Controller
         $user->status = 'active';
         $user->is_pa = 1;
         $user->save();
-        
+
         return [
             'success' => true,
         ];
@@ -697,12 +697,7 @@ class ComplianceController extends Controller
                 }
             });
         if ($status == 'need-review') {
-            $onboardings->where('onboarding.status', 'pending')
-                ->where(function ($query) {
-                    $query->where('onboarding.compliance_status', 'pending')
-                        ->orWhere('shuftipro.status', 'pending')
-                        ->orWhere('shuftipro.status', null);
-                });
+            $onboardings->where('onboarding.compliance_status', 'pending');
         }
 
         if ($status == 'approved') {
