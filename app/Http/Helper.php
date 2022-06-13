@@ -1102,6 +1102,9 @@ class Helper
       $pass_rate = $settings["pass_rate_simple"] ?? 0;
     else if ($vote->content_type == "milestone")
       $pass_rate = $settings["pass_rate_milestone"] ?? 0;
+    else if ($vote->content_type == "admin-grant")
+      $pass_rate = $settings["pass_rate_simple"] ?? 0;
+    else $pass_rate = $settings["pass_rate_simple"] ?? 0;
 
     $pass_rate = (float) $pass_rate;
 
