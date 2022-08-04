@@ -70,8 +70,13 @@ class UserController extends Controller
 			$text = $request->get('text');
 			if ($text) {
 				// Mail to Admin
-				$admins = ['wulf@wulfkaal.com', 'timothy.messer@emergingte.ch', 'wulf.kaal@emergingte.ch', 'hayley.howe@emergingte.ch'];
-    		Mail::to($admins)->send(new HelpRequest($user->email, $text));
+				$admins = [
+					'wulf@wulfkaal.com', 
+					'tim@devxdao.com', 
+					'hayley.howe@emergingte.ch'
+				];
+
+				Mail::to($admins)->send(new HelpRequest($user->email, $text));
 
 				return ['success' => true];
 			}
