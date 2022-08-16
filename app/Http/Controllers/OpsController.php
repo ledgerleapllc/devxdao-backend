@@ -511,12 +511,14 @@ class OpsController extends Controller
             ->join('milestone', 'milestone.id', '=', 'milestone_review.milestone_id')
             ->join('proposal', 'milestone.proposal_id', '=', 'proposal.id')
             ->join('ops_users', 'milestone_review.assigner_id', '=', 'ops_users.id')
-            ->where(function ($query) use ($search, $status) {
+            ->where(function ($query) use ($search) {
                 if ($search) {
                     $query->where('proposal.id', 'like', '%' . $search . '%')
                         ->orWhere('proposal.title', 'like', '%' . $search . '%')
                         ->orWhere('ops_users.email', 'like', '%' . $search . '%');
                 }
+            })
+            ->where(function ($query) use ($status) {
                 if ($status == 'active') {
                     $query->where('milestone_review.status', 'active');
                 } else {
