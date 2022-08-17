@@ -2346,17 +2346,21 @@ class SharedController extends Controller
 						->orderBy('rank', 'desc');
 				}])
 				->doesntHave('votes')
-				->where(function ($query) use ($search, $is_winner, $ignore_previous_winner, $ignore_previous_loser) {
+				->where(function ($query) use ($search) {
 					if ($search) {
 						$query->where('proposal.title', 'like', '%' . $search . '%')
 							->orWhere('proposal.id', 'like', '%' . $search . '%')
 							->orWhere('proposal.member_reason', 'like', '%' . $search . '%');
 					}
+				})
+				->where(function ($query) use ($is_winner) {
 					if ($is_winner) {
 						$query->whereHas('surveyRanks', function ($q) {
 							$q->where('is_winner', 1);
 						});
 					}
+				})
+				->where(function ($query) use ($ignore_previous_winner) {
 					if ($ignore_previous_winner == 1) {
 						$survey_rank_ids = SurveyRank::where('is_winner', 1)->pluck('proposal_id');
 						$survey_downvote_rank_ids = SurveyDownVoteRank::where('is_winner', 1)->pluck('proposal_id');
@@ -2723,12 +2727,14 @@ class SharedController extends Controller
 					})
 					->where('vote.type', 'formal')
 					->where('vote.status', 'active')
-					->where(function ($query) use ($search, $show_unvoted, $user, $unvoted_informal) {
+					->where(function ($query) use ($search) {
 						if ($search) {
 							$query->where('proposal.title', 'like', '%' . $search . '%')
 								->orWhere('proposal.member_reason', 'like', '%' . $search . '%')
 								->orWhere('proposal.id', 'like', '%' . $search . '%');
 						}
+					})
+					->where(function ($query) use ($show_unvoted, $user, $unvoted_informal) {
 						if ($show_unvoted) {
 							$query->where('users.id', '!=', $user->id)
 								->whereNotIn('vote.id', $unvoted_informal->toArray())
@@ -2958,12 +2964,14 @@ class SharedController extends Controller
 					->leftJoin('milestone', 'vote.milestone_id', '=', 'milestone.id')
 					->where('vote.type', 'informal')
 					->where('vote.status', 'active')
-					->where(function ($query) use ($search, $show_unvoted, $user) {
+					->where(function ($query) use ($search) {
 						if ($search) {
 							$query->where('proposal.title', 'like', '%' . $search . '%')
 								->orWhere('proposal.member_reason', 'like', '%' . $search . '%')
 								->orWhere('proposal.id', 'like', '%' . $search . '%');
 						}
+					})
+					->where(function ($query) use ($show_unvoted, $user) {
 						if ($show_unvoted) {
 							$query->where('vote_result.type', null)->where('users.id', '!=', $user->id);
 						}

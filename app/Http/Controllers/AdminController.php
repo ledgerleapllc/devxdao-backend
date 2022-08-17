@@ -3623,7 +3623,7 @@ class AdminController extends Controller
 				$query->where('proposal.dos_eth_amount', '>', 0)
 					->orWhere('proposal.dos_cc_amount', '>', 0);
 			})
-			->where(function ($query) use ($search, $start_date, $end_date) {
+			->where(function ($query) use ($search) {
 				if ($search) {
 					$query->where('users.email', 'like', '%' . $search . '%')
 						->orWhere('proposal.id', 'like', '%' . $search . '%')
@@ -3631,6 +3631,8 @@ class AdminController extends Controller
 						->orWhereRaw("(CASE WHEN proposal.dos_eth_amount > 0 THEN 'eth' WHEN proposal.dos_cc_amount > 0 THEN 'cc' ELSE '' END) like '%$search%' ")
 						->orWhereRaw("(CASE WHEN proposal.dos_eth_amount > 0 THEN proposal.dos_eth_amount WHEN proposal.dos_cc_amount > 0 THEN proposal.dos_cc_amount ELSE 0 END) like '%$search%' ");
 				}
+			})
+			->where(function ($query) use ($start_date, $end_date) {
 				if ($start_date) {
 					$query->whereDate('proposal.approved_at', '>=', $start_date);
 				}
@@ -3652,7 +3654,7 @@ class AdminController extends Controller
 		$totalETH = Proposal::join('users', 'users.id', '=', 'proposal.user_id')
 			->where('proposal.dos_paid', 1)
 			->where('proposal.dos_eth_amount', '>', 0)
-			->where(function ($query) use ($search, $start_date, $end_date) {
+			->where(function ($query) use ($search) {
 				if ($search) {
 					$query->where('users.email', 'like', '%' . $search . '%')
 						->orWhere('proposal.id', 'like', '%' . $search . '%')
@@ -3660,18 +3662,21 @@ class AdminController extends Controller
 						->orWhereRaw("(CASE WHEN proposal.dos_eth_amount > 0 THEN 'eth' WHEN proposal.dos_cc_amount > 0 THEN 'cc' ELSE '' END) like '%$search%' ")
 						->orWhereRaw("(CASE WHEN proposal.dos_eth_amount > 0 THEN proposal.dos_eth_amount WHEN proposal.dos_cc_amount > 0 THEN proposal.dos_cc_amount ELSE 0 END) like '%$search%' ");
 				}
+			})
+			->where(function ($query) use ($start_date, $end_date) {
 				if ($start_date) {
 					$query->whereDate('proposal.approved_at', '>=', $start_date);
 				}
 				if ($end_date) {
 					$query->whereDate('proposal.approved_at', '<=', $end_date);
 				}
-			})->sum('proposal.dos_amount');
+			})
+			->sum('proposal.dos_amount');
 
 		$totalCC = Proposal::join('users', 'users.id', '=', 'proposal.user_id')
 			->where('proposal.dos_paid', 1)
 			->where('proposal.dos_cc_amount', '>', 0)
-			->where(function ($query) use ($search, $start_date, $end_date) {
+			->where(function ($query) use ($search) {
 				if ($search) {
 					$query->where('users.email', 'like', '%' . $search . '%')
 						->orWhere('proposal.id', 'like', '%' . $search . '%')
@@ -3679,13 +3684,16 @@ class AdminController extends Controller
 						->orWhereRaw("(CASE WHEN proposal.dos_eth_amount > 0 THEN 'eth' WHEN proposal.dos_cc_amount > 0 THEN 'cc' ELSE '' END) like '%$search%' ")
 						->orWhereRaw("(CASE WHEN proposal.dos_eth_amount > 0 THEN proposal.dos_eth_amount WHEN proposal.dos_cc_amount > 0 THEN proposal.dos_cc_amount ELSE 0 END) like '%$search%' ");
 				}
+			})
+			->where(function ($query) use ($start_date, $end_date) {
 				if ($start_date) {
 					$query->whereDate('proposal.approved_at', '>=', $start_date);
 				}
 				if ($end_date) {
 					$query->whereDate('proposal.approved_at', '<=', $end_date);
 				}
-			})->sum('proposal.dos_amount');
+			})
+			->sum('proposal.dos_amount');
 
 		$proposals->each(function($proposal) {
 			if ($proposal->dos_txid == config('services.crypto.eth.secret_code')) {
@@ -3734,7 +3742,7 @@ class AdminController extends Controller
 				$query->where('proposal.dos_eth_amount', '>', 0)
 					->orWhere('proposal.dos_cc_amount', '>', 0);
 			})
-			->where(function ($query) use ($search, $start_date, $end_date) {
+			->where(function ($query) use ($search) {
 				if ($search) {
 					$query->where('users.email', 'like', '%' . $search . '%')
 						->orWhere('proposal.id', 'like', '%' . $search . '%')
@@ -3742,6 +3750,8 @@ class AdminController extends Controller
 						->orWhereRaw("(CASE WHEN proposal.dos_eth_amount > 0 THEN 'eth' WHEN proposal.dos_cc_amount > 0 THEN 'cc' ELSE '' END) like '%$search%' ")
 						->orWhereRaw("(CASE WHEN proposal.dos_eth_amount > 0 THEN proposal.dos_eth_amount WHEN proposal.dos_cc_amount > 0 THEN proposal.dos_cc_amount ELSE 0 END) like '%$search%' ");
 				}
+			})
+			->where(function ($query) use ($start_date, $end_date) {
 				if ($start_date) {
 					$query->whereDate('proposal.approved_at', '>=', $start_date);
 				}
