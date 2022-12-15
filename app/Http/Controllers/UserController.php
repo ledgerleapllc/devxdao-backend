@@ -1972,7 +1972,7 @@ class UserController extends Controller
 				$milestone->time_submit = $milestone->time_submit +1;
 				$milestone->save();
 				$statusReview = 'pending';
-				$milestoneReview = new MilestoneReview();
+				$milestoneReview = new MilestoneReview;
 				$milestoneReview->milestone_id = $milestoneId;
 				$milestoneReview->proposal_id = $proposalId;
 				$milestoneReview->status = $statusReview;
@@ -3128,21 +3128,41 @@ class UserController extends Controller
 		$user = Auth::user();
 		if ($user && $user->email_verified) {
 			$milestones = Milestone::where('milestone.proposal_id', $proposalId)
-				->doesntHave('votes')
-				->leftJoin('milestone_review', 'milestone.id', '=', 'milestone_review.milestone_id')
 				->where(function ($query) {
-					$query->where('milestone_review.status', 'denied')
-					->orWhere('milestone_review.status', null);
+					$query->where(function ($query) {
+						$query->doesntHave('votes')
+							->where(function ($query) {
+								$query->doesntHave('reviews')
+									->orWhere(function ($query) {
+										$query->has('deniedReviews')
+											->doesntHave('notDeniedReviews');
+									});
+							});
+					})->orWhere(function ($query) {
+						$query->has('votes')
+							->doesntHave('pendingOrActiveReviews');
+					});
 				})
 				->select(['milestone.*'])
 				->orderBy('milestone.created_at', 'asc')
 				->get();
+
+			$filtered = [];
 			foreach ($milestones as $milestone) {
+				$lastVote = Vote::where('proposal_id', $proposalId)
+								->where('milestone_id', $milestone->id)
+								->orderBy('id', 'desc')
+								->first();
+				if (!$lastVote) {
+					$filtered[] = $milestone;
+				} else if ($lastVote->type == 'formal' && $lastVote->result == 'fail') {
+					$filtered[] = $milestone;
+				}
 				$milestone->milestone_posittion = Helper::getPositionMilestone($milestone);
 			}
 			return [
 				'success' => true,
-				'milestones' => $milestones,
+				'milestones' => $filtered,
 			];
 		}
 		return [
