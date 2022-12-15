@@ -50,4 +50,25 @@ class Milestone extends Model
 	{
 		return $this->hasMany('App\MilestoneSubmitHistory', 'milestone_id');
 	}
+
+	// Newly Added Relations
+
+	public function reviews() {
+		return $this->hasMany('App\MilestoneReview', 'milestone_id');
+	}
+
+	public function notDeniedReviews() {
+		return $this->hasMany('App\MilestoneReview', 'milestone_id')
+					->where('status', '!=', 'denied');
+	}
+
+	public function deniedReviews() {
+		return $this->hasMany('App\MilestoneReview', 'milestone_id')
+					->where('status', 'denied');
+	}
+
+	public function pendingOrActiveReviews() {
+		return $this->hasMany('App\MilestoneReview', 'milestone_id')
+					->whereIn('status', ['pending', 'active']);
+	}
 }

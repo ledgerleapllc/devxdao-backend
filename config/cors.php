@@ -21,6 +21,7 @@ return [
 
     'allowed_origins' => [
         'http://localhost:3000',
+        'http://localhost:3001',
         '*.devxdao.com',
         'https://devxdao.com',
         'https://portal.devxdao.com',

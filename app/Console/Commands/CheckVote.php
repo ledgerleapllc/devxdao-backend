@@ -193,8 +193,15 @@ class CheckVote extends Command
     public function handle()
     {
         // Force Mode
-        $force = isset($_SERVER['APP_URL']) && $_SERVER['APP_URL'] == "http://localhost" ? true : false;
-
+        /*
+        $localUrls = [
+        	'http://dxd-backend.stage.local',
+        	'http://localhost'
+        ];
+        $force = isset($_SERVER['APP_URL']) && in_array($_SERVER['APP_URL'], $localUrls) ? true : false;
+		*/
+		$force = false;
+		
         // Get Settings
         $settings = Helper::getSettings();
 

@@ -52,7 +52,7 @@ class OpsController extends Controller
             ];
         }
 
-        if ($user->is_super_admin == 1 ||  $user->is_pa == 1) {
+        if ($user->is_super_admin == 1 || $user->is_pa == 1) {
             if (!Hash::check($password, $user->password)) {
                 return [
                     'success' => false,
