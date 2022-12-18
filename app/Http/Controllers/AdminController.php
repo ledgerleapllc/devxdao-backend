@@ -6086,22 +6086,54 @@ class AdminController extends Controller
 			];
 		}
 
+		/*
 		$users =  User::join('profile', 'users.id', '=', 'profile.user_id')
 		->where('is_member', 1)
 		->select(['users.id', 'profile.forum_name'])
 		->get();
+		*/
+		$users = User::with('profile')
+				->has('profile')
+				->where('is_member', 1)
+				->where('banned', 0)
+				->where('can_access', 1)
+				->get();
 		foreach ($users as $user) {
+			/*
 			$total_staked = Reputation::where('user_id', $user->id)
 				->where('type', 'Staked')
 				->sum('staked');
-			$total_staked = round(abs($total_staked));
-			$total_available =  Reputation::where('user_id', $user->id)->whereIn('type', ['Gained', 'Minted', 'Stake Lost', 'Lost'])->sum('value');
+			*/
+			$total_staked = DB::table('reputation')
+				->where('user_id', $user->id)
+				->where('type', 'Staked')
+				->sum('staked');
+			$total_staked = round(abs($total_staked), 5);
+
+			$total_return_staked = DB::table('reputation')
+				->where('user_id', $user->id)
+				->where('type', 'Gained')
+				->where('return_type', 'Return Staked')
+				->sum('value');
+			$total_return_staked = round(abs($total_return_staked), 5);
+
+			// $total_staked = round(abs($total_staked));
+			$total_staked = $total_staked - $total_return_staked;
+			if ($total_staked < 0) $total_staked = 0;
+
+			// $total_available =  Reputation::where('user_id', $user->id)->whereIn('type', ['Gained', 'Minted', 'Stake Lost', 'Lost'])->sum('value');
+			$total_available = $user->profile->rep;
+
 			$total = $total_staked + $total_available;
-			$minted_pending = Reputation::where('user_id', $user->id)->sum('pending');
+
+			// $minted_pending = Reputation::where('user_id', $user->id)->sum('pending');
+			$minted_pending = $user->profile->rep_pending;
+			
 			$user->total_staked = $total_staked;
 			$user->total_available = $total_available;
 			$user->total = $total;
 			$user->minted_pending = $minted_pending;
+			$user->forum_name = $user->profile->forum_name;
 		}
 		return Excel::download(new AllVARepExport($users), 'all_rep.csv');
 	}

@@ -46,14 +46,35 @@ class TotalRepStatistic extends Command
             ->get();
         $body = '<table><tbody>';
         foreach ($users as $user) {
-            $total_staked = DB::table('reputation')
-                ->where('user_id', $user->id)
-                ->where('type', 'Staked')
-                ->sum('staked');
+			$total_staked = DB::table('reputation')
+				->where('user_id', $user->id)
+				->where('type', 'Staked')
+				->sum('staked');
+			$total_staked = round(abs($total_staked), 5);
+
+			$total_return_staked = DB::table('reputation')
+				->where('user_id', $user->id)
+				->where('type', 'Gained')
+				->where('return_type', 'Return Staked')
+				->sum('value');
+			$total_return_staked = round(abs($total_return_staked), 5);
+
+			$total_staked = $total_staked - $total_return_staked;
+			if ($total_staked < 0) $total_staked = 0;
+
+			/*
+			$total_staked = DB::table('reputation')
+				->where('user_id', $user->id)
+				->where('type', 'Staked')
+				->sum('staked');
+            */
+            /*
             $total_pending = DB::table('reputation')
                 ->where('user_id', $user->id)
                 ->where('type', 'Minted Pending')
                 ->sum('pending');    
+            */
+            $total_pending = $user->profile->rep_pending;
             $total_staked = round(abs($total_staked), 2);
             $available = $user->profile->rep;
             $total = $available + $total_staked;
@@ -71,6 +92,7 @@ class TotalRepStatistic extends Command
             </tr>";
         }
         $body .= '</tbody></table>';
+        
         // Emailer Admin
         $emailerData = Helper::getEmailerData();
         Helper::triggerAdminEmail('Total rep', $emailerData, null, null, null, $body);
