@@ -1728,7 +1728,6 @@ class SharedController extends Controller
 			// Total Members
 			$proposal->totalMembers = Helper::getTotalMemberProposal($proposalId);
 
-
 			if ($proposal->votes && count($proposal->votes)) {
 				foreach ($proposal->votes as $vote) {
 					$vote->totalVotes = VoteResult::where('proposal_id', $proposal->id)
@@ -1736,15 +1735,24 @@ class SharedController extends Controller
 						->get()
 						->count();
 
-					$vote->results = VoteResult::join('profile', 'profile.user_id', '=', 'vote_result.user_id')
-						->where('vote_id', $vote->id)
-						->where('proposal_id', $proposal->id)
-						->select([
-							'vote_result.*',
-							'profile.forum_name'
-						])
-						->orderBy('vote_result.created_at', 'asc')
-						->get();
+					if (
+						$user && 
+						(
+							$user->hasRole('admin') ||
+							(int) $user->id == (int) $proposal->user_id ||
+							$vote->status == 'completed'
+						)
+					) {
+						$vote->results = VoteResult::join('profile', 'profile.user_id', '=', 'vote_result.user_id')
+							->where('vote_id', $vote->id)
+							->where('proposal_id', $proposal->id)
+							->select([
+								'vote_result.*',
+								'profile.forum_name'
+							])
+							->orderBy('vote_result.created_at', 'asc')
+							->get();
+					}
 				}
 			}
 
