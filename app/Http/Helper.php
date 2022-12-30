@@ -1973,8 +1973,8 @@ class Helper
 
   public static function checkPathCompliance() {
     if (Str::contains(request()->path(), 'compliance')) {
-			return true;
-		}
+		return true;
+	}
     return false;
   }
 
