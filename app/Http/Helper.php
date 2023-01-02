@@ -850,6 +850,7 @@ class Helper
       }
       $members = User::where('is_member', 1)
         ->where('banned', 0)
+        ->whereNotIn('email', array('thomas@ledgerleap.com'))
         ->get();
 
       if ($members) {
