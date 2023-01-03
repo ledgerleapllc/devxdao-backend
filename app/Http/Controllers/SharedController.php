@@ -1739,7 +1739,7 @@ class SharedController extends Controller
 						$user && 
 						(
 							$user->hasRole('admin') ||
-							(int) $user->id == (int) $proposal->user_id ||
+							// (int) $user->id == (int) $proposal->user_id ||
 							$vote->status == 'completed'
 						)
 					) {
