@@ -173,7 +173,7 @@ class CheckVote extends Command
                     Helper::runWinnerFlow($proposal, $vote, $settings);
                     Helper::startFinalGrant($proposal);
                     $op = User::find($proposal->user_id);
-                    Helper::sendGrantHellosign($op, $proposal, $settings);
+                    // Helper::sendGrantHellosign($op, $proposal, $settings);
                     Helper::createGrantTracking($proposal->id, "Passed Formal vote", 'passed_formal_vote');
                 } else {
                     // Emailer
