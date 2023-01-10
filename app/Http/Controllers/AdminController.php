@@ -2292,7 +2292,7 @@ class AdminController extends Controller
 		return ['success' => false];
 	}
 
-	// resned Send grant Hellosign Request
+	// resend Send grant Hellosign Request
 	public static function resendHellosignGrant($grantId)
 	{
 		$user = Auth::user();
