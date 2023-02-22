@@ -1746,7 +1746,18 @@ class SharedController extends Controller
 							->where('vote_id', $vote->id)
 							->where('proposal_id', $proposal->id)
 							->select([
-								'vote_result.*',
+								'vote_result.id',
+								'vote_result.proposal_id',
+								'vote_result.type',
+								'vote_result.status',
+								'vote_result.created_at',
+								'vote_result.updated_at',
+								'vote_result.result_count',
+								'vote_result.formal_vote_id',
+								'vote_result.result',
+								'vote_result.content_type',
+								'vote_result.milestone_id',
+								// 'vote_result.*',
 								'profile.forum_name'
 							])
 							->orderBy('vote_result.created_at', 'asc')
