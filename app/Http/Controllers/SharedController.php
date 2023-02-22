@@ -2704,10 +2704,10 @@ class SharedController extends Controller
 			if ($user->hasRole('member')) {
 				$unvoted_informal =  Vote::join('proposal', 'proposal.id', '=', 'vote.proposal_id')
 					->join('users', 'users.id', '=', 'proposal.user_id')
-					// ->leftJoin('vote_result', function ($join) use ($user) {
-					// 	$join->on('vote_result.vote_id', '=', 'vote.id');
-					// 	$join->where('vote_result.user_id', $user->id);
-					// })
+					->leftJoin('vote_result', function ($join) use ($user) {
+						$join->on('vote_result.vote_id', '=', 'vote.id');
+						$join->where('vote_result.user_id', $user->id);
+					})
 					->leftJoin('milestone', 'vote.milestone_id', '=', 'milestone.id')
 					->where('vote.type', 'informal')
 					->where('vote.status', 'completed')
@@ -2722,10 +2722,10 @@ class SharedController extends Controller
 					})->pluck('vote.formal_vote_id');
 				$votes = Vote::join('proposal', 'proposal.id', '=', 'vote.proposal_id')
 					->join('users', 'users.id', '=', 'proposal.user_id')
-					// ->leftJoin('vote_result', function ($join) use ($user) {
-					// 	$join->on('vote_result.vote_id', '=', 'vote.id');
-					// 	$join->where('vote_result.user_id', $user->id);
-					// })
+					->leftJoin('vote_result', function ($join) use ($user) {
+						$join->on('vote_result.vote_id', '=', 'vote.id');
+						$join->where('vote_result.user_id', $user->id);
+					})
 					->leftJoin('milestone', 'vote.milestone_id', '=', 'milestone.id')
 					->join('vote as vote2', function ($join) {
 						$join->on('vote.proposal_id', '=', 'vote2.proposal_id');
@@ -2769,8 +2769,8 @@ class SharedController extends Controller
 						'users.last_name',
 						'users.id as user_id',
 						'vote.*',
-						// 'vote_result.type as vote_result_type',
-						// 'vote_result.value as vote_result_value',
+						'vote_result.type as vote_result_type',
+						'vote_result.value as vote_result_value',
 						'vote2.result_count as total_member',
 						DB::raw('(CASE WHEN vote.content_type = \'grant\' OR proposal.type = \'admin-grant\' OR proposal.type = \'advance-payment\' THEN proposal.total_grant WHEN vote.content_type = \'milestone\' THEN milestone.grant ELSE null END) AS euros'),
 						DB::raw("(CASE WHEN vote.content_type = 'grant' THEN TIMEDIFF(vote.created_at + INTERVAL $minsFormal MINUTE, current_timestamp())
@@ -2805,10 +2805,10 @@ class SharedController extends Controller
 
 				$total_unvoted =  Vote::join('proposal', 'proposal.id', '=', 'vote.proposal_id')
 					->join('users', 'users.id', '=', 'proposal.user_id')
-					// ->leftJoin('vote_result', function ($join) use ($user) {
-					// 	$join->on('vote_result.vote_id', '=', 'vote.id');
-					// 	$join->where('vote_result.user_id', $user->id);
-					// })
+					->leftJoin('vote_result', function ($join) use ($user) {
+						$join->on('vote_result.vote_id', '=', 'vote.id');
+						$join->where('vote_result.user_id', $user->id);
+					})
 					->leftJoin('milestone', 'vote.milestone_id', '=', 'milestone.id')
 					->join('vote as vote2', function ($join) {
 						$join->on('vote.proposal_id', '=', 'vote2.proposal_id');
@@ -2840,11 +2840,11 @@ class SharedController extends Controller
 			} else {
 				$votes = Vote::join('proposal', 'proposal.id', '=', 'vote.proposal_id')
 					->join('users', 'users.id', '=', 'proposal.user_id')
-					// ->join('vote as vote2', function ($join) {
-					// 	$join->on('vote.proposal_id', '=', 'vote2.proposal_id');
-					// 	$join->where('vote2.type', 'informal');
-					// 	$join->on('vote2.content_type', 'vote.content_type');
-					// })
+					->join('vote as vote2', function ($join) {
+						$join->on('vote.proposal_id', '=', 'vote2.proposal_id');
+						$join->where('vote2.type', 'informal');
+						$join->on('vote2.content_type', 'vote.content_type');
+					})
 					->leftJoin('milestone', 'vote.milestone_id', '=', 'milestone.id')
 					->where('vote.type', 'formal')
 					->where('vote.status', 'active')
@@ -2964,10 +2964,10 @@ class SharedController extends Controller
 			if ($user->hasRole('member')) {
 				$votes = Vote::join('proposal', 'proposal.id', '=', 'vote.proposal_id')
 					->join('users', 'users.id', '=', 'proposal.user_id')
-					// ->leftJoin('vote_result', function ($join) use ($user) {
-					// 	$join->on('vote_result.vote_id', '=', 'vote.id');
-					// 	$join->where('vote_result.user_id', $user->id);
-					// })
+					->leftJoin('vote_result', function ($join) use ($user) {
+						$join->on('vote_result.vote_id', '=', 'vote.id');
+						$join->where('vote_result.user_id', $user->id);
+					})
 					->leftJoin('milestone', 'vote.milestone_id', '=', 'milestone.id')
 					->where('vote.type', 'informal')
 					->where('vote.status', 'active')
@@ -2995,8 +2995,8 @@ class SharedController extends Controller
 						'users.last_name',
 						'users.id as user_id',
 						'vote.*',
-						// 'vote_result.type as vote_result_type',
-						// 'vote_result.value as vote_result_value',
+						'vote_result.type as vote_result_type',
+						'vote_result.value as vote_result_value',
 						DB::raw('(CASE WHEN vote.content_type = \'grant\' OR proposal.type = \'admin-grant\' THEN proposal.total_grant WHEN vote.content_type = \'milestone\' THEN milestone.grant ELSE null END) AS euros'),
 						DB::raw("(CASE WHEN vote.content_type = 'grant' THEN TIMEDIFF(vote.created_at + INTERVAL $minsInformal MINUTE, current_timestamp())
 							WHEN vote.content_type = 'milestone' THEN TIMEDIFF(vote.created_at + INTERVAL $minsMileStone MINUTE, current_timestamp())
@@ -3015,10 +3015,10 @@ class SharedController extends Controller
 					->get();
 				$total_unvoted =  Vote::join('proposal', 'proposal.id', '=', 'vote.proposal_id')
 					->join('users', 'users.id', '=', 'proposal.user_id')
-					// ->leftJoin('vote_result', function ($join) use ($user) {
-					// 	$join->on('vote_result.vote_id', '=', 'vote.id');
-					// 	$join->where('vote_result.user_id', $user->id);
-					// })
+					->leftJoin('vote_result', function ($join) use ($user) {
+						$join->on('vote_result.vote_id', '=', 'vote.id');
+						$join->where('vote_result.user_id', $user->id);
+					})
 					->leftJoin('milestone', 'vote.milestone_id', '=', 'milestone.id')
 					->where('vote.type', 'informal')
 					->where('vote.status', 'active')
