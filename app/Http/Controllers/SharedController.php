@@ -2769,8 +2769,8 @@ class SharedController extends Controller
 						'users.last_name',
 						'users.id as user_id',
 						'vote.*',
-						// 'vote_result.type as vote_result_type',
-						// 'vote_result.value as vote_result_value',
+						'vote_result.type as vote_result_type',
+						'vote_result.value as vote_result_value',
 						'vote2.result_count as total_member',
 						DB::raw('(CASE WHEN vote.content_type = \'grant\' OR proposal.type = \'admin-grant\' OR proposal.type = \'advance-payment\' THEN proposal.total_grant WHEN vote.content_type = \'milestone\' THEN milestone.grant ELSE null END) AS euros'),
 						DB::raw("(CASE WHEN vote.content_type = 'grant' THEN TIMEDIFF(vote.created_at + INTERVAL $minsFormal MINUTE, current_timestamp())
@@ -2781,9 +2781,9 @@ class SharedController extends Controller
 							ELSE null END ) AS timeLeft")
 
 					]);
-				// if ($sort_key == 'vote_result_type' &&  $sort_direction == 'asc') {
-				// 	$votes = $votes->orderByRaw('-vote_result.type ASC');
-				// }
+				if ($sort_key == 'vote_result_type' &&  $sort_direction == 'asc') {
+					$votes = $votes->orderByRaw('-vote_result.type ASC');
+				}
 				$votes = $votes
 					->orderBy($sort_key, $sort_direction)
 					->groupBy('vote.id')
@@ -2995,8 +2995,8 @@ class SharedController extends Controller
 						'users.last_name',
 						'users.id as user_id',
 						'vote.*',
-						// 'vote_result.type as vote_result_type',
-						// 'vote_result.value as vote_result_value',
+						'vote_result.type as vote_result_type',
+						'vote_result.value as vote_result_value',
 						DB::raw('(CASE WHEN vote.content_type = \'grant\' OR proposal.type = \'admin-grant\' THEN proposal.total_grant WHEN vote.content_type = \'milestone\' THEN milestone.grant ELSE null END) AS euros'),
 						DB::raw("(CASE WHEN vote.content_type = 'grant' THEN TIMEDIFF(vote.created_at + INTERVAL $minsInformal MINUTE, current_timestamp())
 							WHEN vote.content_type = 'milestone' THEN TIMEDIFF(vote.created_at + INTERVAL $minsMileStone MINUTE, current_timestamp())
@@ -3004,9 +3004,9 @@ class SharedController extends Controller
 							WHEN vote.content_type = 'admin-grant' THEN TIMEDIFF(vote.created_at + INTERVAL $minsSimple MINUTE, current_timestamp())
 							ELSE null END ) AS timeLeft")
 					]);
-				// if ($sort_key == 'vote_result_type' &&  $sort_direction == 'asc') {
-				// 	$votes = $votes->orderByRaw('-vote_result.type ASC');
-				// }
+				if ($sort_key == 'vote_result_type' &&  $sort_direction == 'asc') {
+					$votes = $votes->orderByRaw('-vote_result.type ASC');
+				}
 				$votes = $votes
 					->orderBy($sort_key, $sort_direction)
 					->groupBy('vote.id')
