@@ -3321,15 +3321,19 @@ class SharedController extends Controller
 			}
 		}
 		$proposal->milestone = $milestone;
-		$proposal->voteResults  = VoteResult::join('profile', 'profile.user_id', '=', 'vote_result.user_id')
-			->where('vote_id',  $voteId)
-			->where('proposal_id', $proposal->id)
-			->select([
-				'vote_result.*',
-				'profile.forum_name'
-			])
-			->orderBy('vote_result.created_at', 'asc')
-			->get();
+
+		if ($vote->status == 'completed') {
+			$proposal->voteResults  = VoteResult::join('profile', 'profile.user_id', '=', 'vote_result.user_id')
+				->where('vote_id',  $voteId)
+				->where('proposal_id', $proposal->id)
+				->select([
+					'vote_result.*',
+					'profile.forum_name'
+				])
+				->orderBy('vote_result.created_at', 'asc')
+				->get();
+		}
+
 		$summary_preview = '';
 		if ($proposal->type == 'simple') {
 			$summary_preview = $proposal->short_description;

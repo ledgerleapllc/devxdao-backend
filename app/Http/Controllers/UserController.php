@@ -201,8 +201,8 @@ class UserController extends Controller
 
 		if ($user && $user->hasRole(['participant', 'member']) && $user->email_verified) {
 			$proposal = Proposal::where('id', $proposalId)
-													->with(['bank', 'citations', 'crypto', 'grants', 'milestones', 'members', 'files', 'votes'])
-													->first();
+				->with(['bank', 'citations', 'crypto', 'grants', 'milestones', 'members', 'files', 'votes'])
+				->first();
 
 			if ($proposal && $proposal->status == 'approved') {
 				// Latest Changes
@@ -211,10 +211,10 @@ class UserController extends Controller
 
 				foreach ($sections as $section) {
 					$change = ProposalChange::where('proposal_id', $proposal->id)
-																	->where('what_section', $section)
-																	->where('status', 'approved')
-																	->orderBy('updated_at', 'desc')
-																	->first();
+						->where('what_section', $section)
+						->where('status', 'approved')
+						->orderBy('updated_at', 'desc')
+						->first();
 
 					if ($change) {
 						$changes[$section] = $change;
@@ -225,11 +225,11 @@ class UserController extends Controller
 
 				// Has Pending Change
 				$pendingCount = ProposalChange::where('proposal_id', $proposal->id)
-																			->where('status', 'pending')
-                                                                            ->where('what_section', '!=', 'general_discussion')
-                                                                            ->where('user_id', '!=', $proposal->user_id)
-																			->get()
-																			->count();
+					->where('status', 'pending')
+					->where('what_section', '!=', 'general_discussion')
+					->where('user_id', '!=', $proposal->user_id)
+					->get()
+					->count();
 				$proposal->pendingChangeCount = $pendingCount;
 				$proposal->hasPendingChange = $pendingCount > 0 ? true : false;
 
