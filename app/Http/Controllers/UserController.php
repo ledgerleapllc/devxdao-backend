@@ -234,10 +234,10 @@ class UserController extends Controller
 				$proposal->hasPendingChange = $pendingCount > 0 ? true : false;
 
 				// Vote Results
-				// $voteResults = VoteResult::where('proposal_id', $proposal->id)
-				// 	->where('user_id', $user->id)
-				// 	->get();
-				// $proposal->voteResults = $voteResults;
+				$voteResults = VoteResult::where('proposal_id', $proposal->id)
+					->where('user_id', $user->id)
+					->get();
+				$proposal->voteResults = $voteResults;
 
 				return [
 					'success' => true,

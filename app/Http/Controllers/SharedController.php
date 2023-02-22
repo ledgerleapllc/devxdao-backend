@@ -1717,10 +1717,10 @@ class SharedController extends Controller
 			$proposal->hasPendingChange = $pendingCount > 0 ? true : false;
 
 			// Vote Results
-			// $voteResults = VoteResult::where('proposal_id', $proposal->id)
-			// 	->where('user_id', $user->id)
-			// 	->get();
-			// $proposal->voteResults = $voteResults;
+			$voteResults = VoteResult::where('proposal_id', $proposal->id)
+				->where('user_id', $user->id)
+				->get();
+			$proposal->voteResults = $voteResults;
 
 			// Sponsor
 			$proposal->sponsor = Helper::getSponsor($proposal);
@@ -1735,23 +1735,23 @@ class SharedController extends Controller
 						->get()
 						->count();
 
-					// if (
-					// 	$user && 
-					// 	(
-					// 		$user->hasRole('admin') ||
-					// 		$vote->status == 'completed'
-					// 	)
-					// ) {
-					// 	$vote->results = VoteResult::join('profile', 'profile.user_id', '=', 'vote_result.user_id')
-					// 		->where('vote_id', $vote->id)
-					// 		->where('proposal_id', $proposal->id)
-					// 		->select([
-					// 			'vote_result.*',
-					// 			'profile.forum_name'
-					// 		])
-					// 		->orderBy('vote_result.created_at', 'asc')
-					// 		->get();
-					// }
+					if (
+						$user && 
+						(
+							$user->hasRole('admin') ||
+							$vote->status == 'completed'
+						)
+					) {
+						$vote->results = VoteResult::join('profile', 'profile.user_id', '=', 'vote_result.user_id')
+							->where('vote_id', $vote->id)
+							->where('proposal_id', $proposal->id)
+							->select([
+								'vote_result.*',
+								'profile.forum_name'
+							])
+							->orderBy('vote_result.created_at', 'asc')
+							->get();
+					}
 				}
 			}
 
@@ -1844,10 +1844,10 @@ class SharedController extends Controller
 			$proposal->hasPendingChange = $pendingCount > 0 ? true : false;
 
 			// Vote Results
-			// $voteResults = VoteResult::where('proposal_id', $proposal->id)
-			// 	->where('user_id', $user->id)
-			// 	->get();
-			// $proposal->voteResults = $voteResults;
+			$voteResults = VoteResult::where('proposal_id', $proposal->id)
+				->where('user_id', $user->id)
+				->get();
+			$proposal->voteResults = $voteResults;
 
 			return [
 				'success' => true,
@@ -3321,15 +3321,15 @@ class SharedController extends Controller
 			}
 		}
 		$proposal->milestone = $milestone;
-		// $proposal->voteResults  = VoteResult::join('profile', 'profile.user_id', '=', 'vote_result.user_id')
-		// 	->where('vote_id',  $voteId)
-		// 	->where('proposal_id', $proposal->id)
-		// 	->select([
-		// 		'vote_result.*',
-		// 		'profile.forum_name'
-		// 	])
-		// 	->orderBy('vote_result.created_at', 'asc')
-		// 	->get();
+		$proposal->voteResults  = VoteResult::join('profile', 'profile.user_id', '=', 'vote_result.user_id')
+			->where('vote_id',  $voteId)
+			->where('proposal_id', $proposal->id)
+			->select([
+				'vote_result.*',
+				'profile.forum_name'
+			])
+			->orderBy('vote_result.created_at', 'asc')
+			->get();
 		$summary_preview = '';
 		if ($proposal->type == 'simple') {
 			$summary_preview = $proposal->short_description;
