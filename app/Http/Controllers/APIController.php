@@ -368,6 +368,12 @@ class APIController extends Controller
   // User Pre Registration
   public function registerPre(Request $request)
   {
+    //// disabled
+    return [
+      'success' => false,
+      'message' => 'Registrations are currently disabled'
+    ];
+
     // Validator
     $validator = Validator::make($request->all(), [
       'email' => 'required|email',
@@ -443,6 +449,12 @@ class APIController extends Controller
   // User Registration
   public function register(Request $request, DiscourseService $discourse)
   {
+    //// disabled
+    return [
+      'success' => false,
+      'message' => 'Registrations are currently disabled'
+    ];
+
     try {
       DB::beginTransaction();
       // Validator

@@ -3130,6 +3130,13 @@ class SharedController extends Controller
 			$mem->makeHidden('country');
 		}
 
+		//// hide files if no session
+		$proposal = json_decode($proposal);
+
+		if (!Auth::user()) {
+			$proposal->files = array();
+		}
+
 		return [
 			'success' => true,
 			'proposal' => $proposal
@@ -3468,13 +3475,20 @@ class SharedController extends Controller
 				'milestone_review.status as milestone_review_status',
 				'u1.email as admin_reviewer_email',
 			])->where('milestone.id', $milestoneId)->first();
+
 		if ($milestone) {
-			$milestone->support_file_url = $milestone->support_file ? asset($milestone->support_file) : null;
+			$milestone->support_file_url = (
+				$milestone->support_file ? 
+				asset($milestone->support_file) : 
+				null
+			);
+
 			return [
 				'success' => true,
 				'milestone' => $milestone
 			];
 		}
+
 		return [
 			'success' => false,
 			'message' => 'This milestone does not exist'
